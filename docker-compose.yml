@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:14
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data:/etc/data
+
+volumes:
+  postgres-data:
+    driver: local
