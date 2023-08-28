@@ -1,0 +1,10 @@
+<.simple_form :let={f} for={@changeset} action={@action}>
+  <.input field={f[:name]} label="Nome" />
+  <.error :if={@changeset.action}>
+    Oops, algo de errado aconteceu!
+  </.error>
+
+  <:actions>
+    <.button>Salvar</.button>
+  </:actions>
+</.simple_form>

@@ -1,0 +1,16 @@
+<.header>
+  Produto <%= @product.id %>
+  <:actions>
+    <.link href={~p"/products/#{@product}/edit"}>
+      <.button>Editar</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Nome"><%= @product.name %></:item>
+  <:item title="Inserido em"><%= NaiveDateTime.to_string(@product.inserted_at) %></:item>
+  <:item title="Atualizado em"><%= NaiveDateTime.to_string(@product.updated_at) %></:item>
+</.list>
+
+<.back navigate={~p"/products"}>Voltar</.back>

@@ -16,8 +16,20 @@ defmodule Refood.Inventory.Products do
     Repo.all(Product)
   end
 
+  def get!(product_id) do
+    Repo.get!(Product, product_id)
+  end
+
+  def change(product) do
+    Product.changeset(product, %{})
+  end
+
   def update(product, attrs) do
     Product.changeset(product, attrs)
     |> Repo.update()
+  end
+
+  def delete(product) do
+    Repo.delete(product)
   end
 end
