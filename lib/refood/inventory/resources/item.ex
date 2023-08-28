@@ -1,25 +1,34 @@
 defmodule Refood.Inventory.Item do
-  use Ash.Resource,
-    data_layer: Ash.DataLayer.Ets
+  use Refood.Schema
 
-  actions do
-    defaults [:create]
+  alias Refood.Inventory.Product
+  alias Refood.Inventory.Storage
+
+  schema "storage_items" do
+    field :expires_at, :date
+
+    belongs_to :product, Product
+    belongs_to :storage, Storage
+
+    timestamps format: :utc_datetime
   end
 
-  attributes do
-    uuid_primary_key :id
-
-    attribute :quantity, :integer do
-      allow_nil? false
-    end
-
-    attribute :expires_at, :date do
-      allow_nil? true
-    end
+  @doc false
+  def changeset(struct \\ %__MODULE__{}, attrs) do
+    struct
+    |> cast(attrs, [:storage_id, :product_id, :expires_at])
+    |> base_changeset()
   end
 
-  relationships do
-    belongs_to :product, Refood.Inventory.Product
-    belongs_to :storage, Refood.Inventory.Storage
+  def add_item_changeset(struct, attrs) do
+    struct
+    |> cast(attrs, [:expires_at, :product_id])
+    |> base_changeset()
+  end
+
+  defp base_changeset(changeset) do
+    changeset
+    |> foreign_key_constraint(:product_id)
+    |> foreign_key_constraint(:storage_id)
   end
 end

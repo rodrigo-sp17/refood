@@ -1,48 +1,19 @@
 defmodule Refood.Inventory.Product do
-  use Ash.Resource,
-    data_layer: AshPostgres.DataLayer
+  use Refood.Schema
 
-  alias Ash.Changeset
+  schema "products" do
+    field :name, :string
 
-  postgres do
-    table "products"
-
-    repo Refood.Repo
+    timestamps format: :utc_datetime
   end
 
-  code_interface do
-    define_for Refood.Inventory
-
-    define :register, action: :create
-    define :read, action: :read
-    define :update, action: :update
-  end
-
-  actions do
-    defaults [:read, :update, :destroy]
-
-    create :create do
-      change fn changeset, _ ->
-        case Changeset.get_attribute(changeset, :name) do
-          nil -> changeset
-          name -> Changeset.change_attribute(changeset, :name, String.upcase(name))
-        end
-      end
-    end
-  end
-
-  attributes do
-    uuid_primary_key :id
-
-    attribute :name, :string do
-      allow_nil? false
-    end
-
-    create_timestamp :inserted_at
-    update_timestamp :updated_at
-  end
-
-  identities do
-    identity :name, [:name]
+  def changeset(schema \\ %__MODULE__{}, attrs) do
+    schema
+    |> cast(attrs, [:name])
+    |> validate_required([:name])
+    |> update_change(:name, fn name ->
+      String.upcase(name)
+    end)
+    |> unique_constraint(:name)
   end
 end

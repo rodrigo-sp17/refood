@@ -50,10 +50,7 @@ defmodule Refood.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
-      {:ash, "~> 2.14.2"},
-      {:ash_postgres, "~> 1.3"},
-      {:ash_phoenix, "~> 1.2"},
-      {:spark, "~> 1.1.22"}
+      {:ex_machina, "~> 2.7.0", only: [:dev, :test]}
     ]
   end
 

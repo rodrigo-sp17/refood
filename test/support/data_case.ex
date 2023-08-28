@@ -24,6 +24,7 @@ defmodule Refood.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import Refood.DataCase
+      import Refood.Factory
     end
   end
 

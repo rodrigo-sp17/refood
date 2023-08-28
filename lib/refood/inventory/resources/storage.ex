@@ -1,35 +1,20 @@
 defmodule Refood.Inventory.Storage do
-  use Ash.Resource,
-    data_layer: Ash.DataLayer.Ets
+  use Refood.Schema
 
-  actions do
-    defaults [:read]
+  alias Refood.Inventory.Item
 
-    create :create do
-      argument :items, {:array, :map}
-      change manage_relationship(:items, :items, type: :create)
-    end
+  schema "storages" do
+    field :name, :string
 
-    update :add_item do
-      accept []
+    has_many :items, Item
 
-      argument :item, :map do
-        allow_nil? false
-      end
-
-      change manage_relationship(:item, :items, type: :create)
-    end
+    timestamps format: :utc_datetime
   end
 
-  attributes do
-    uuid_primary_key :id
-
-    attribute :name, :string do
-      allow_nil? false
-    end
-  end
-
-  relationships do
-    has_many :items, Refood.Inventory.Item
+  def changeset(schema \\ %__MODULE__{}, attrs) do
+    schema
+    |> cast(attrs, [:name])
+    |> cast_assoc(:items)
+    |> validate_required(:name)
   end
 end
