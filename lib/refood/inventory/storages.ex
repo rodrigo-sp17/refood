@@ -13,14 +13,22 @@ defmodule Refood.Inventory.Storages do
     |> Repo.insert()
   end
 
-  def list do
-    Repo.all(Storage)
-    |> Repo.preload(:items)
+  def change(struct) do
+    Storage.changeset(struct, %{})
   end
 
-  def get!(storage_id) when is_binary(storage_id) do
+  def list_storages do
+    Repo.all(Storage)
+    |> Repo.preload(items: :product)
+  end
+
+  def get_storage!(storage_id) when is_binary(storage_id) do
     Repo.get!(Storage, storage_id)
-    |> Repo.preload(:items)
+    |> Repo.preload(items: :product)
+  end
+
+  def change_item(struct) do
+    Item.changeset(struct, %{})
   end
 
   def add_item(storage_id, item_attrs) do

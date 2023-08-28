@@ -21,6 +21,19 @@ defmodule RefoodWeb.Router do
     resources "/products", ProductController
   end
 
+  scope "/storages", RefoodWeb do
+    pipe_through :browser
+
+    get "/", StorageController, :index
+    get "/new", StorageController, :new
+    post "/", StorageController, :create
+    get "/:id", StorageController, :show
+
+    get "/:id/items/new", StorageController, :new_item
+    post "/:id/items", StorageController, :add_item
+    delete "/:id/items/:item_id", StorageController, :remove_item
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", RefoodWeb do
   #   pipe_through :api

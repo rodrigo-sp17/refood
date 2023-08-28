@@ -1,0 +1,11 @@
+<.simple_form :let={f} for={@changeset} action={@action}>
+  <.input field={f[:product_id]} label="Produto" />
+  <.input field={f[:expires_at]} label="Validade" />
+  <.error :if={@changeset.action}>
+    Oops, algo de errado aconteceu!
+  </.error>
+
+  <:actions>
+    <.button>Adicionar</.button>
+  </:actions>
+</.simple_form>

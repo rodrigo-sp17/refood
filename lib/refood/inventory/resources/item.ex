@@ -28,6 +28,7 @@ defmodule Refood.Inventory.Item do
 
   defp base_changeset(changeset) do
     changeset
+    |> validate_required([:product_id, :storage_id])
     |> foreign_key_constraint(:product_id)
     |> foreign_key_constraint(:storage_id)
   end
