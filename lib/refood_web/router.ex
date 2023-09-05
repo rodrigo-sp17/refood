@@ -29,7 +29,7 @@ defmodule RefoodWeb.Router do
     post "/", StorageController, :create
     get "/:id", StorageController, :show
 
-    get "/:id/items/new", StorageController, :new_item
+    live "/:id/items/new", StorageLive.NewItemLive
     post "/:id/items", StorageController, :add_item
     delete "/:id/items/:item_id", StorageController, :remove_item
   end

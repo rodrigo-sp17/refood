@@ -27,7 +27,7 @@ defmodule Refood.Inventory.Storages do
     |> Repo.preload(items: :product)
   end
 
-  def change_item(struct) do
+  def change_item(struct \\ %Item{}) do
     Item.changeset(struct, %{})
   end
 

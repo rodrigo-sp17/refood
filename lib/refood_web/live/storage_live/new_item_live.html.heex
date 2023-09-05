@@ -1,0 +1,34 @@
+<.header>
+  Adicionar Item
+</.header>
+
+<.simple_form :let={f} for={@changeset} phx-submit="submit">
+  <.live_component
+    module={RefoodWeb.StorageLive.ProductSearchComponent}
+    id="search-products"
+    change_event="choose-product"
+    show={@show_search_product}
+    on_cancel={JS.push("close-search-product")}
+  />
+  <.input
+    readonly="readonly"
+    label="Produto"
+    phx-click="open-search-product"
+    phx-keydown="open-search-product"
+    value={@product.name}
+    name="product_name"
+    errors={Enum.map(f[:product_id].errors, &translate_error(&1))}
+  />
+  <.input hidden type="hidden" name="product_id" value={@product.id} />
+  <.input label="Validade" field={f[:expires_at]} />
+
+  <:actions>
+    <.button>Adicionar Item</.button>
+  </:actions>
+
+  <.error :if={@changeset.action}>
+    Oops, algo de errado aconteceu!
+  </.error>
+</.simple_form>
+
+<.back navigate={~p"/storages/#{@storage_id}"}>Voltar</.back>

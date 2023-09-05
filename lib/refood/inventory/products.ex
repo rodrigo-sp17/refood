@@ -2,6 +2,7 @@ defmodule Refood.Inventory.Products do
   @moduledoc """
   Manages a product catalog.
   """
+  import Ecto.Query
 
   alias Refood.Inventory.Product
   alias Refood.Repo
@@ -12,9 +13,20 @@ defmodule Refood.Inventory.Products do
     |> Repo.insert()
   end
 
-  def list do
-    Repo.all(Product)
+  def list(params \\ %{}) do
+    Product
+    |> filter_name(params)
+    |> Repo.all()
   end
+
+  defp filter_name(query, %{name: name}) do
+    name_query = "%#{name}%"
+
+    query
+    |> where([p], like(p.name, ^name_query))
+  end
+
+  defp filter_name(query, _), do: query
 
   def get!(product_id) do
     Repo.get!(Product, product_id)
