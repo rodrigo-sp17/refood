@@ -1,16 +1,30 @@
-defmodule RefoodWeb.StorageLive.ProductSearchComponent do
-  @moduledoc "A component that searches for Products"
+defmodule RefoodWeb.StorageLive.ProductPickerComponent do
+  @moduledoc """
+  Component for picking products. Allows registering a new one if it does not exist.
+  """
   use RefoodWeb, :live_component
 
   alias Refood.Inventory.Products
+  alias Refood.Inventory.Product
 
   @impl true
   def render(assigns) do
     ~H"""
     <div>
       <.search_modal :if={@show} show id={@id} on_cancel={@on_cancel}>
-        <.search_input value={@query} phx-target={@myself} phx-keyup="do-search" phx-debounce="200" />
-        <.results change_event={@change_event} products={@products} query={@query} />
+        <div :if={@step == "search"} id="search-step">
+          <.search_input value={@query} phx-target={@myself} phx-keyup="do-search" phx-debounce="200" />
+          <.results products={@products} query={@query} phx-target={@myself} />
+        </div>
+        <div :if={@step == "register"} id="register-step">
+          <.header>Registrar produto</.header>
+          <.simple_form for={@form} phx-target={@myself} phx-submit="register-product">
+            <.input field={@form[:name]} label="Nome" />
+            <.button>
+              Registrar
+            </.button>
+          </.simple_form>
+        </div>
       </.search_modal>
     </div>
     """
@@ -40,6 +54,7 @@ defmodule RefoodWeb.StorageLive.ProductSearchComponent do
   attr :change_event, :string, default: "change"
   attr :query, :string, required: true
   attr :products, :list, required: true
+  attr :rest, :global
 
   def results(assigns) do
     ~H"""
@@ -53,9 +68,11 @@ defmodule RefoodWeb.StorageLive.ProductSearchComponent do
         id="option-none"
         role="option"
         tabindex="-1"
-        class="cursor-default select-none rounded-md px-4 py-2 text-xl"
+        class="cursor-default select-none rounded-md px-4 py-2 text-xl bg-zinc-100 hover:bg-zinc-800 hover:text-white"
+        phx-click="new-product"
+        {@rest}
       >
-        TODO -> registrar produto
+        Registrar novo produto...
       </li>
       <li
         :if={@products == [] && String.length(@query) < 3}
@@ -69,8 +86,9 @@ defmodule RefoodWeb.StorageLive.ProductSearchComponent do
       <.link
         :for={product <- @products}
         id={"product-#{product.id}"}
-        phx-click={@change_event}
+        phx-click="select-product"
         phx-value-product_id={product.id}
+        {@rest}
       >
         <.result_item product={product} />
       </.link>
@@ -118,7 +136,7 @@ defmodule RefoodWeb.StorageLive.ProductSearchComponent do
         aria-modal="true"
         tabindex="0"
       >
-        <div class="flex min-h-full justify-center">
+        <div class="flex min-h-full items-center justify-center">
           <div class="w-full min-h-12 max-w-3xl p-2 sm:p-4 lg:py-6">
             <.focus_wrap
               id={"#{@id}-container"}
@@ -149,7 +167,7 @@ defmodule RefoodWeb.StorageLive.ProductSearchComponent do
     {:ok,
      socket
      |> assign(assigns)
-     |> assign(:selected_product, nil)
+     |> assign(:step, "search")
      |> assign(:products, [])
      |> assign(:query, "")}
   end
@@ -160,6 +178,34 @@ defmodule RefoodWeb.StorageLive.ProductSearchComponent do
      socket
      |> assign(:query, value)
      |> assign(:products, search_products(value))}
+  end
+
+  def handle_event("select-product", %{"product_id" => product_id}, socket) do
+    choose_product(self(), Products.get!(product_id))
+    {:noreply, socket}
+  end
+
+  def handle_event("new-product", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:form, to_form(Products.change(%Product{})))
+     |> assign(:step, "register")}
+  end
+
+  def handle_event("register-product", %{"product" => params}, socket) do
+    case Products.register(params) do
+      {:ok, product} ->
+        choose_product(self(), product)
+
+        {:noreply,
+         socket
+         |> put_flash(:info, "Produto registrado!")}
+
+      {:error, changeset} ->
+        {:noreply,
+         socket
+         |> assign(:form, to_form(changeset))}
+    end
   end
 
   defp search_products(""), do: []
@@ -175,4 +221,8 @@ defmodule RefoodWeb.StorageLive.ProductSearchComponent do
   end
 
   defp search_products(_), do: []
+
+  defp choose_product(pid, product) do
+    send(pid, {:selected_product, product})
+  end
 end
