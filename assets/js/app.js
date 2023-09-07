@@ -18,15 +18,53 @@
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
-import {Socket} from "phoenix"
-import {LiveSocket} from "phoenix_live_view"
+import { Socket } from "phoenix"
+import { LiveSocket } from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
+let Hooks = {}
+Hooks.SearchBar = {
+    mounted() {
+        const searchBarContainer = (this).el
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') {
+                return
+            }
+
+            const focusElemnt = document.querySelector(':focus')
+
+            if (!focusElemnt) {
+                return
+            }
+
+            if (!searchBarContainer.contains(focusElemnt)) {
+                return
+            }
+
+            event.preventDefault()
+
+            const tabElements = document.querySelectorAll(
+                '#search-input, #options a, #option-none',
+            )
+            const focusIndex = Array.from(tabElements).indexOf(focusElemnt)
+            const tabElementsCount = tabElements.length - 1
+
+            if (event.key === 'ArrowUp') {
+                tabElements[focusIndex > 0 ? focusIndex - 1 : tabElementsCount].focus()
+            }
+
+            if (event.key === 'ArrowDown') {
+                tabElements[focusIndex < tabElementsCount ? focusIndex + 1 : 0].focus()
+            }
+        })
+    },
+}
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
-let liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToken}})
+let liveSocket = new LiveSocket("/live", Socket, { hooks: Hooks, params: { _csrf_token: csrfToken } })
 
 // Show progress bar on live navigation and form submits
-topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
+topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" })
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 

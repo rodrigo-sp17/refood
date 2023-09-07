@@ -78,21 +78,6 @@ defmodule RefoodWeb.StorageLive.NewItemLive do
     {:noreply, assign(socket, :show_product_picker, false)}
   end
 
-  # def handle_event(
-  #       "validate",
-  #       %{"item" => item_params},
-  #       socket
-  #     ) do
-  #   changeset =
-  #     socket.assigns.changeset
-  #     |> Item.changeset(item_params)
-  #     |> Map.put(:action, :validate)
-
-  #   {:noreply,
-  #    socket
-  #    |> assign(:changeset, changeset)}
-  # end
-
   def handle_event("submit", %{"item" => item_params} = params, socket) do
     case Storages.add_item(
            socket.assigns.storage_id,

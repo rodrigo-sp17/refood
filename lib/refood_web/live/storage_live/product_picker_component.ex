@@ -12,7 +12,7 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
     ~H"""
     <div>
       <.search_modal :if={@show} show id={@id} on_cancel={@on_cancel}>
-        <div :if={@step == "search"} id="search-step">
+        <div :if={@step == "search"} id="search-step" phx-hook="SearchBar">
           <.search_input value={@query} phx-target={@myself} phx-keyup="do-search" phx-debounce="200" />
           <.results products={@products} query={@query} phx-target={@myself} />
         </div>
@@ -38,6 +38,7 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
     <div class="relative flex flex-row items-center space-x-2">
       <.icon name="hero-magnifying-glass" class="h-6 w-6" />
       <input
+        id="search-input"
         {@rest}
         value={@value}
         type="text"
@@ -70,6 +71,7 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
         tabindex="-1"
         class="cursor-default select-none rounded-md px-4 py-2 text-xl bg-zinc-100 hover:bg-zinc-800 hover:text-white"
         phx-click="new-product"
+        phx-keydown="new-product"
         {@rest}
       >
         Registrar novo produto...
@@ -185,11 +187,15 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
     {:noreply, socket}
   end
 
-  def handle_event("new-product", _, socket) do
-    {:noreply,
-     socket
-     |> assign(:form, to_form(Products.change(%Product{})))
-     |> assign(:step, "register")}
+  def handle_event("new-product", params, socket) do
+    if params["key"] in ["Enter", nil] do
+      {:noreply,
+       socket
+       |> assign(:form, to_form(Products.change(%Product{})))
+       |> assign(:step, "register")}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("register-product", %{"product" => params}, socket) do
