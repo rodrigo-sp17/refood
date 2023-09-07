@@ -29,7 +29,7 @@ defmodule RefoodWeb.StorageLive.NewItemLive do
         errors={Enum.map(f[:product_id].errors, &translate_error(&1))}
       />
       <.input hidden type="hidden" name="product_id" value={@product.id} />
-      <.input label="Validade" field={f[:expires_at]} />
+      <.input type="date" label="Validade" field={f[:expires_at]} />
 
       <:actions>
         <.button>Adicionar Item</.button>
