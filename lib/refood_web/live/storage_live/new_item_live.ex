@@ -5,53 +5,54 @@ defmodule RefoodWeb.StorageLive.NewItemLive do
   alias Refood.Inventory.Storages
 
   @impl true
-  def render(assigns) do
-    ~H"""
-    <.header>
-      Adicionar Item
-    </.header>
-
-    <.live_component
-      module={RefoodWeb.StorageLive.ProductPickerComponent}
-      id="product-picker"
-      show={@show_product_picker}
-      on_cancel={JS.push("hide-product-picker")}
-    />
-
-    <.simple_form :let={f} for={@changeset} phx-submit="submit">
-      <.input
-        readonly="readonly"
-        label="Produto"
-        phx-click="show-product-picker"
-        phx-keydown="show-product-picker"
-        value={@product.name}
-        name="product_name"
-        errors={Enum.map(f[:product_id].errors, &translate_error(&1))}
-      />
-      <.input hidden type="hidden" name="product_id" value={@product.id} />
-      <.input type="date" label="Validade" field={f[:expires_at]} />
-
-      <:actions>
-        <.button>Adicionar Item</.button>
-      </:actions>
-
-      <.error :if={@changeset.action}>
-        Oops, algo de errado aconteceu!
-      </.error>
-    </.simple_form>
-
-    <.back navigate={~p"/storages/#{@storage_id}"}>Voltar</.back>
-    """
+  def mount(%{"id" => storage_id}, _, socket) do
+    {:ok,
+     socket
+     |> assign(:changeset, Storages.change_item())
+     |> assign(:storage_id, storage_id)
+     |> assign(:show_product_picker, true)
+     |> assign(:product, %Product{})}
   end
 
   @impl true
-  def mount(%{"id" => storage_id}, _session, socket) do
-    {:ok,
-     socket
-     |> assign(:storage_id, storage_id)
-     |> assign(:changeset, Storages.change_item())
-     |> assign(:show_product_picker, false)
-     |> assign(:product, %Product{})}
+  def render(assigns) do
+    ~H"""
+    <div>
+      <.header>
+        Adicionar Item
+      </.header>
+
+      <.live_component
+        module={RefoodWeb.StorageLive.ProductPickerComponent}
+        id="product-picker"
+        show={@show_product_picker}
+        on_cancel={JS.push("hide-product-picker")}
+      />
+
+      <.simple_form :let={f} for={@changeset} phx-submit="submit">
+        <.input
+          readonly="readonly"
+          label="Produto"
+          phx-click="show-product-picker"
+          phx-keydown="show-product-picker"
+          value={@product.name}
+          name="product_name"
+          errors={Enum.map(f[:product_id].errors, &translate_error(&1))}
+        />
+        <.input hidden type="hidden" name="product_id" value={@product.id} />
+        <.input type="date" label="Validade" field={f[:expires_at]} />
+        <:actions>
+          <.button>Adicionar Item</.button>
+        </:actions>
+
+        <.error :if={@changeset.action}>
+          Oops, algo de errado aconteceu!
+        </.error>
+      </.simple_form>
+
+      <.back navigate={~p"/storages/#{@storage_id}"}>Voltar</.back>
+    </div>
+    """
   end
 
   @impl true

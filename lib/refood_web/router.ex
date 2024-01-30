@@ -18,20 +18,27 @@ defmodule RefoodWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    resources "/products", ProductController
   end
 
-  scope "/storages", RefoodWeb do
-    pipe_through :browser
+  live_session :authenticated,
+    on_mount: [
+      RefoodWeb.Nav
+    ] do
+    scope "/products", RefoodWeb do
+      pipe_through :browser
 
-    get "/", StorageController, :index
-    get "/new", StorageController, :new
-    post "/", StorageController, :create
-    get "/:id", StorageController, :show
+      live "/", ProductsLive, :index
+      live "/new", ProductsLive, :new
+    end
 
-    live "/:id/items/new", StorageLive.NewItemLive
-    post "/:id/items", StorageController, :add_item
-    delete "/:id/items/:item_id", StorageController, :remove_item
+    scope "/storages", RefoodWeb do
+      pipe_through :browser
+
+      live "/", StoragesLive, :index
+      live "/new", StoragesLive, :new
+      live "/:id", StorageLive, :show
+      live "/:id/items/new", StorageLive.NewItemLive, :new_item
+    end
   end
 
   # Other scopes may use custom stacks.
