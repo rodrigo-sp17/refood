@@ -23,10 +23,9 @@ defmodule RefoodWeb.StorageLive do
         </.link>
       </:actions>
     </.header>
-
-    <.list>
-      <:item title="Criado em"><%= NaiveDateTime.to_string(@storage.inserted_at) %></:item>
-    </.list>
+    <!--<.list>
+        <:item title="Criado em"><%= NaiveDateTime.to_string(@storage.inserted_at) %></:item>
+      </.list>-->
     <.table id="storage_items" rows={@storage.items}>
       <:col :let={item} label="Produto"><%= item.product.name %></:col>
       <:col :let={item} label="Validade"><%= item.expires_at %></:col>

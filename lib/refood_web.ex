@@ -52,7 +52,8 @@ defmodule RefoodWeb do
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: {RefoodWeb.Layouts, :app}
+        layout: {RefoodWeb.Layouts, :app},
+        container: {:div, class: "relative h-screen flex overflow-hidden bg-white"}
 
       unquote(html_helpers())
     end

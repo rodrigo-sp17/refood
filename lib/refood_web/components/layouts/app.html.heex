@@ -1,9 +1,8 @@
-<RefoodWeb.Components.nav_bar active_tab={@active_tab} />
-<header class="px-4 sm:px-6 lg:px-8">
+<!--<header class="px-4 sm:px-6 lg:px-8">
   <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
-    <div class="flex items-center gap-4">
-      <a href="/">
-        <img src={~p"/images/logo.svg"} width="36" />
+   <a href="/">
+          <div class="flex items-center gap-4">
+     <img src={~p"/images/logo.svg"} width="36" />
       </a>
       <p class="bg-brand/5 text-brand rounded-full px-2 font-medium leading-6">
         v<%= Application.spec(:phoenix, :vsn) %>
@@ -25,10 +24,42 @@
     </div>
   </div>
 </header>
-
-<main class="px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-2xl">
-    <.flash_group flash={@flash} />
-    <%= @inner_content %>
+-->
+<div class="flex flex-shrink-0">
+  <div class="flex flex-col w-64 border-r border-gray-200 pt-5 pb-4 bg-gray-800">
+    <div class="flex items-center flex-shrink-0 px-6 py-10">
+      <.icon name="hero-question-mark-circle" class="w-8 h-8 text-yellow-500 inline-block" />
+      <span class="h-8 w-auto text-2xl text-yellow-500 ml-1 font-bold">
+        REFOOD
+      </span>
+    </div>
+    <div class="h-0 flex-1 flex flex-col overflow-y-auto">
+      <nav class="px-3 mt-6">
+        <.link
+          class={"#{if @active_tab == :storages, do: "bg-gray-500 rounded"}"}
+          navigate={~p"/storages"}
+        >
+          <div class="flex gap-5 items-center h-16 w-full p-4 text-white hover:bg-gray-500 hover:rounded">
+            <.icon name="hero-folder-solid" /> Inventários
+          </div>
+        </.link>
+        <.link
+          class={"#{if @active_tab == :products, do: "bg-gray-500 rounded"}"}
+          navigate={~p"/products"}
+        >
+          <div class="flex gap-5 items-center h-16 w-full p-4 text-white hover:bg-gray-500 hover:rounded">
+            <.icon name="hero-book-open-solid" /> Produtos
+          </div>
+        </.link>
+      </nav>
+    </div>
   </div>
-</main>
+</div>
+<div class="flex flex-col w-0 flex-1">
+  <main class="px-20 py-16">
+    <div class="max-w-2xl">
+      <.flash_group flash={@flash} />
+      <%= @inner_content %>
+    </div>
+  </main>
+</div>
