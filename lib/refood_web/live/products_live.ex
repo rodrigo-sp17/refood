@@ -26,7 +26,8 @@ defmodule RefoodWeb.ProductsLive do
     assigns = [
       products: Products.list(),
       selected_product: nil,
-      view_to_show: view_to_show
+      view_to_show: view_to_show,
+      sort: %{}
     ]
 
     {:ok, assign(socket, assigns)}
@@ -67,9 +68,18 @@ defmodule RefoodWeb.ProductsLive do
     />
 
     <.table id="products" rows={@products} row_click={&JS.push("show-product", value: %{id: &1.id})}>
-      <:col :let={product} label="ID"><%= product.id %></:col>
-      <:col :let={product} label="Nome"><%= product.name %></:col>
-      <:col :let={product} label="Inserido em">
+      <:col :let={product} sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
+        <%= product.id %>
+      </:col>
+      <:col :let={product} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
+        <%= product.name %>
+      </:col>
+      <:col
+        :let={product}
+        sort={@sort[:inserted_at]}
+        on_sort={&on_sort(:inserted_at, &1)}
+        label="Inserido em"
+      >
         <%= NaiveDateTime.to_string(product.inserted_at) %>
       </:col>
       <:action :let={product}>
@@ -133,6 +143,30 @@ defmodule RefoodWeb.ProductsLive do
 
     {:noreply, assign(socket, assigns)}
   end
+
+  @impl true
+  def handle_event("on-sort", %{"id" => col_id, "sort" => sort}, socket) do
+    col_id = String.to_existing_atom(col_id)
+    sort = sort && String.to_existing_atom(sort)
+
+    new_sort =
+      case sort do
+        nil -> %{}
+        sort -> Map.new([{col_id, sort}])
+      end
+
+    assigns = [
+      sort: new_sort,
+      products: sort_products(socket.assigns.products, col_id, sort)
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  defp on_sort(col_id, sort), do: JS.push("on-sort", value: %{id: col_id, sort: sort})
+
+  defp sort_products(products, _key, nil), do: products
+  defp sort_products(products, key, order), do: Enum.sort_by(products, &Map.get(&1, key), order)
 
   @impl true
   def handle_info({:updated_product, _}, socket) do

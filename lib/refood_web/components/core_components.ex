@@ -454,7 +454,10 @@ defmodule RefoodWeb.CoreComponents do
     doc: "the function for mapping each row before calling the :col and :action slots"
 
   slot :col, required: true do
+    attr :id, :string
     attr :label, :string
+    attr :sort, :atom
+    attr :on_sort, :any, doc: "the function for handling a phx-click on the table column"
   end
 
   slot :action, doc: "the slot for showing user actions in the last table column"
@@ -470,7 +473,16 @@ defmodule RefoodWeb.CoreComponents do
       <table class="w-[40rem] mt-11 sm:w-full">
         <thead class="text-base text-left leading-6 text-black-500">
           <tr>
-            <th :for={col <- @col} class="pr-8 pb-4 font-normal"><%= col[:label] %></th>
+            <th :for={col <- @col} class="pr-8 py-4 font-normal hover:bg-zinc-50">
+              <div
+                class="flex items-center gap-1"
+                phx-click={col[:on_sort] && col[:on_sort].(next_sort(col[:sort]))}
+              >
+                <%= col[:label] %>
+                <.icon :if={col[:sort] == :asc} name="hero-chevron-up" />
+                <.icon :if={col[:sort] == :desc} name="hero-chevron-down" />
+              </div>
+            </th>
             <th class="relative p-0 pb-4"><span class="sr-only"><%= gettext("Actions") %></span></th>
           </tr>
         </thead>
@@ -509,6 +521,10 @@ defmodule RefoodWeb.CoreComponents do
     </div>
     """
   end
+
+  defp next_sort(nil), do: :asc
+  defp next_sort(:asc), do: :desc
+  defp next_sort(:desc), do: nil
 
   @doc """
   Renders a data list.
