@@ -27,7 +27,8 @@ defmodule RefoodWeb.ProductsLive do
       products: Products.list(),
       selected_product: nil,
       view_to_show: view_to_show,
-      sort: %{}
+      sort: %{},
+      filter: ""
     ]
 
     {:ok, assign(socket, assigns)}
@@ -68,8 +69,11 @@ defmodule RefoodWeb.ProductsLive do
     />
 
     <.table id="products" rows={@products} row_click={&JS.push("show-product", value: %{id: &1.id})}>
+      <:top_controls>
+        <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
+      </:top_controls>
       <:col :let={product} sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
-        <%= product.id %>
+        <%= String.slice(product.id, 0, 8) %>
       </:col>
       <:col :let={product} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
         <%= product.name %>
@@ -84,7 +88,7 @@ defmodule RefoodWeb.ProductsLive do
       </:col>
       <:action :let={product}>
         <.link phx-click="show-edit-product" phx-value-id={product.id}>
-          <.icon name="hero-pencil" class="h-5 w-5 " />
+          <.icon name="hero-pencil" class="h-5 w-5 hover:bg-blue-500" />
         </.link>
       </:action>
       <:action :let={product}>
@@ -93,7 +97,7 @@ defmodule RefoodWeb.ProductsLive do
           phx-value-id={product.id}
           data-confirm="Tem certeza de que deseja remover?"
         >
-          <.icon name="hero-x-mark" class="h-5 w-5 bg-red-500" />
+          <.icon name="hero-x-mark" class="h-5 w-5 hover:bg-red-500" />
         </.link>
       </:action>
     </.table>
@@ -145,6 +149,26 @@ defmodule RefoodWeb.ProductsLive do
   end
 
   @impl true
+  def handle_event("on-filter", %{"value" => value}, socket) do
+    assigns = [
+      filter: value,
+      products: filter_products(value)
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("on-reset-filter", _, socket) do
+    assigns = [
+      filter: "",
+      products: Products.list()
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
   def handle_event("on-sort", %{"id" => col_id, "sort" => sort}, socket) do
     col_id = String.to_existing_atom(col_id)
     sort = sort && String.to_existing_atom(sort)
@@ -167,6 +191,15 @@ defmodule RefoodWeb.ProductsLive do
 
   defp sort_products(products, _key, nil), do: products
   defp sort_products(products, key, order), do: Enum.sort_by(products, &Map.get(&1, key), order)
+
+  defp filter_products(value) do
+    downcase_value = String.downcase(value)
+    products = Products.list()
+
+    Enum.filter(products, fn %{id: id, name: name} ->
+      Enum.any?([id, name], &String.contains?(String.downcase(&1), downcase_value))
+    end)
+  end
 
   @impl true
   def handle_info({:updated_product, _}, socket) do

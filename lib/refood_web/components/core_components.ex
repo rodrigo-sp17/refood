@@ -461,6 +461,7 @@ defmodule RefoodWeb.CoreComponents do
   end
 
   slot :action, doc: "the slot for showing user actions in the last table column"
+  slot :top_controls, doc: "the slot for showing controls on top of table"
 
   def table(assigns) do
     assigns =
@@ -469,8 +470,11 @@ defmodule RefoodWeb.CoreComponents do
       end
 
     ~H"""
-    <div class="overflow-y-auto px-4 sm:overflow-visible sm:px-0">
-      <table class="w-[40rem] mt-11 sm:w-full">
+    <div class="overflow-y-auto px-4 mt-11 sm:overflow-visible sm:px-0">
+      <div class="mb-2">
+        <%= render_slot(@top_controls) %>
+      </div>
+      <table class="w-[40rem] sm:w-full">
         <thead class="text-base text-left leading-6 text-black-500">
           <tr>
             <th :for={col <- @col} class="pr-8 py-4 font-normal hover:bg-zinc-50">
@@ -525,6 +529,42 @@ defmodule RefoodWeb.CoreComponents do
   defp next_sort(nil), do: :asc
   defp next_sort(:asc), do: :desc
   defp next_sort(:desc), do: nil
+
+  @doc ~S"""
+  Renders a table search input.
+  """
+
+  attr :value, :string, required: true
+  attr :on_change, :string, required: true
+  attr :on_reset, :string, required: true
+
+  def table_search_input(assigns) do
+    ~H"""
+    <div class="relative w-fit border-round border-zinc-300 focus:border-zinc-400 focus:ring-0">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+        <.icon name="hero-magnifying-glass" class="h-5 w-5" />
+      </div>
+      <input
+        id="table-search-input"
+        value={@value}
+        phx-keyup={@on_change}
+        type="text"
+        class="h-10 pl-10 pr-3 rounded-lg text-gray-800 placeholder-gray-400 text-xl"
+        placeholder="Filtrar"
+        role="combobox"
+        aria-expanded="false"
+        aria-controls="options"
+      />
+      <div
+        :if={@value !== ""}
+        class="absolute inset-y-0 right-0 pr-3 flex items-center"
+        phx-click={@on_reset}
+      >
+        <.icon name="hero-x-mark" class="h-5 w-5 hover:bg-red-500" />
+      </div>
+    </div>
+    """
+  end
 
   @doc """
   Renders a data list.
