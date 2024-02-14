@@ -560,7 +560,7 @@ defmodule RefoodWeb.CoreComponents do
         class="absolute inset-y-0 right-0 pr-3 flex items-center"
         phx-click={@on_reset}
       >
-        <.icon name="hero-x-mark" class="h-5 w-5 hover:bg-red-500" />
+        <.icon name="hero-x-mark" class="h-5 w-5 hover:bg-zinc-700" />
       </div>
     </div>
     """

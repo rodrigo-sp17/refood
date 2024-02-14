@@ -10,7 +10,8 @@ defmodule RefoodWeb.StorageLive do
   def mount(%{"id" => storage_id}, _session, socket) do
     assigns = [
       storage: Storages.get_storage!(storage_id),
-      sort: %{}
+      sort: %{},
+      filter: ""
     ]
 
     {:ok, assign(socket, assigns)}
@@ -31,6 +32,9 @@ defmodule RefoodWeb.StorageLive do
         <:item title="Criado em"><%= NaiveDateTime.to_string(@storage.inserted_at) %></:item>
       </.list>-->
     <.table id="storage_items" rows={@storage.items}>
+      <:top_controls>
+        <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
+      </:top_controls>
       <:col :let={item} sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Produto">
         <%= item.product.name %>
       </:col>
@@ -43,7 +47,7 @@ defmodule RefoodWeb.StorageLive do
           phx-value-id={item.id}
           data-confirm="Tem certeza de que deseja remover o item?"
         >
-          <.icon name="hero-x-mark" class="h-5 w-5 bg-red-500" />
+          <.icon name="hero-x-mark" class="h-5 w-5 hover:bg-red-500" />
         </.link>
       </:action>
     </.table>
@@ -57,6 +61,26 @@ defmodule RefoodWeb.StorageLive do
     Storages.remove_item!(item_id)
 
     assigns = [
+      storage: Storages.get_storage!(socket.assigns.storage.id)
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("on-filter", %{"value" => value}, socket) do
+    assigns = [
+      filter: value,
+      storage: filter_storage(socket.assigns.storage.id, value)
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("on-reset-filter", _, socket) do
+    assigns = [
+      filter: "",
       storage: Storages.get_storage!(socket.assigns.storage.id)
     ]
 
@@ -80,6 +104,18 @@ defmodule RefoodWeb.StorageLive do
     ]
 
     {:noreply, assign(socket, assigns)}
+  end
+
+  defp filter_storage(storage_id, value) do
+    downcase_value = String.downcase(value)
+    storage = Storages.get_storage!(storage_id)
+
+    filtered_items =
+      Enum.filter(storage.items, fn %{product: %{name: name}} ->
+        Enum.any?([name], &String.contains?(String.downcase(&1), downcase_value))
+      end)
+
+    %{storage | items: filtered_items}
   end
 
   defp on_sort(col_id, sort), do: JS.push("on-sort", value: %{id: col_id, sort: sort})
