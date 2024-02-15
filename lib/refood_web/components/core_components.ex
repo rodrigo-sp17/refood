@@ -288,6 +288,7 @@ defmodule RefoodWeb.CoreComponents do
               tabindex="-1"
               role="menuitem"
               class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100"
+              phx-click={hide_dropdown("##{@id}-dropdown")}
               {link}
             >
               <%= render_slot(link) %>
@@ -540,7 +541,7 @@ defmodule RefoodWeb.CoreComponents do
       <table class="w-[40rem] sm:w-full">
         <thead class="text-base text-left leading-6 text-black-500">
           <tr>
-            <th :for={col <- @col} class="pr-8 py-4 font-normal hover:bg-zinc-50">
+            <th :for={col <- @col} class="pr-8 py-4 font-semibold hover:bg-zinc-50">
               <div
                 class="flex items-center gap-1"
                 phx-click={col[:on_sort] && col[:on_sort].(next_sort(col[:sort]))}

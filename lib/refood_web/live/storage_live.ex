@@ -35,7 +35,7 @@ defmodule RefoodWeb.StorageLive do
       <:top_controls>
         <div class="flex items-center justify-between">
           <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
-          <.dropdown id="storage-table-dropdown">
+          <.dropdown id="storage-table">
             <:link href={~p"/storages/#{@storage.id}/items/download"}>
               Exportar para Excel
             </:link>
@@ -111,11 +111,6 @@ defmodule RefoodWeb.StorageLive do
     ]
 
     {:noreply, assign(socket, assigns)}
-  end
-
-  @impl true
-  def handle_event("export-to-excel", _, socket) do
-    {:noreply, socket}
   end
 
   defp filter_storage(storage_id, value) do
