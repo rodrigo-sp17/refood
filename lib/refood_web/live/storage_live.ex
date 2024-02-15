@@ -33,7 +33,14 @@ defmodule RefoodWeb.StorageLive do
       </.list>-->
     <.table id="storage_items" rows={@storage.items}>
       <:top_controls>
-        <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
+        <div class="flex items-center justify-between">
+          <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
+          <.dropdown id="storage-table-dropdown">
+            <:link href={~p"/storages/#{@storage.id}/items/download"}>
+              Exportar para Excel
+            </:link>
+          </.dropdown>
+        </div>
       </:top_controls>
       <:col :let={item} sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Produto">
         <%= item.product.name %>
@@ -47,7 +54,7 @@ defmodule RefoodWeb.StorageLive do
           phx-value-id={item.id}
           data-confirm="Tem certeza de que deseja remover o item?"
         >
-          <.icon name="hero-x-mark" class="h-5 w-5 hover:bg-red-500" />
+          <.icon name="hero-x-mark" class="h-6 w-6 hover:bg-red-500" />
         </.link>
       </:action>
     </.table>
@@ -104,6 +111,11 @@ defmodule RefoodWeb.StorageLive do
     ]
 
     {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("export-to-excel", _, socket) do
+    {:noreply, socket}
   end
 
   defp filter_storage(storage_id, value) do

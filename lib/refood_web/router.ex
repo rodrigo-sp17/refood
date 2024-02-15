@@ -18,6 +18,7 @@ defmodule RefoodWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/storages/:storage_id/items/download", ExportController, :download_storage_csv
   end
 
   live_session :authenticated,

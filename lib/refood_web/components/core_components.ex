@@ -236,6 +236,69 @@ defmodule RefoodWeb.CoreComponents do
     """
   end
 
+  # TODO -> extract icon button
+
+  @doc """
+  Returns a button triggered dropdown with aria keyboard and focus supporrt.
+
+  Accepts the follow slots:
+
+    * `:id` - The id to uniquely identify this dropdown
+
+  ## Examples
+
+      <.dropdown id={@id}>
+        <:link navigate={profile_path(@current_user)}>View Profile</:link>
+        <:link navigate={~p"/profile/settings"}Settings</:link>
+      </.dropdown>
+  """
+  attr :id, :string, required: true
+
+  slot :link do
+    attr :navigate, :string
+    attr :href, :string
+    attr :method, :any
+  end
+
+  def dropdown(assigns) do
+    ~H"""
+    <div class="relative">
+      <div>
+        <.link
+          id={@id}
+          phx-click={show_dropdown("##{@id}-dropdown")}
+          phx-hook="Menu"
+          aria-haspopup="true"
+        >
+          <div class="flex w-10 h-10 shrink-0 grow-0 rounded-full items-center justify-center hover:bg-gray-100">
+            <.icon name="hero-ellipsis-vertical" class="h-8 w-8" />
+          </div>
+        </.link>
+      </div>
+      <div
+        id={"#{@id}-dropdown"}
+        phx-click-away={hide_dropdown("##{@id}-dropdown")}
+        class="hidden w-40 z-10 mx-3 origin-top absolute right-0 left-0 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-200"
+        role="menu"
+        aria-labelledby={@id}
+      >
+        <div class="py-1" role="none">
+          <%= for link <- @link do %>
+            <.link
+              tabindex="-1"
+              role="menuitem"
+              class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100"
+              {link}
+            >
+              <%= render_slot(link) %>
+            </.link>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
   @doc """
   Renders an input with label and error messages.
 
@@ -665,6 +728,26 @@ defmodule RefoodWeb.CoreComponents do
          "opacity-100 translate-y-0 sm:scale-100",
          "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"}
     )
+  end
+
+  def show_dropdown(to) do
+    JS.show(
+      to: to,
+      transition:
+        {"transition ease-out duration-120", "transform opacity-0 scale-95",
+         "transform opacity-100 scale-100"}
+    )
+    |> JS.set_attribute({"aria-expanded", "true"}, to: to)
+  end
+
+  def hide_dropdown(to) do
+    JS.hide(
+      to: to,
+      transition:
+        {"transition ease-in duration-120", "transform opacity-100 scale-100",
+         "transform opacity-0 scale-95"}
+    )
+    |> JS.remove_attribute("aria-expanded", to: to)
   end
 
   def show_modal(js \\ %JS{}, id) when is_binary(id) do
