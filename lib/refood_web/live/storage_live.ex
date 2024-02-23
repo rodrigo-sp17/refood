@@ -10,6 +10,7 @@ defmodule RefoodWeb.StorageLive do
   def mount(%{"id" => storage_id}, _session, socket) do
     assigns = [
       storage: Storages.get_storage!(storage_id),
+      items: Storages.list_summarized_storage_items(storage_id),
       sort: %{},
       filter: ""
     ]
@@ -31,7 +32,7 @@ defmodule RefoodWeb.StorageLive do
     <!--<.list>
         <:item title="Criado em"><%= NaiveDateTime.to_string(@storage.inserted_at) %></:item>
       </.list>-->
-    <.table id="storage_items" rows={@storage.items}>
+    <.table id="storage_items" rows={@items}>
       <:top_controls>
         <div class="flex items-center justify-between">
           <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
@@ -43,15 +44,23 @@ defmodule RefoodWeb.StorageLive do
         </div>
       </:top_controls>
       <:col :let={item} sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Produto">
-        <%= item.product.name %>
+        <%= item.product_name %>
       </:col>
-      <:col :let={item} sort={@sort[:expires_at]} on_sort={&on_sort(:expires_at, &1)} label="Validade">
+      <:col :let={item} sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Qtd.">
+        <%= item.quantity %>
+      </:col>
+      <:col
+        :let={item}
+        sort={@sort[:expires_at]}
+        on_sort={&on_sort(:expires_at, &1)}
+        label="Validade Mínima"
+      >
         <%= item.expires_at %>
       </:col>
       <:action :let={item}>
         <.link
           phx-click="remove-item"
-          phx-value-id={item.id}
+          phx-value-id={item.product_id}
           data-confirm="Tem certeza de que deseja remover o item?"
         >
           <.icon name="hero-x-mark" class="h-6 w-6 hover:bg-red-500" />
@@ -63,12 +72,14 @@ defmodule RefoodWeb.StorageLive do
     """
   end
 
+  # TODO -> remove this after migration to dialog
   @impl true
   def handle_event("remove-item", %{"id" => item_id}, socket) do
     Storages.remove_item!(item_id)
 
     assigns = [
-      storage: Storages.get_storage!(socket.assigns.storage.id)
+      storage: Storages.get_storage!(socket.assigns.storage.id),
+      items: Storages.list_summarized_storage_items(socket.assigns.storage.id)
     ]
 
     {:noreply, assign(socket, assigns)}
@@ -78,7 +89,7 @@ defmodule RefoodWeb.StorageLive do
   def handle_event("on-filter", %{"value" => value}, socket) do
     assigns = [
       filter: value,
-      storage: filter_storage(socket.assigns.storage.id, value)
+      items: filter_items(socket.assigns.storage.id, value)
     ]
 
     {:noreply, assign(socket, assigns)}
@@ -113,16 +124,13 @@ defmodule RefoodWeb.StorageLive do
     {:noreply, assign(socket, assigns)}
   end
 
-  defp filter_storage(storage_id, value) do
+  defp filter_items(storage_id, value) do
     downcase_value = String.downcase(value)
-    storage = Storages.get_storage!(storage_id)
+    items = Storages.list_summarized_storage_items(storage_id)
 
-    filtered_items =
-      Enum.filter(storage.items, fn %{product: %{name: name}} ->
-        Enum.any?([name], &String.contains?(String.downcase(&1), downcase_value))
-      end)
-
-    %{storage | items: filtered_items}
+    Enum.filter(items, fn %{product: %{name: name}} ->
+      Enum.any?([name], &String.contains?(String.downcase(&1), downcase_value))
+    end)
   end
 
   defp on_sort(col_id, sort), do: JS.push("on-sort", value: %{id: col_id, sort: sort})

@@ -85,4 +85,24 @@ defmodule Refood.Inventory.StoragesTest do
       assert length(items) == 3
     end
   end
+
+  describe "list_summarized_storage_items" do
+    test "lists storage items with their minimum expiration date" do
+      storage = insert(:storage)
+      product = insert(:product)
+      insert(:item, product: product, storage: storage, expires_at: ~D[2020-01-01])
+      insert(:item, product: product, storage: storage, expires_at: ~D[2019-01-01])
+      insert(:item, product: product, storage: storage, expires_at: ~D[2022-01-01])
+
+      assert [
+               %{
+                 product_name: product.name,
+                 product_id: product.id,
+                 quantity: 3,
+                 expires_at: ~D[2019-01-01]
+               }
+             ] ==
+               Storages.list_summarized_storage_items(storage.id)
+    end
+  end
 end

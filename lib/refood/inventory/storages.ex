@@ -2,6 +2,7 @@ defmodule Refood.Inventory.Storages do
   @moduledoc """
   Manages the storages.
   """
+  import Ecto.Query
 
   alias Refood.Inventory.Item
   alias Refood.Inventory.Storage
@@ -20,6 +21,21 @@ defmodule Refood.Inventory.Storages do
   def list_storages do
     Repo.all(Storage)
     |> Repo.preload(items: :product)
+  end
+
+  def list_summarized_storage_items(storage_id) do
+    from(item in Item,
+      inner_join: product in assoc(item, :product),
+      where: item.storage_id == ^storage_id,
+      group_by: [item.product_id, product.name],
+      select: %{
+        product_id: item.product_id,
+        product_name: product.name,
+        quantity: count(item.id),
+        expires_at: min(item.expires_at)
+      }
+    )
+    |> Repo.all()
   end
 
   def get_storage!(storage_id) when is_binary(storage_id) do
