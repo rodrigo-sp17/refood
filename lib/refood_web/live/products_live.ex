@@ -68,39 +68,41 @@ defmodule RefoodWeb.ProductsLive do
       on_cancel={JS.push("hide-view")}
     />
 
-    <.table id="products" rows={@products} row_click={&JS.push("show-product", value: %{id: &1.id})}>
-      <:top_controls>
-        <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
-      </:top_controls>
-      <:col :let={product} sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
-        <%= String.slice(product.id, 0, 8) %>
-      </:col>
-      <:col :let={product} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
-        <%= product.name %>
-      </:col>
-      <:col
-        :let={product}
-        sort={@sort[:inserted_at]}
-        on_sort={&on_sort(:inserted_at, &1)}
-        label="Inserido em"
-      >
-        <%= NaiveDateTime.to_string(product.inserted_at) %>
-      </:col>
-      <:action :let={product}>
-        <.link phx-click="show-edit-product" phx-value-id={product.id}>
-          <.icon name="hero-pencil" class="h-5 w-5 hover:bg-blue-500" />
-        </.link>
-      </:action>
-      <:action :let={product}>
-        <.link
-          phx-click="delete-product"
-          phx-value-id={product.id}
-          data-confirm="Tem certeza de que deseja remover?"
+    <div class="mt-11">
+      <.table id="products" rows={@products} row_click={&JS.push("show-product", value: %{id: &1.id})}>
+        <:top_controls>
+          <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
+        </:top_controls>
+        <:col :let={product} sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
+          <%= String.slice(product.id, 0, 8) %>
+        </:col>
+        <:col :let={product} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
+          <%= product.name %>
+        </:col>
+        <:col
+          :let={product}
+          sort={@sort[:inserted_at]}
+          on_sort={&on_sort(:inserted_at, &1)}
+          label="Inserido em"
         >
-          <.icon name="hero-x-mark" class="h-5 w-5 hover:bg-red-500" />
-        </.link>
-      </:action>
-    </.table>
+          <%= NaiveDateTime.to_string(product.inserted_at) %>
+        </:col>
+        <:action :let={product}>
+          <.link phx-click="show-edit-product" phx-value-id={product.id}>
+            <.icon name="hero-pencil" class="h-5 w-5 hover:bg-blue-500" />
+          </.link>
+        </:action>
+        <:action :let={product}>
+          <.link
+            phx-click="delete-product"
+            phx-value-id={product.id}
+            data-confirm="Tem certeza de que deseja remover?"
+          >
+            <.icon name="hero-x-mark" class="h-5 w-5 hover:bg-red-500" />
+          </.link>
+        </:action>
+      </.table>
+    </div>
     """
   end
 

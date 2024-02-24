@@ -23,6 +23,32 @@ defmodule Refood.Inventory.Storages do
     |> Repo.preload(items: :product)
   end
 
+  # TODO -> test this
+  def list_storage_items(opts \\ []) do
+    from(item in Item)
+    |> apply_filters(opts)
+    |> order_by(:expires_at)
+    |> Repo.all()
+  end
+
+  defp apply_filters(query, []), do: query
+
+  defp apply_filters(query, [filter | rest]) do
+    filtered_query =
+      case filter do
+        {:storage_id, storage_id} ->
+          from(item in query, where: item.storage_id == ^storage_id)
+
+        {:product_id, product_id} ->
+          from(item in query, where: item.product_id == ^product_id)
+
+        _ ->
+          query
+      end
+
+    apply_filters(filtered_query, rest)
+  end
+
   def list_summarized_storage_items(storage_id) do
     from(item in Item,
       inner_join: product in assoc(item, :product),

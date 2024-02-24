@@ -146,7 +146,7 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
               phx-window-keydown={hide_modal(@on_cancel, @id)}
               phx-key="escape"
               phx-click-away={hide_modal(@on_cancel, @id)}
-              class="hidden relative rounded-2xl bg-white p-2 shadow-lg shadow-zinc-700/10 ring-1 ring-zinc-700/10 transition min-h-[30vh] max-h-[50vh] overflow-y-scroll"
+              class="hidden relative rounded-2xl bg-white p-2 shadow-lg shadow-zinc-700/10 ring-1 ring-zinc-700/10 transition min-h-[30vh] max-h-[60vh] overflow-y-auto"
             >
               <div class="p-1" id={"#{@id}-content"}>
                 <%= render_slot(@inner_block) %>

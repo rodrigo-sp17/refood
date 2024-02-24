@@ -36,17 +36,19 @@ defmodule RefoodWeb.StoragesLive do
       on_cancel={JS.push("hide-all")}
     />
 
-    <.table id="storages" rows={@storages} row_click={&JS.navigate(~p"/storages/#{&1}")}>
-      <:col :let={storage} label="Nome"><%= storage.name %></:col>
-      <:col :let={storage} label="Criado em">
-        <%= NaiveDateTime.to_string(storage.inserted_at) %>
-      </:col>
-      <:action :let={storage}>
-        <div class="sr-only">
-          <.link navigate={~p"/storages/#{storage}"}>Ver</.link>
-        </div>
-      </:action>
-    </.table>
+    <div class="mt-11">
+      <.table id="storages" rows={@storages} row_click={&JS.navigate(~p"/storages/#{&1}")}>
+        <:col :let={storage} label="Nome"><%= storage.name %></:col>
+        <:col :let={storage} label="Criado em">
+          <%= NaiveDateTime.to_string(storage.inserted_at) %>
+        </:col>
+        <:action :let={storage}>
+          <div class="sr-only">
+            <.link navigate={~p"/storages/#{storage}"}>Ver</.link>
+          </div>
+        </:action>
+      </.table>
+    </div>
     """
   end
 

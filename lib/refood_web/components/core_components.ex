@@ -534,7 +534,7 @@ defmodule RefoodWeb.CoreComponents do
       end
 
     ~H"""
-    <div class="overflow-y-auto px-4 mt-11 sm:overflow-visible sm:px-0">
+    <div class="overflow-y-auto px-4 sm:overflow-visible sm:px-0">
       <div class="mb-2">
         <%= render_slot(@top_controls) %>
       </div>
