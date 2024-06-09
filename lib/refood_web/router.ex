@@ -25,6 +25,12 @@ defmodule RefoodWeb.Router do
     on_mount: [
       RefoodWeb.Nav
     ] do
+    scope "/shift", RefoodWeb do
+      pipe_through :browser
+
+      live "/", ShiftLive, :index
+    end
+
     scope "/products", RefoodWeb do
       pipe_through :browser
 
@@ -63,4 +69,18 @@ defmodule RefoodWeb.Router do
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end
+
+  # Window with daily families -> UI only
+  # Authentication
+  # Family register (name, number, quantity, restrictions)
+  # Day exchange
+  # Fault register
+  # New family solicitation -> add a new one (can't remove, only admins)
+  # Family queue -> check who is there
+  # Queue status ->
+  # Authentication and log in (a token, admin accounts)
+  # What kind of users? we have managers, shifts, rounds
+  # Family and register -> For managers -> (name, number, quantity, absency register, )
+  # Family Register -> For managers
+  # Queue
 end

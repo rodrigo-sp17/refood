@@ -10,6 +10,7 @@ defmodule RefoodWeb.Nav do
   defp set_active_tab(_params, _url, socket) do
     active_tab =
       case {socket.view, socket.assigns.live_action} do
+        {RefoodWeb.ShiftLive, _} -> :shift
         {RefoodWeb.StoragesLive, _} -> :storages
         {RefoodWeb.StoragesLive.NewStorageLive, _} -> :storages
         {RefoodWeb.StorageLive, _} -> :storages
