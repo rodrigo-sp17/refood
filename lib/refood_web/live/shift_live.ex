@@ -19,12 +19,12 @@ defmodule RefoodWeb.ShiftLive do
 
     <div class="mt-11 flex flex-col gap-8 w-9/12">
       <div class="flex justify-center items-center gap-8">
-        <button class="flex items-center rounded-full bg-white hover:bg-black border border-black p-1">
-          <.icon name="hero-chevron-left" class="bg-black hover:bg-white" />
+        <button class="flex items-center rounded-full bg-white group hover:bg-black border border-black p-1">
+          <.icon name="hero-chevron-left" class="bg-black group-hover:bg-white" />
         </button>
         <div class="text-3xl font-bold">(Hoje) Quarta-feira, 20 de Junho de 2024</div>
-        <button class="flex items-center rounded-full bg-white hover:bg-black border border-black p-1">
-          <.icon name="hero-chevron-right" class="bg-black hover:bg-white" />
+        <button class="flex items-center rounded-full bg-white group hover:bg-black border border-black p-1">
+          <.icon name="hero-chevron-right" class="bg-black group-hover:bg-white" />
         </button>
       </div>
       <div class="flex flex-col bg-white rounded-lg divide-y w-full">
