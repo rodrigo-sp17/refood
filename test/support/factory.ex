@@ -23,4 +23,15 @@ defmodule Refood.Factory do
       expires_at: Enum.random([nil, Date.new!(Enum.random(1993..2050), 5, 1)])
     }
   end
+
+  def family_factory do
+    %Refood.Families.Family{
+      number: sequence(:number, & &1),
+      name: sequence("Family-"),
+      adults: Enum.random(1..6),
+      children: Enum.random(0..4),
+      restrictions: Enum.random([nil, "- doces", "s/ frutos do mar", "vegetariano"]),
+      weekdays: [:wednesday]
+    }
+  end
 end
