@@ -34,4 +34,12 @@ defmodule Refood.Factory do
       weekdays: [:wednesday]
     }
   end
+
+  def absence_factory do
+    %Refood.Families.Absence{
+      date: Date.utc_today(),
+      warned: true,
+      family: build(:family)
+    }
+  end
 end

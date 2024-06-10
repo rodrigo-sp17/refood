@@ -1,6 +1,8 @@
 defmodule Refood.Families.Family do
   use Refood.Schema
 
+  alias Refood.Families.Absence
+
   @weekdays [:monday, :tuesday, :wednesday, :thursday, :friday, :saturday, :sunday]
 
   schema "families" do
@@ -11,6 +13,8 @@ defmodule Refood.Families.Family do
     field :restrictions, :string
 
     field :weekdays, {:array, Ecto.Enum}, values: @weekdays
+
+    has_many :absences, Absence
 
     timestamps(type: :utc_datetime)
   end

@@ -13,38 +13,40 @@
 alias Refood.Families.Family
 alias Refood.Repo
 
-[
-  %{
-    number: 9,
-    name: "Abdul",
-    adults: 2,
-    children: 2,
-    restrictions: "- doces",
-    weekdays: [:wednesday, :friday]
-  },
-  %{
-    number: 12,
-    name: "Vania",
-    adults: 2,
-    children: 2,
-    restrictions: nil,
-    weekdays: [:monday, :wednesday]
-  },
-  %{
-    number: 22,
-    name: "Santiago",
-    adults: 2,
-    children: 2,
-    restrictions: nil,
-    weekdays: [:wednesday, :saturday]
-  },
-  %{
-    number: 35,
-    name: "Marlene",
-    adults: 1,
-    children: 0,
-    restrictions: nil,
-    weekdays: [:wednesday, :friday]
-  }
-]
-|> Enum.map(&(Family.changeset(&1) |> Repo.insert!()))
+if Mix.env() == :dev do
+  [
+    %{
+      number: 9,
+      name: "Abdul",
+      adults: 2,
+      children: 2,
+      restrictions: "- doces",
+      weekdays: [:wednesday, :friday]
+    },
+    %{
+      number: 12,
+      name: "Vania",
+      adults: 2,
+      children: 2,
+      restrictions: nil,
+      weekdays: [:monday, :wednesday]
+    },
+    %{
+      number: 22,
+      name: "Santiago",
+      adults: 2,
+      children: 2,
+      restrictions: nil,
+      weekdays: [:wednesday, :saturday]
+    },
+    %{
+      number: 35,
+      name: "Marlene",
+      adults: 1,
+      children: 0,
+      restrictions: nil,
+      weekdays: [:wednesday, :friday]
+    }
+  ]
+  |> Enum.map(&(Family.changeset(&1) |> Repo.insert!()))
+end

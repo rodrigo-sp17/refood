@@ -75,8 +75,8 @@ defmodule RefoodWeb.ShiftLive do
             Nenhuma família para o dia.
           </div>
           <div :for={family <- @families} class="py-4 flex justify-between items-center">
-            <div class="text-xl font-bold basis-1/6">F-<%= family.number %></div>
-            <div class="text-lg basis-1/5"><%= family.name %></div>
+            <div class="text-xl font-bold w-24">F-<%= family.number %></div>
+            <div class="text-lg basis-1/6"><%= family.name %></div>
             <div class="text-lg basis-1/6 flex items-center gap-3">
               <.icon name="hero-users-solid" /><%= family.adults %> + <%= family.children %>
             </div>
@@ -88,15 +88,32 @@ defmodule RefoodWeb.ShiftLive do
                 -
               <% end %>
             </div>
-            <div class="basis-1/4 flex items-center gap-6">
-              <.link class="underline underline-offset-4"> Trocar dia</.link>
+            <div class="basis-1/4 flex justify-end items-center gap-6">
+              <.link :if={family.absences == []} class="underline underline-offset-4">
+                Trocar dia
+              </.link>
               <.button
+                :if={family.absences == []}
                 phx-click="add-family-absence"
                 phx-value-family_id={family.id}
                 class="flex items-center gap-1 rounded-3xl bg-transparent text-black border border-black px-6"
               >
                 <.icon name="hero-exclamation-circle" /> Marcar falta
               </.button>
+              <div :for={absence <- family.absences}>
+                <div
+                  :if={absence.warned}
+                  class="w-40 px-10 py-2 border border-yellow-600 text-yellow-600 text-center font-bold"
+                >
+                  Avisou
+                </div>
+                <div
+                  :if={!absence.warned}
+                  class="w-40 px-10 py-2 border border-red-500 text-red-500 text-center font-bold"
+                >
+                  Faltou
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -149,14 +166,26 @@ defmodule RefoodWeb.ShiftLive do
   end
 
   @impl true
-  def handle_event("add-absence", %{"warned" => _warned?}, socket) do
-    assigns = [
-      selected_family: nil
-    ]
+  def handle_event("add-absence", %{"warned" => warned?}, socket) do
+    %{selected_family: family_id, date: date} = socket.assigns
 
-    socket = put_flash(socket, :info, "Falta registrada!")
+    case Families.add_absence(%{family_id: family_id, warned: warned?, date: date}) do
+      {:ok, _} ->
+        assigns = [
+          selected_family: nil,
+          families: Families.list_families_by_date(date)
+        ]
 
-    {:noreply, assign(socket, assigns)}
+        {:noreply, socket |> assign(assigns) |> put_flash(:info, "Falta registrada!")}
+
+      {:error, changeset} ->
+        assigns = [
+          selected_family: nil,
+          changeset: changeset
+        ]
+
+        {:noreply, assign(socket, assigns)}
+    end
   end
 
   defp weekday_name(1), do: "Segunda-feira"
