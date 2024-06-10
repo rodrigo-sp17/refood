@@ -80,7 +80,7 @@ defmodule RefoodWeb.ShiftLive do
           </div>
         </div>
       </div>
-      <.button class="py-5">Registrar pedido de ajuda</.button>
+      <.button class="py-5">Novo pedido de ajuda</.button>
     </div>
     """
   end

@@ -68,10 +68,12 @@ defmodule RefoodWeb.ProductsLive do
       on_cancel={JS.push("hide-view")}
     />
 
-    <div class="mt-11">
+    <div class="mt-11 bg-white rounded-xl">
       <.table id="products" rows={@products} row_click={&JS.push("show-product", value: %{id: &1.id})}>
         <:top_controls>
-          <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
+          <div class="flex items-center justify-between p-4">
+            <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
+          </div>
         </:top_controls>
         <:col :let={product} sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
           <%= String.slice(product.id, 0, 8) %>

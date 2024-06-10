@@ -36,7 +36,7 @@ defmodule RefoodWeb.StoragesLive do
       on_cancel={JS.push("hide-all")}
     />
 
-    <div class="mt-11">
+    <div class="mt-11 bg-white rounded-xl">
       <.table id="storages" rows={@storages} row_click={&JS.navigate(~p"/storages/#{&1}")}>
         <:col :let={storage} label="Nome"><%= storage.name %></:col>
         <:col :let={storage} label="Criado em">

@@ -44,14 +44,14 @@ defmodule RefoodWeb.StorageLive do
     <!--<.list>
         <:item title="Criado em"><%= NaiveDateTime.to_string(@storage.inserted_at) %></:item>
       </.list>-->
-    <div class="mt-11">
+    <div class="mt-11 bg-white rounded-xl">
       <.table
         id="storage_items"
         rows={@items}
         row_click={&JS.push("select-product", value: %{id: &1.product_id})}
       >
         <:top_controls>
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between p-4">
             <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
             <.dropdown id="storage-table">
               <:link href={~p"/storages/#{@storage.id}/items/download"}>

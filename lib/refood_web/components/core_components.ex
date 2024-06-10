@@ -535,13 +535,11 @@ defmodule RefoodWeb.CoreComponents do
 
     ~H"""
     <div class="overflow-y-auto px-4 sm:overflow-visible sm:px-0">
-      <div class="mb-2">
-        <%= render_slot(@top_controls) %>
-      </div>
+      <%= render_slot(@top_controls) %>
       <table class="w-[40rem] sm:w-full">
-        <thead class="text-base text-left leading-6 text-black-500">
+        <thead class="border-t border-zinc-200 text-base text-left leading-6 text-black-500">
           <tr>
-            <th :for={col <- @col} class="pr-8 py-4 font-semibold hover:bg-zinc-50">
+            <th :for={col <- @col} class="pr-8 py-4 px-4 font-semibold hover:bg-zinc-50">
               <div
                 class="flex items-center gap-1"
                 phx-click={col[:on_sort] && col[:on_sort].(next_sort(col[:sort]))}
@@ -563,7 +561,7 @@ defmodule RefoodWeb.CoreComponents do
             <td
               :for={{col, i} <- Enum.with_index(@col)}
               phx-click={@row_click && @row_click.(row)}
-              class={["relative pr-8 whitespace-nowrap", @row_click && "hover:cursor-pointer"]}
+              class={["relative pr-8 px-4 whitespace-nowrap", @row_click && "hover:cursor-pointer"]}
             >
               <div class="block py-4 pr-6">
                 <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
@@ -572,7 +570,7 @@ defmodule RefoodWeb.CoreComponents do
                 </span>
               </div>
             </td>
-            <td :if={@action != []} class="relative w-14 p-0">
+            <td :if={@action != []} class="relative w-14 px-6">
               <div class="relative whitespace-nowrap py-4 text-right text-sm font-medium">
                 <span class="absolute -inset-y-px -right-4 left-0 group-hover:bg-zinc-50 sm:rounded-r-xl" />
                 <span
