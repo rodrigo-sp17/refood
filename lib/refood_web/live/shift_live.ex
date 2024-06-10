@@ -12,7 +12,8 @@ defmodule RefoodWeb.ShiftLive do
 
     assigns = [
       date: date,
-      families: Families.list_families_by_date(date)
+      families: Families.list_families_by_date(date),
+      selected_family: nil
     ]
 
     {:ok, assign(socket, assigns)}
@@ -24,6 +25,28 @@ defmodule RefoodWeb.ShiftLive do
     <.header>
       Turno
     </.header>
+
+    <.modal :if={@selected_family} id="add-absence" show on_cancel={JS.push("cancel-absence")}>
+      <div class="flex flex-col gap-10">
+        <h2 class="text-2xl text-center">A família avisou com antecedência sobre a falta?</h2>
+        <div class="flex justify-center gap-8 h-12">
+          <button
+            phx-click="add-absence"
+            phx-value-warned="true"
+            class="basis-1/3 rounded-3xl bg-transparent text-black hover:bg-black hover:text-white border border-black px-6"
+          >
+            Avisou
+          </button>
+          <button
+            phx-click="add-absence"
+            phx-value-warned="false"
+            class="basis-1/3 rounded-3xl bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 px-6"
+          >
+            Não avisou
+          </button>
+        </div>
+      </div>
+    </.modal>
 
     <div class="mt-11 flex flex-col gap-8 w-9/12">
       <div class="flex justify-center items-center gap-8">
@@ -67,8 +90,12 @@ defmodule RefoodWeb.ShiftLive do
             </div>
             <div class="basis-1/4 flex items-center gap-6">
               <.link class="underline underline-offset-4"> Trocar dia</.link>
-              <.button class="flex items-center gap-1 rounded-3xl bg-transparent text-black border border-black px-6">
-                <.icon name="hero-exclamation-circle" /> Faltou
+              <.button
+                phx-click="add-family-absence"
+                phx-value-family_id={family.id}
+                class="flex items-center gap-1 rounded-3xl bg-transparent text-black border border-black px-6"
+              >
+                <.icon name="hero-exclamation-circle" /> Marcar falta
               </.button>
             </div>
           </div>
@@ -99,6 +126,35 @@ defmodule RefoodWeb.ShiftLive do
       date: next_date,
       families: Families.list_families_by_date(next_date)
     ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("add-family-absence", %{"family_id" => family_id}, socket) do
+    assigns = [
+      selected_family: family_id
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("cancel-absence", _, socket) do
+    assigns = [
+      selected_family: nil
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("add-absence", %{"warned" => _warned?}, socket) do
+    assigns = [
+      selected_family: nil
+    ]
+
+    socket = put_flash(socket, :info, "Falta registrada!")
 
     {:noreply, assign(socket, assigns)}
   end
