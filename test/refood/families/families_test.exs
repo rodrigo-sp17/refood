@@ -40,8 +40,29 @@ defmodule Refood.FamiliesTest do
       assert [] == Families.list_families_by_date(~D[2024-06-15])
     end
 
-    # test "returns swapped families for the day" do
-    # end
+    test "returns swapped families for the day" do
+      saturday = ~D[2024-06-08]
+      sunday = ~D[2024-06-09]
+      monday = ~D[2024-06-10]
+      no_swap_family = insert(:family, weekdays: [:sunday])
+
+      %{family: in_swap_family} =
+        insert(:swap, family: build(:family, weekdays: [:monday]), to: sunday, from: monday)
+
+      %{family: out_swap_family} = insert(:swap, to: saturday, from: sunday)
+
+      assert families = Families.list_families_by_date(sunday)
+
+      assert length(families) == 2
+      assert [] = Enum.find(families, &(&1.id == no_swap_family.id)).swaps
+      assert [_] = Enum.find(families, &(&1.id == in_swap_family.id)).swaps
+
+      assert [sat_family] = Families.list_families_by_date(saturday)
+      assert sat_family.id == out_swap_family.id
+
+      monday_families = Families.list_families_by_date(monday)
+      refute Enum.find(monday_families, &(&1.id == in_swap_family.id))
+    end
   end
 
   describe "list_absences/1" do
@@ -125,6 +146,71 @@ defmodule Refood.FamiliesTest do
                family_id: ["can't be blank"],
                date: ["can't be blank"],
                warned: ["can't be blank"]
+             }
+    end
+  end
+
+  describe "add_swap/1" do
+    test "creates swap if valid attrs" do
+      family = insert(:family)
+
+      attrs = %{
+        family_id: family.id,
+        from: ~D[2024-05-15],
+        to: ~D[2024-05-17]
+      }
+
+      assert {:ok, family} = Families.add_swap(attrs)
+      assert family.id == family.id
+    end
+
+    test "errors if swapping from same day for same family" do
+      family_1 = insert(:family)
+      family_2 = insert(:family)
+
+      attrs = %{
+        family_id: family_1.id,
+        from: ~D[2024-05-15],
+        to: ~D[2024-05-17]
+      }
+
+      assert {:ok, _family} = Families.add_swap(%{attrs | family_id: family_2.id})
+      assert {:ok, _family} = Families.add_swap(attrs)
+      assert {:error, changeset} = Families.add_swap(%{attrs | to: ~D[2024-05-18]})
+
+      assert errors_on(changeset) == %{
+               from: ["troca já efetuada para este dia"]
+             }
+    end
+
+    test "errors if swapping from to same day for same family" do
+      family_1 = insert(:family)
+      family_2 = insert(:family)
+
+      attrs = %{
+        family_id: family_1.id,
+        from: ~D[2024-05-15],
+        to: ~D[2024-05-17]
+      }
+
+      assert {:ok, _family} = Families.add_swap(%{attrs | family_id: family_2.id})
+      assert {:ok, _family} = Families.add_swap(attrs)
+      assert {:error, changeset} = Families.add_swap(%{attrs | from: ~D[2024-05-20]})
+
+      assert errors_on(changeset) == %{
+               to: ["troca já efetuada para este dia"]
+             }
+    end
+
+    test "error if invalid attrs" do
+      attrs = %{}
+
+      assert {:error, changeset} = Families.add_swap(attrs)
+
+      assert errors_on(changeset) == %{
+               family_id: ["obrigatório"],
+               to: ["obrigatório"],
+               from: ["obrigatório"]
              }
     end
   end

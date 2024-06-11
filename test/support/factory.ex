@@ -42,4 +42,12 @@ defmodule Refood.Factory do
       family: build(:family)
     }
   end
+
+  def swap_factory do
+    %Refood.Families.Swap{
+      from: Date.utc_today(),
+      to: Date.add(Date.utc_today(), 1),
+      family: build(:family)
+    }
+  end
 end

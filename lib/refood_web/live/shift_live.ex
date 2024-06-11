@@ -13,7 +13,8 @@ defmodule RefoodWeb.ShiftLive do
     assigns = [
       date: date,
       families: Families.list_families_by_date(date),
-      selected_family: nil
+      selected_family: nil,
+      view_to_show: nil
     ]
 
     {:ok, assign(socket, assigns)}
@@ -26,7 +27,12 @@ defmodule RefoodWeb.ShiftLive do
       Turno
     </.header>
 
-    <.modal :if={@selected_family} id="add-absence" show on_cancel={JS.push("cancel-absence")}>
+    <.modal
+      :if={@view_to_show == :add_absence}
+      id="add-absence"
+      show
+      on_cancel={JS.push("cancel-modal")}
+    >
       <div class="flex flex-col gap-10">
         <h2 class="text-2xl text-center">A família avisou com antecedência sobre a falta?</h2>
         <div class="flex justify-center gap-8 h-12">
@@ -45,6 +51,22 @@ defmodule RefoodWeb.ShiftLive do
             Não avisou
           </button>
         </div>
+      </div>
+    </.modal>
+
+    <.modal :if={@view_to_show == :add_swap} id="add-swap" show on_cancel={JS.push("cancel-modal")}>
+      <div class="flex flex-col gap-10">
+        <h2 class="text-2xl text-center">Para qual dia deseja trocar?</h2>
+        <.simple_form :let={f} for={@changeset} phx-submit="add-swap">
+          <.input type="date" field={f[:to]} />
+          <.error :if={@changeset.action}>
+            Oops, algo de errado aconteceu!
+          </.error>
+
+          <:actions>
+            <.button>Trocar</.button>
+          </:actions>
+        </.simple_form>
       </div>
     </.modal>
 
@@ -89,12 +111,17 @@ defmodule RefoodWeb.ShiftLive do
               <% end %>
             </div>
             <div class="basis-1/4 flex justify-end items-center gap-6">
-              <.link :if={family.absences == []} class="underline underline-offset-4">
+              <.link
+                :if={family.absences == []}
+                phx-click="show-swap"
+                phx-value-family_id={family.id}
+                class="underline underline-offset-4"
+              >
                 Trocar dia
               </.link>
               <.button
                 :if={family.absences == []}
-                phx-click="add-family-absence"
+                phx-click="show-absence"
                 phx-value-family_id={family.id}
                 class="flex items-center gap-1 rounded-3xl bg-transparent text-black border border-black px-6"
               >
@@ -148,20 +175,8 @@ defmodule RefoodWeb.ShiftLive do
   end
 
   @impl true
-  def handle_event("add-family-absence", %{"family_id" => family_id}, socket) do
-    assigns = [
-      selected_family: family_id
-    ]
-
-    {:noreply, assign(socket, assigns)}
-  end
-
-  @impl true
-  def handle_event("cancel-absence", _, socket) do
-    assigns = [
-      selected_family: nil
-    ]
-
+  def handle_event("show-absence", %{"family_id" => family_id}, socket) do
+    assigns = [selected_family: family_id, view_to_show: :add_absence]
     {:noreply, assign(socket, assigns)}
   end
 
@@ -169,23 +184,45 @@ defmodule RefoodWeb.ShiftLive do
   def handle_event("add-absence", %{"warned" => warned?}, socket) do
     %{selected_family: family_id, date: date} = socket.assigns
 
+    base_assigns = [
+      selected_family: nil,
+      view_to_show: nil
+    ]
+
     case Families.add_absence(%{family_id: family_id, warned: warned?, date: date}) do
       {:ok, _} ->
-        assigns = [
-          selected_family: nil,
-          families: Families.list_families_by_date(date)
-        ]
+        assigns =
+          base_assigns ++ [families: Families.list_families_by_date(date)]
 
         {:noreply, socket |> assign(assigns) |> put_flash(:info, "Falta registrada!")}
 
       {:error, changeset} ->
-        assigns = [
-          selected_family: nil,
-          changeset: changeset
-        ]
+        assigns = base_assigns ++ [changeset: changeset]
 
         {:noreply, assign(socket, assigns)}
     end
+  end
+
+  @impl true
+  def handle_event("show-swap", %{"family_id" => family_id}, socket) do
+    assigns = [selected_family: family_id, view_to_show: :add_swap]
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("add-swap", value, socket) do
+    IO.inspect(value)
+
+    %{selected_family: family_id, date: date} = socket.assigns
+    assigns = []
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("cancel-modal", _, socket) do
+    assigns = [selected_family: nil, view_to_show: nil]
+    {:noreply, assign(socket, assigns)}
   end
 
   defp weekday_name(1), do: "Segunda-feira"

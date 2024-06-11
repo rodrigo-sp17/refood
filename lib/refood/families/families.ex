@@ -6,6 +6,7 @@ defmodule Refood.Families do
 
   alias Refood.Families.Absence
   alias Refood.Families.Family
+  alias Refood.Families.Swap
   alias Refood.Repo
 
   def list_families_by_date(%Date{} = date) do
@@ -14,9 +15,11 @@ defmodule Refood.Families do
     from(
       f in Family,
       as: :family,
-      where: ^weekday in f.weekdays,
+      left_join: swaps in assoc(f, :swaps),
+      where: ^weekday in f.weekdays and (swaps.from != ^date or is_nil(swaps)),
+      or_where: swaps.to == ^date,
       order_by: f.number,
-      preload: [absences: ^from(a in Absence, where: a.date == ^date)]
+      preload: [absences: ^from(a in Absence, where: a.date == ^date), swaps: swaps]
     )
     |> Repo.all()
   end
@@ -43,4 +46,12 @@ defmodule Refood.Families do
     |> Absence.changeset()
     |> Repo.insert()
   end
+
+  def add_swap(attrs) do
+    attrs
+    |> Swap.changeset()
+    |> Repo.insert()
+  end
+
+  def swap_changeset(attrs \\ %{}), do: Swap.changeset(attrs)
 end
