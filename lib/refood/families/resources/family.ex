@@ -32,4 +32,9 @@ defmodule Refood.Families.Family do
     weekday = Date.day_of_week(date)
     Enum.at(@weekdays, weekday - 1)
   end
+
+  def scheduled_to_day?(%{weekdays: weekdays}, %Date{} = date) do
+    weekday = weekday_from_date(date)
+    weekday in weekdays
+  end
 end

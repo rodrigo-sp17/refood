@@ -112,20 +112,29 @@ defmodule RefoodWeb.ShiftLive do
             </div>
             <div class="basis-1/4 flex justify-end items-center gap-6">
               <.link
-                :if={family.absences == []}
+                :if={
+                  family.absences == [] && Enum.empty?(family.swaps) &&
+                    Date.compare(@date, Date.utc_today()) in [:gt, :eq]
+                }
                 phx-click="show-swap"
                 phx-value-family_id={family.id}
                 class="underline underline-offset-4"
               >
                 Trocar dia
               </.link>
+              <div
+                :if={!Enum.empty?(family.swaps)}
+                class="w-40 px-10 py-2 border border-yellow-600 text-yellow-600 text-center font-bold"
+              >
+                Troca
+              </div>
               <.button
                 :if={family.absences == []}
                 phx-click="show-absence"
                 phx-value-family_id={family.id}
                 class="flex items-center gap-1 rounded-3xl bg-transparent text-black border border-black px-6"
               >
-                <.icon name="hero-exclamation-circle" /> Marcar falta
+                Marcar falta
               </.button>
               <div :for={absence <- family.absences}>
                 <div
@@ -205,18 +214,34 @@ defmodule RefoodWeb.ShiftLive do
 
   @impl true
   def handle_event("show-swap", %{"family_id" => family_id}, socket) do
-    assigns = [selected_family: family_id, view_to_show: :add_swap]
+    assigns = [
+      selected_family: family_id,
+      view_to_show: :add_swap,
+      changeset: Families.swap_changeset()
+    ]
+
     {:noreply, assign(socket, assigns)}
   end
 
   @impl true
-  def handle_event("add-swap", value, socket) do
-    IO.inspect(value)
-
+  def handle_event("add-swap", %{"swap" => attrs}, socket) do
     %{selected_family: family_id, date: date} = socket.assigns
-    assigns = []
 
-    {:noreply, assign(socket, assigns)}
+    final_attrs = Map.merge(attrs, %{"family_id" => family_id, "from" => date})
+
+    case Families.add_swap(final_attrs) do
+      {:ok, _swap} ->
+        assigns = [
+          view_to_show: nil,
+          selected_family: nil,
+          families: Families.list_families_by_date(date)
+        ]
+
+        {:noreply, socket |> assign(assigns) |> put_flash(:info, "Troca efetuada!")}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :changeset, changeset)}
+    end
   end
 
   @impl true

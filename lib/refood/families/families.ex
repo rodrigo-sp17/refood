@@ -3,23 +3,35 @@ defmodule Refood.Families do
   Manages families and their frequencies.
   """
   import Ecto.Query
+  import Ecto.Changeset
 
   alias Refood.Families.Absence
   alias Refood.Families.Family
   alias Refood.Families.Swap
   alias Refood.Repo
 
+  @spec list_families_by_date(Date.t()) :: any()
   def list_families_by_date(%Date{} = date) do
     weekday = Family.weekday_from_date(date)
 
     from(
       f in Family,
       as: :family,
-      left_join: swaps in assoc(f, :swaps),
-      where: ^weekday in f.weekdays and (swaps.from != ^date or is_nil(swaps)),
-      or_where: swaps.to == ^date,
+      left_join: swap in assoc(f, :swaps),
+      on: swap.to == ^date or swap.from == ^date,
+      where:
+        ^weekday in f.weekdays or
+          exists(from(s in Swap, where: s.family_id == parent_as(:family).id and s.to == ^date)),
+      where:
+        not exists(
+          from(s in Swap, where: s.family_id == parent_as(:family).id and s.from == ^date)
+        ),
+      or_where:
+        ^weekday in f.weekdays and
+          exists(from(s in Swap, where: s.family_id == parent_as(:family).id and s.to == ^date)) and
+          exists(from(s in Swap, where: s.family_id == parent_as(:family).id and s.from == ^date)),
       order_by: f.number,
-      preload: [absences: ^from(a in Absence, where: a.date == ^date), swaps: swaps]
+      preload: [absences: ^from(a in Absence, where: a.date == ^date), swaps: swap]
     )
     |> Repo.all()
   end
@@ -47,9 +59,26 @@ defmodule Refood.Families do
     |> Repo.insert()
   end
 
-  def add_swap(attrs) do
+  def add_swap(attrs, ref_date \\ Date.utc_today()) do
+    family_id = attrs["family_id"] || attrs[:family_id]
+    family = Repo.get!(Family, family_id)
+
     attrs
     |> Swap.changeset()
+    |> validate_change(:from, fn _, from ->
+      if Family.scheduled_to_day?(family, from) do
+        []
+      else
+        [from: "dia fora de escala"]
+      end
+    end)
+    |> validate_change(:to, fn _, to ->
+      if Date.before?(ref_date, to) do
+        []
+      else
+        [to: "não é possível trocar para o passado"]
+      end
+    end)
     |> Repo.insert()
   end
 
