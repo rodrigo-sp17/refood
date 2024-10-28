@@ -10,6 +10,41 @@ defmodule Refood.Families do
   alias Refood.Families.Swap
   alias Refood.Repo
 
+  def list_families(params \\ %{}) do
+    from(f in Family,
+      as: :family,
+      left_join: absences in assoc(f, :absences),
+      as: :absences,
+      preload: [absences: absences]
+    )
+    |> filter_families(params)
+    |> Repo.all()
+  end
+
+  defp filter_families(query, params) do
+    Enum.reduce(params, query, fn
+      {:q, q}, query when is_binary(q) ->
+        parsed_q = "%#{q}%"
+
+        query
+        |> where(
+          [family: f],
+          ilike(f.name, ^parsed_q) or ilike(f.restrictions, ^parsed_q)
+        )
+        |> maybe_search_family_number(q)
+
+      _, query ->
+        query
+    end)
+  end
+
+  defp maybe_search_family_number(query, q) do
+    case Integer.parse(q) do
+      {number, _} -> or_where(query, [family: f], f.number == ^number)
+      _ -> query
+    end
+  end
+
   @spec list_families_by_date(Date.t()) :: any()
   def list_families_by_date(%Date{} = date) do
     weekday = Family.weekday_from_date(date)

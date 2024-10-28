@@ -37,4 +37,18 @@ defmodule Refood.Families.Family do
     weekday = weekday_from_date(date)
     weekday in weekdays
   end
+
+  def get_readable_weekdays(%{weekdays: weekdays}, type) do
+    weekdays
+    |> Enum.map(&weekday(&1, type))
+    |> Enum.join(" | ")
+  end
+
+  defp weekday(:monday, :short), do: "Seg"
+  defp weekday(:tuesday, :short), do: "Ter"
+  defp weekday(:wednesday, :short), do: "Qua"
+  defp weekday(:thursday, :short), do: "Qui"
+  defp weekday(:friday, :short), do: "Sex"
+  defp weekday(:saturday, :short), do: "Sab"
+  defp weekday(:sunday, :short), do: "Dom"
 end

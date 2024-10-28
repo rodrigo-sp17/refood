@@ -40,6 +40,11 @@
             <.icon name="hero-calendar-solid" class="w-6 h-6 mx-1" /> Turno
           </div>
         </.link>
+        <.link navigate={~p"/families"}>
+          <div class={"#{if @active_tab == :families, do: "bg-gray-500 rounded", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+            <.icon name="hero-users-solid" class="w-6 h-6 mx-1" /> Familias
+          </div>
+        </.link>
         <.link navigate={~p"/storages"}>
           <div class={"#{if @active_tab == :storages, do: "bg-gray-500 rounded", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
             <.icon name="hero-folder-solid" class="w-6 h-6 mx-1" /> Inventários

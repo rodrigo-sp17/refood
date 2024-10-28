@@ -539,7 +539,7 @@ defmodule RefoodWeb.CoreComponents do
       <table class="w-[40rem] sm:w-full">
         <thead class="border-t border-zinc-200 text-base text-left leading-6 text-black-500">
           <tr>
-            <th :for={col <- @col} class="pr-8 py-4 px-4 font-semibold hover:bg-zinc-50">
+            <th :for={col <- @col} class="py-4 pl-4 w-6 font-semibold hover:bg-zinc-50">
               <div
                 class="flex items-center gap-1"
                 phx-click={col[:on_sort] && col[:on_sort].(next_sort(col[:sort]))}

@@ -3,6 +3,20 @@ defmodule Refood.FamiliesTest do
 
   alias Refood.Families
 
+  describe "list_families" do
+    test "lists families if they exist" do
+      _f1 = insert(:family, name: "Joao", weekdays: [:monday, :tuesday])
+      _f2 = insert(:family, name: "Maria", weekdays: [:thursday, :friday])
+      f3 = insert(:family, name: "Abreu", weekdays: [:tuesday, :wednesday, :thursday])
+      insert(:absence, family: f3)
+
+      assert result = Families.list_families()
+      assert length(result) == 3
+
+      assert [_] = Enum.find(result, &(&1.name == "Abreu")).absences
+    end
+  end
+
   describe "list_families_by_date/1" do
     setup do
       f1 = insert(:family, name: "Joao", weekdays: [:monday, :tuesday])

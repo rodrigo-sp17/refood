@@ -16,6 +16,7 @@ defmodule RefoodWeb.Nav do
         {RefoodWeb.StorageLive, _} -> :storages
         {RefoodWeb.StorageLive.NewItemLive, _} -> :storages
         {RefoodWeb.ProductsLive, _} -> :products
+        {RefoodWeb.FamiliesLive, _} -> :families
       end
 
     {:cont, Phoenix.Component.assign(socket, :active_tab, active_tab)}

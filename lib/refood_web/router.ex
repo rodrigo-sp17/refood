@@ -31,6 +31,12 @@ defmodule RefoodWeb.Router do
       live "/", ShiftLive, :index
     end
 
+    scope "/families", RefoodWeb do
+      pipe_through :browser
+
+      live "/", FamiliesLive, :index
+    end
+
     scope "/products", RefoodWeb do
       pipe_through :browser
 
