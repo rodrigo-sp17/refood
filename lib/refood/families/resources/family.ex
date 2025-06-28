@@ -1,6 +1,7 @@
 defmodule Refood.Families.Family do
   use Refood.Schema
 
+  alias Refood.Families.Address
   alias Refood.Families.Absence
   alias Refood.Families.Swap
 
@@ -13,18 +14,78 @@ defmodule Refood.Families.Family do
     field :children, :integer, default: 0
     field :restrictions, :string
 
-    field :weekdays, {:array, Ecto.Enum}, values: @weekdays
+    field :phone_number, :string
+    field :email, :string
+    has_one :address, Address
 
+    field :status, Ecto.Enum, values: [:queued, :active, :paused, :finished], default: :queued
+    field :queue_position, :integer
+
+    field :weekdays, {:array, Ecto.Enum}, values: @weekdays
     has_many :absences, Absence
     has_many :swaps, Swap
 
     timestamps(type: :utc_datetime)
   end
 
+  def request_help(attrs) do
+    %__MODULE__{}
+    |> cast(attrs, [
+      :name,
+      :adults,
+      :children,
+      :restrictions,
+      :phone_number,
+      :email,
+      :queue_position
+    ])
+    |> cast_assoc(:address,
+      with: &Address.changeset/2,
+      required: true,
+      required_message: "endereço requerido"
+    )
+    |> validate_contact_info_required()
+  end
+
+  defp validate_contact_info_required(changeset) do
+    email = get_field(changeset, :email)
+    phone_number = get_field(changeset, :phone_number)
+
+    if is_nil(email) and is_nil(phone_number) do
+      message = "e-mail ou telefone requeridos"
+
+      changeset
+      |> add_error(:email, message)
+      |> add_error(:phone_number, message)
+    else
+      changeset
+    end
+  end
+
+  def activate_family(family, attrs) do
+    family
+    |> cast(attrs, [:number, :weekdays])
+    |> validate_required([:number, :weekdays])
+    |> validate_length(:weekdays, min: 1, message: "dias da semana requeridos")
+    |> unique_constraint([:number], message: "número já assimilado")
+    |> put_change(:queue_position, nil)
+    |> put_change(:status, :active)
+  end
+
   def changeset(schema \\ %__MODULE__{}, attrs) do
     schema
-    |> cast(attrs, [:number, :name, :adults, :children, :restrictions, :weekdays])
-    |> validate_required([:number, :name, :adults, :children, :weekdays])
+    |> cast(attrs, [
+      :number,
+      :name,
+      :adults,
+      :children,
+      :restrictions,
+      :weekdays,
+      :phone_number,
+      :email,
+      :status
+    ])
+    |> validate_required([:name, :status, :adults, :children])
     |> unique_constraint([:number])
   end
 

@@ -24,14 +24,24 @@ defmodule Refood.Factory do
     }
   end
 
-  def family_factory do
+  def family_factory(attrs) do
     %Refood.Families.Family{
       number: sequence(:number, & &1),
       name: sequence("Family-"),
       adults: Enum.random(1..6),
       children: Enum.random(0..4),
       restrictions: Enum.random([nil, "- doces", "s/ frutos do mar", "vegetariano"]),
-      weekdays: [:wednesday]
+      weekdays: [:wednesday],
+      address: build(:address)
+    }
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
+  end
+
+  def address_factory do
+    %Refood.Families.Address{
+      city: "Porto",
+      region: "Bonfim"
     }
   end
 

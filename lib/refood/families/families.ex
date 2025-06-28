@@ -10,6 +10,108 @@ defmodule Refood.Families do
   alias Refood.Families.Swap
   alias Refood.Repo
 
+  def request_help(attrs) do
+    attrs
+    |> Family.request_help()
+    |> add_latest_queue_position()
+    |> Repo.insert()
+  end
+
+  defp add_latest_queue_position(changeset) do
+    latest_position =
+      Repo.one(
+        from(family in Family,
+          order_by: [desc_nulls_last: :queue_position],
+          limit: 1,
+          select: family.queue_position
+        )
+      )
+
+    put_change(changeset, :queue_position, (latest_position || 0) + 1)
+  end
+
+  def list_queue do
+    Repo.all(
+      from(family in Family,
+        join: address in assoc(family, :address),
+        order_by: [asc: :queue_position],
+        where: family.status == :queued,
+        preload: [address: address]
+      )
+    )
+  end
+
+  def move_queue_position(family_id, new_position) do
+    case Repo.get(Family, family_id) do
+      %{queue_position: current} when is_integer(current) ->
+        do_move_queue_position(family_id, current, new_position)
+    end
+  end
+
+  defp do_move_queue_position(family_id, current, new) when current < new do
+    base_query = from(f in Family, where: f.status == :queued)
+
+    Repo.transact(fn ->
+      Repo.update_all(from(f in base_query, where: f.id == ^family_id),
+        set: [queue_position: nil]
+      )
+
+      Repo.update_all(
+        from(f in base_query, where: f.queue_position > ^current and f.queue_position <= ^new),
+        inc: [queue_position: -1]
+      )
+
+      Repo.update_all(from(f in base_query, where: f.id == ^family_id),
+        set: [queue_position: new]
+      )
+
+      {:ok, Repo.get(Family, family_id)}
+    end)
+  end
+
+  defp do_move_queue_position(family_id, current, new) when new < current do
+    base_query = from(f in Family, where: f.status == :queued)
+
+    Repo.transact(fn ->
+      Repo.update_all(from(f in base_query, where: f.id == ^family_id),
+        set: [queue_position: nil]
+      )
+
+      Repo.update_all(
+        from(f in base_query, where: f.queue_position >= ^new and f.queue_position < ^current),
+        inc: [queue_position: 1]
+      )
+
+      Repo.update_all(from(f in base_query, where: f.id == ^family_id),
+        set: [queue_position: new]
+      )
+
+      {:ok, Repo.get(Family, family_id)}
+    end)
+  end
+
+  defp do_move_queue_position(family_id, _, _), do: {:ok, Repo.get(Family, family_id)}
+
+  def activate_family(family_id, attrs) do
+    Repo.transact(fn ->
+      with {:ok, family} <- do_activate_family(family_id, attrs) do
+        reorder_queue()
+        {:ok, family}
+      end
+    end)
+  end
+
+  defp do_activate_family(family_id, attrs) do
+    Repo.get(Family, family_id)
+    |> Family.activate_family(attrs)
+    |> Repo.update()
+  end
+
+  defp reorder_queue do
+    query = from(f in Family, where: f.status == :queued)
+    Repo.update_all(query, inc: [queue_position: -1])
+  end
+
   def list_families(params \\ %{}) do
     from(f in Family,
       as: :family,
