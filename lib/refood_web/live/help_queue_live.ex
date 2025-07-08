@@ -50,13 +50,13 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:queue_position, &1)}
           label="Posição"
         >
-          <%= "#{family.queue_position}" %>
+          {"#{family.queue_position}"}
         </:col>
         <:col :let={family} id="family-id" sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
-          <%= String.slice(family.id, 0, 8) %>
+          {String.slice(family.id, 0, 8)}
         </:col>
         <:col :let={family} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
-          <%= family.name %>
+          {family.name}
         </:col>
         <:col
           :let={family}
@@ -65,7 +65,7 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:adults, &1)}
           label="Adultos"
         >
-          <%= family.adults %>
+          {family.adults}
         </:col>
         <:col
           :let={family}
@@ -74,7 +74,7 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:children, &1)}
           label="Crianças"
         >
-          <%= family.children %>
+          {family.children}
         </:col>
         <:col
           :let={family}
@@ -83,7 +83,7 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:phone_number, &1)}
           label="Tel."
         >
-          <%= family.phone_number %>
+          {family.phone_number}
         </:col>
         <:col
           :let={family}
@@ -92,7 +92,7 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:email, &1)}
           label="Email"
         >
-          <%= family.email %>
+          {family.email}
         </:col>
         <:col
           :let={family}
@@ -101,7 +101,7 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:region, &1)}
           label="Região"
         >
-          <%= family.address.region %>
+          {family.address.region}
         </:col>
         <:col
           :let={family}
@@ -110,7 +110,7 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:region, &1)}
           label="Cidade"
         >
-          <%= family.address.city %>
+          {family.address.city}
         </:col>
         <:col
           :let={family}
@@ -119,7 +119,7 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:inserted_at, &1)}
           label="Criado em"
         >
-          <%= family.inserted_at %>
+          {family.inserted_at}
         </:col>
         <:action :let={family}>
           <.link phx-click="show-edit-request" phx-value-id={family.id}>

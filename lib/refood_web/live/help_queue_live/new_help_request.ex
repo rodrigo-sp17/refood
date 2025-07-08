@@ -26,15 +26,23 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
 
         <.simple_form :let={f} for={@changeset} phx-target={@myself} phx-submit="add-help-request">
           <.input field={f[:name]} type="text" label="Nome" />
-          <div class="flex flex-row justify-stretch">
-            <.input field={f[:adults]} type="number" label="Adultos" value={1} />
-            <.input field={f[:children]} type="number" label="Crianças" value={0} />
+          <div class="flex gap-4 justify-stretch">
+            <div class="w-full">
+              <.input field={f[:adults]} type="number" label="Adultos" value={1} />
+            </div>
+            <div class="w-full">
+              <.input field={f[:children]} type="number" label="Crianças" value={0} />
+            </div>
           </div>
           <.input field={f[:phone_number]} type="tel" label="Tel." />
           <.input field={f[:email]} type="email" label="Email" />
-          <div class="flex flex-row justify-evenly">
-            <.input field={f[:region]} type="text" label="Região" />
-            <.input field={f[:city]} type="text" label="Cidade" value="Porto" />
+          <div class="flex gap-4 justify-stretch">
+            <div class="w-full">
+              <.input field={f[:region]} type="text" label="Região" />
+            </div>
+            <div class="w-full">
+              <.input field={f[:city]} type="text" label="Cidade" value="Porto" />
+            </div>
           </div>
 
           <.error :if={@changeset.action}>

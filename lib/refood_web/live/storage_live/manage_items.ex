@@ -35,7 +35,7 @@ defmodule RefoodWeb.StorageLive.ManageItems do
     <div>
       <RefoodWeb.StorageLive.ProductPickerComponent.search_modal show id={@id} on_cancel={@on_cancel}>
         <.header>
-          <%= @product.name %>
+          {@product.name}
         </.header>
 
         <div class="flex flex-col items-center gap-6 justify-between">
@@ -53,7 +53,7 @@ defmodule RefoodWeb.StorageLive.ManageItems do
                 />
               </:col>
               <:col :let={item} label="Validade">
-                <%= if item.expires_at, do: item.expires_at, else: "-" %>
+                {if item.expires_at, do: item.expires_at, else: "-"}
               </:col>
             </.table>
           </div>

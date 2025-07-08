@@ -109,8 +109,8 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
       tabindex="-1"
     >
       <div>
-        <%= @product.name %>
-        <div class="text-xs"><%= @product.id %></div>
+        {@product.name}
+        <div class="text-xs">{@product.id}</div>
       </div>
     </li>
     """
@@ -149,7 +149,7 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
               class="hidden relative rounded-2xl bg-white p-2 shadow-lg shadow-zinc-700/10 ring-1 ring-zinc-700/10 transition min-h-[30vh] max-h-[60vh] overflow-y-auto"
             >
               <div class="p-1" id={"#{@id}-content"}>
-                <%= render_slot(@inner_block) %>
+                {render_slot(@inner_block)}
               </div>
             </.focus_wrap>
           </div>

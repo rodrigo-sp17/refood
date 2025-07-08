@@ -76,10 +76,10 @@ defmodule RefoodWeb.ProductsLive do
           </div>
         </:top_controls>
         <:col :let={product} sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
-          <%= String.slice(product.id, 0, 8) %>
+          {String.slice(product.id, 0, 8)}
         </:col>
         <:col :let={product} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
-          <%= product.name %>
+          {product.name}
         </:col>
         <:col
           :let={product}
@@ -87,7 +87,7 @@ defmodule RefoodWeb.ProductsLive do
           on_sort={&on_sort(:inserted_at, &1)}
           label="Inserido em"
         >
-          <%= NaiveDateTime.to_string(product.inserted_at) %>
+          {NaiveDateTime.to_string(product.inserted_at)}
         </:col>
         <:action :let={product}>
           <.link phx-click="show-edit-product" phx-value-id={product.id}>

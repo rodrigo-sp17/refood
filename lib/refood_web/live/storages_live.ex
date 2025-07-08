@@ -38,9 +38,9 @@ defmodule RefoodWeb.StoragesLive do
 
     <div class="mt-11 bg-white rounded-xl">
       <.table id="storages" rows={@storages} row_click={&JS.navigate(~p"/storages/#{&1}")}>
-        <:col :let={storage} label="Nome"><%= storage.name %></:col>
+        <:col :let={storage} label="Nome">{storage.name}</:col>
         <:col :let={storage} label="Criado em">
-          <%= NaiveDateTime.to_string(storage.inserted_at) %>
+          {NaiveDateTime.to_string(storage.inserted_at)}
         </:col>
         <:action :let={storage}>
           <div class="sr-only">

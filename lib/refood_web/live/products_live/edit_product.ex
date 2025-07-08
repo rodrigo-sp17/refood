@@ -23,7 +23,7 @@ defmodule RefoodWeb.ProductsLive.EditProduct do
     <div>
       <.modal show id={@id} on_cancel={@on_cancel}>
         <.header>
-          Editar Produto <%= @product.id %>
+          Editar Produto {@product.id}
         </.header>
 
         <.simple_form :let={f} for={@changeset} phx-target={@myself} phx-submit="edit-product">

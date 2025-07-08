@@ -25,7 +25,7 @@ defmodule RefoodWeb.StorageLive do
   def render(assigns) do
     ~H"""
     <.header>
-      Inventário - <%= @storage.name %>
+      Inventário - {@storage.name}
       <:actions>
         <.link href={~p"/storages/#{@storage.id}/items/new"}>
           <.button class="bg-green-700">Adicionar Item</.button>
@@ -61,10 +61,10 @@ defmodule RefoodWeb.StorageLive do
           </div>
         </:top_controls>
         <:col :let={item} sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Produto">
-          <%= item.product_name %>
+          {item.product_name}
         </:col>
         <:col :let={item} sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Qtd.">
-          <%= item.quantity %>
+          {item.quantity}
         </:col>
         <:col
           :let={item}
@@ -72,7 +72,7 @@ defmodule RefoodWeb.StorageLive do
           on_sort={&on_sort(:expires_at, &1)}
           label="Validade Mínima"
         >
-          <%= item.expires_at %>
+          {item.expires_at}
         </:col>
       </.table>
     </div>

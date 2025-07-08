@@ -79,7 +79,7 @@ defmodule RefoodWeb.ShiftLive do
           <.icon name="hero-chevron-left" class="bg-black group-hover:bg-white" />
         </button>
         <div class="basis-7/12 text-3xl text-center font-bold">
-          <%= if @date == Date.utc_today(), do: "(Hoje)" %> <%= "#{weekday_name(Date.day_of_week(@date))}, #{@date.day} de #{month_name(@date.month)} de #{@date.year}" %>
+          {if @date == Date.utc_today(), do: "(Hoje)"} {"#{weekday_name(Date.day_of_week(@date))}, #{@date.day} de #{month_name(@date.month)} de #{@date.year}"}
         </div>
         <button
           phx-click="next-date"
@@ -97,15 +97,15 @@ defmodule RefoodWeb.ShiftLive do
             Nenhuma família para o dia.
           </div>
           <div :for={family <- @families} class="py-4 flex justify-between items-center">
-            <div class="text-xl font-bold w-24">F-<%= family.number %></div>
-            <div class="text-lg basis-1/6"><%= family.name %></div>
+            <div class="text-xl font-bold w-24">F-{family.number}</div>
+            <div class="text-lg basis-1/6">{family.name}</div>
             <div class="text-lg basis-1/6 flex items-center gap-3">
-              <.icon name="hero-users-solid" /><%= family.adults %> + <%= family.children %>
+              <.icon name="hero-users-solid" />{family.adults} + {family.children}
             </div>
             <div class="basis-1/5 flex items-center gap-1">
               <%= if family.restrictions do %>
                 <.icon name="hero-exclamation-triangle-solid text-red-500" />
-                <p class="text-red-500"><%= family.restrictions %></p>
+                <p class="text-red-500">{family.restrictions}</p>
               <% else %>
                 -
               <% end %>

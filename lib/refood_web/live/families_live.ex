@@ -36,7 +36,7 @@ defmodule RefoodWeb.FamiliesLive do
           </div>
         </:top_controls>
         <:col :let={family} id="family-id" sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
-          <%= String.slice(family.id, 0, 8) %>
+          {String.slice(family.id, 0, 8)}
         </:col>
         <:col
           :let={family}
@@ -45,10 +45,10 @@ defmodule RefoodWeb.FamiliesLive do
           on_sort={&on_sort(:number, &1)}
           label="No."
         >
-          <%= "F-#{family.number}" %>
+          {"F-#{family.number}"}
         </:col>
         <:col :let={family} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
-          <%= family.name %>
+          {family.name}
         </:col>
         <:col
           :let={family}
@@ -57,7 +57,7 @@ defmodule RefoodWeb.FamiliesLive do
           on_sort={&on_sort(:adults, &1)}
           label="Adultos"
         >
-          <%= family.adults %>
+          {family.adults}
         </:col>
         <:col
           :let={family}
@@ -66,7 +66,7 @@ defmodule RefoodWeb.FamiliesLive do
           on_sort={&on_sort(:children, &1)}
           label="Crianças"
         >
-          <%= family.children %>
+          {family.children}
         </:col>
         <:col
           :let={family}
@@ -75,7 +75,7 @@ defmodule RefoodWeb.FamiliesLive do
           on_sort={&on_sort(:restrictions, &1)}
           label="Restrições"
         >
-          <%= family.restrictions %>
+          {family.restrictions}
         </:col>
         <:col
           :let={family}
@@ -84,7 +84,7 @@ defmodule RefoodWeb.FamiliesLive do
           on_sort={&on_sort(:weekdays, &1)}
           label="Dias"
         >
-          <%= Family.get_readable_weekdays(family, :short) %>
+          {Family.get_readable_weekdays(family, :short)}
         </:col>
         <:col
           :let={family}
@@ -93,7 +93,7 @@ defmodule RefoodWeb.FamiliesLive do
           on_sort={&on_sort(:absences, &1)}
           label="Faltas"
         >
-          <%= length(family.absences) %>
+          {length(family.absences)}
         </:col>
         <:action :let={family}>
           <.link phx-click="show-edit-family" phx-value-id={family.id}>
