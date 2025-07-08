@@ -43,7 +43,7 @@ defmodule RefoodWeb do
         layouts: [html: RefoodWeb.Layouts]
 
       import Plug.Conn
-      import RefoodWeb.Gettext
+      use Gettext, backend: RefoodWeb.Gettext
 
       unquote(verified_routes())
     end
@@ -86,7 +86,7 @@ defmodule RefoodWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import RefoodWeb.CoreComponents
-      import RefoodWeb.Gettext
+      use Gettext, backend: RefoodWeb.Gettext
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

@@ -26,7 +26,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
 
         <.simple_form :let={f} for={@changeset} phx-target={@myself} phx-submit="add-help-request">
           <.input field={f[:name]} type="text" label="Nome" />
-          <div class="flex flex-row justify-evenly">
+          <div class="flex flex-row justify-stretch">
             <.input field={f[:adults]} type="number" label="Adultos" value={1} />
             <.input field={f[:children]} type="number" label="Crianças" value={0} />
           </div>

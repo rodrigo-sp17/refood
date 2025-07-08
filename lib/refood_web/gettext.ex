@@ -20,5 +20,5 @@ defmodule RefoodWeb.Gettext do
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
   """
-  use Gettext, otp_app: :refood
+  use Gettext.Backend, otp_app: :refood
 end
