@@ -10,9 +10,13 @@ defmodule Refood.Families do
   alias Refood.Families.Swap
   alias Refood.Repo
 
+  def change_request_help(attrs) do
+    Family.request_help(attrs)
+  end
+
   def request_help(attrs) do
     attrs
-    |> Family.request_help()
+    |> change_request_help()
     |> add_latest_queue_position()
     |> Repo.insert()
   end
@@ -30,15 +34,35 @@ defmodule Refood.Families do
     put_change(changeset, :queue_position, (latest_position || 0) + 1)
   end
 
-  def list_queue do
-    Repo.all(
-      from(family in Family,
-        join: address in assoc(family, :address),
-        order_by: [asc: :queue_position],
-        where: family.status == :queued,
-        preload: [address: address]
-      )
+  def list_queue(params \\ %{}) do
+    from(family in Family,
+      as: :family,
+      join: address in assoc(family, :address),
+      as: :address,
+      order_by: [asc: :queue_position],
+      where: family.status == :queued,
+      preload: [address: address]
     )
+    |> filter_queue(params)
+    |> Repo.all()
+  end
+
+  defp filter_queue(query, params) do
+    Enum.reduce(params, query, fn
+      {:q, q}, query when is_binary(q) ->
+        parsed_q = "%#{q}%"
+
+        query
+        |> where(
+          [family: f, address: a],
+          ilike(f.name, ^parsed_q) or ilike(f.phone_number, ^parsed_q) or
+            ilike(f.email, ^parsed_q) or ilike(a.region, ^parsed_q) or ilike(a.city, ^parsed_q)
+        )
+        |> maybe_search_family_number(q)
+
+      _, query ->
+        query
+    end)
   end
 
   def move_queue_position(family_id, new_position) do

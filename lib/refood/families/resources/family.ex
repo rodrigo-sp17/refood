@@ -45,6 +45,12 @@ defmodule Refood.Families.Family do
       required_message: "endereço requerido"
     )
     |> validate_contact_info_required()
+    |> validate_number(:adults, greater_than: 0, message: "deve ser maior que 0")
+    |> validate_number(:children,
+      greater_than_or_equal_to: 0,
+      message: "deve ser igual ou maior que 0"
+    )
+    |> validate_format(:email, ~r/@/)
   end
 
   defp validate_contact_info_required(changeset) do
