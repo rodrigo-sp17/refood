@@ -28,23 +28,24 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
           <.input field={f[:name]} type="text" label="Nome" />
           <div class="flex gap-4 justify-stretch">
             <div class="w-full">
-              <.input field={f[:adults]} type="number" label="Adultos" value={1} />
+              <.input field={f[:adults]} type="number" min="0" step="1" pattern="[0-9]*" label="Adultos" value={1} />
             </div>
             <div class="w-full">
-              <.input field={f[:children]} type="number" label="Crianças" value={0} />
+              <.input field={f[:children]} type="number" min="0" step="1" pattern="[0-9]*" label="Crianças" value={0} />
             </div>
           </div>
-          <.input field={f[:phone_number]} type="tel" label="Tel." />
+          <.input field={f[:phone_number]} type="tel" label="Telefone" />
           <.input field={f[:email]} type="email" label="Email" />
           <div class="flex gap-4 justify-stretch">
-            <div class="w-full">
-              <.input field={f[:region]} type="text" label="Região" />
-            </div>
-            <div class="w-full">
-              <.input field={f[:city]} type="text" label="Cidade" value="Porto" />
-            </div>
+            <.inputs_for :let={fa} field={f[:address]}>
+              <div class="w-full">
+                <.input field={fa[:region]} type="text" label="Região" />
+              </div>
+              <div class="w-full">
+                <.input field={fa[:city]} type="text" label="Cidade" value="Porto" />
+              </div>
+            </.inputs_for>
           </div>
-
           <.error :if={@changeset.action}>
             Oops, algo de errado aconteceu!
           </.error>
@@ -60,12 +61,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
 
   @impl true
   def handle_event("add-help-request", %{"family" => help_request_attrs}, socket) do
-    {region, attrs} = Map.pop(help_request_attrs, "region")
-    {city, attrs} = Map.pop(attrs, "city")
-
-    sanitized_attrs = Map.merge(attrs, %{"address" => %{"region" => region, "city" => city}})
-
-    case Families.request_help(sanitized_attrs) do
+    case Families.request_help(help_request_attrs) do
       {:ok, created_request} ->
         socket.assigns.on_created.(created_request)
         {:noreply, put_flash(socket, :info, "Pedido de ajuda registrado!")}

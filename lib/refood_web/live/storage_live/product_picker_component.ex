@@ -59,11 +59,7 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
 
   def results(assigns) do
     ~H"""
-    <ul
-      class="mb-2 py-2 text-sm text-gray-800 flex flex-col gap-2 hover"
-      id="options"
-      role="listbox"
-    >
+    <ul class="mb-2 py-2 text-sm text-gray-800 flex flex-col gap-2 hover" id="options" role="listbox">
       <li
         :if={@products == [] && String.length(@query) >= 3}
         id="option-none"
