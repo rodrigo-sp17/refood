@@ -26,8 +26,21 @@ defmodule RefoodWeb.HelpQueueLive.ChangeQueuePosition do
         </.header>
         <.simple_form :let={f} for={@form} phx-target={@myself} phx-submit="change-queue-position">
           <div class="flex flex-row justify-start gap-8">
-          <.input field={f[:old_position]} readonly disabled value={@family.queue_position} label="De"/>
-          <.input field={f[:new_position]} type="number" step="1" min="1" pattern="[0-9]*" label="Para" />
+            <.input
+              field={f[:old_position]}
+              readonly
+              disabled
+              value={@family.queue_position}
+              label="De"
+            />
+            <.input
+              field={f[:new_position]}
+              type="number"
+              step="1"
+              min="1"
+              pattern="[0-9]*"
+              label="Para"
+            />
           </div>
           <.error :if={@form.action}>
             Oops, algo de errado aconteceu!

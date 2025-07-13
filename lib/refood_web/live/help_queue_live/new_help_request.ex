@@ -28,10 +28,26 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
           <.input field={f[:name]} type="text" label="Nome" />
           <div class="flex gap-4 justify-stretch">
             <div class="w-full">
-              <.input field={f[:adults]} type="number" min="0" step="1" pattern="[0-9]*" label="Adultos" value={1} />
+              <.input
+                field={f[:adults]}
+                type="number"
+                min="0"
+                step="1"
+                pattern="[0-9]*"
+                label="Adultos"
+                value={1}
+              />
             </div>
             <div class="w-full">
-              <.input field={f[:children]} type="number" min="0" step="1" pattern="[0-9]*" label="Crianças" value={0} />
+              <.input
+                field={f[:children]}
+                type="number"
+                min="0"
+                step="1"
+                pattern="[0-9]*"
+                label="Crianças"
+                value={0}
+              />
             </div>
           </div>
           <.input field={f[:phone_number]} type="tel" label="Telefone" />

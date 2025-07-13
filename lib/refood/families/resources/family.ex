@@ -30,7 +30,11 @@ defmodule Refood.Families.Family do
   end
 
   def request_help(attrs) do
-    %__MODULE__{}
+    update_help_request(%__MODULE__{}, attrs)
+  end
+
+  def update_help_request(schema, attrs) do
+    schema
     |> cast(attrs, [
       :name,
       :adults,
@@ -38,7 +42,6 @@ defmodule Refood.Families.Family do
       :restrictions,
       :phone_number,
       :email,
-      :queue_position,
       :notes
     ])
     |> cast_assoc(:address,

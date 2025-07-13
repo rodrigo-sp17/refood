@@ -21,6 +21,16 @@ defmodule Refood.Families do
     |> Repo.insert()
   end
 
+  def change_update_help_request(family, attrs) do
+    Family.update_help_request(family, attrs)
+  end
+
+  def update_help_request(family, attrs) do
+    family
+    |> change_update_help_request(attrs)
+    |> Repo.update()
+  end
+
   defp add_latest_queue_position(changeset) do
     latest_position =
       Repo.one(
@@ -198,7 +208,7 @@ defmodule Refood.Families do
   end
 
   @spec get_family!(integer()) :: Family.t()
-  def get_family!(family_id), do: Repo.get(Family, family_id)
+  def get_family!(family_id), do: Family |> Repo.get(family_id) |> Repo.preload(:address)
 
   def list_absences(params) do
     query = from(a in Absence)

@@ -7,6 +7,7 @@ defmodule RefoodWeb.HelpQueueLive do
   alias Refood.Families
   alias RefoodWeb.HelpQueueLive.NewHelpRequest
   alias RefoodWeb.HelpQueueLive.ChangeQueuePosition
+  alias RefoodWeb.HelpQueueLive.HelpRequestDetails
 
   @impl true
   def mount(_params, _session, socket) do
@@ -41,6 +42,15 @@ defmodule RefoodWeb.HelpQueueLive do
       on_cancel={JS.push("hide-view")}
     />
 
+    <.live_component
+      :if={@view_to_show == :show_request_details}
+      module={HelpRequestDetails}
+      id="help-request-details"
+      family={@selected_family}
+      on_created={fn family -> send(self(), {:updated_family, family}) end}
+      on_cancel={JS.push("hide-view")}
+    />
+
     <.header>
       Lista de Espera
       <:actions>
@@ -61,13 +71,13 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:queue_position, &1)}
           label="Posição"
         >
-        <div class="flex flex-row gap-5 justify-center items-center">
-        <.link phx-click="show-change-order" phx-value-id={family.id}>
-            <.icon name="hero-arrows-up-down" class="h-5 w-5 hover:bg-blue-500" />
-        </.link>
+          <div class="flex flex-row gap-5 justify-center items-center">
+            <.link phx-click="show-change-order" phx-value-id={family.id}>
+              <.icon name="hero-arrows-up-down" class="h-5 w-5 hover:bg-blue-500" />
+            </.link>
 
-          {"#{family.queue_position}"}
-        </div>
+            {"#{family.queue_position}"}
+          </div>
         </:col>
         <:col :let={family} id="family-id" sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
           {String.slice(family.id, 0, 6)}
@@ -129,11 +139,6 @@ defmodule RefoodWeb.HelpQueueLive do
         >
           {family.inserted_at}
         </:col>
-        <:action :let={family}>
-          <.link phx-click="show-edit-request" phx-value-id={family.id}>
-            <.icon name="hero-pencil" class="h-5 w-5 hover:bg-blue-500" />
-          </.link>
-        </:action>
       </.table>
     </div>
     """
@@ -150,6 +155,16 @@ defmodule RefoodWeb.HelpQueueLive do
   def handle_event("show-change-order", %{"id" => family_id}, socket) do
     assigns = [
       view_to_show: :change_order,
+      selected_family: Families.get_family!(family_id)
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("show-request", %{"id" => family_id}, socket) do
+    assigns = [
+      view_to_show: :show_request_details,
       selected_family: Families.get_family!(family_id)
     ]
 
