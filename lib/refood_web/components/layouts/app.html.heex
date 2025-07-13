@@ -36,27 +36,27 @@
     <div id="navbar-nav" class="h-0 flex-1 flex flex-col overflow-y-auto">
       <nav>
         <.link navigate={~p"/shift"}>
-          <div class={"#{if @active_tab == :shift, do: "bg-gray-500 rounded", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+          <div class={"#{if @active_tab == :shift, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
             <.icon name="hero-calendar-solid" class="w-6 h-6 mx-1" /> Turno
           </div>
         </.link>
         <.link navigate={~p"/help-queue"}>
-          <div class={"#{if @active_tab == :help_queue, do: "bg-gray-500 rounded", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+          <div class={"#{if @active_tab == :help_queue, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
             <.icon name="hero-queue-list" class="w-6 h-6 mx-1" /> Lista de Espera
           </div>
         </.link>
         <.link navigate={~p"/families"}>
-          <div class={"#{if @active_tab == :families, do: "bg-gray-500 rounded", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+          <div class={"#{if @active_tab == :families, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
             <.icon name="hero-users-solid" class="w-6 h-6 mx-1" /> Famílias
           </div>
         </.link>
         <.link navigate={~p"/storages"}>
-          <div class={"#{if @active_tab == :storages, do: "bg-gray-500 rounded", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+          <div class={"#{if @active_tab == :storages, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
             <.icon name="hero-folder-solid" class="w-6 h-6 mx-1" /> Inventários
           </div>
         </.link>
         <.link navigate={~p"/products"}>
-          <div class={"#{if @active_tab == :products, do: "bg-gray-500 rounded", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:bg-gray-500 hover:rounded font-medium"}>
+          <div class={"#{if @active_tab == :products, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center justify-items-center h-16 w-full p-4 my-1 text-white hover:bg-gray-500 hover:rounded font-medium"}>
             <.icon name="hero-book-open-solid" class="w-6 h-6 mx-1" /> Produtos
           </div>
         </.link>

@@ -113,8 +113,8 @@ defmodule RefoodWeb.CoreComponents do
       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
       role="alert"
       class={[
-        "fixed top-2 right-2 w-80 sm:w-96 z-50 rounded-lg p-3 ring-1",
-        @kind == :info && "bg-emerald-50 text-emerald-800 ring-emerald-500 fill-cyan-900",
+        "fixed top-2 right-2 w-80 sm:w-96 z-50 rounded-lg p-3 ring-1 ring-blue-500",
+        @kind == :info && "bg-emerald-50 text-emerald-800 -emerald-500 fill-cyan-900",
         @kind == :error && "bg-rose-50 text-rose-900 shadow-md ring-rose-500 fill-rose-900"
       ]}
       {@rest}
@@ -196,7 +196,7 @@ defmodule RefoodWeb.CoreComponents do
   def simple_form(assigns) do
     ~H"""
     <.form :let={f} for={@for} as={@as} {@rest}>
-      <div class="mt-10 space-y-8 bg-white">
+      <div class="mt-10 flex flex-col gap-8 bg-white">
         {render_slot(@inner_block, f)}
         <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
           {render_slot(action, f)}
@@ -278,7 +278,7 @@ defmodule RefoodWeb.CoreComponents do
       <div
         id={"#{@id}-dropdown"}
         phx-click-away={hide_dropdown("##{@id}-dropdown")}
-        class="hidden w-40 z-10 mx-3 origin-top absolute right-0 left-0 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-200"
+        class="hidden w-40 z-10 mx-3 origin-top absolute right-0 left-0 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black/5 divide-y divide-gray-200"
         role="menu"
         aria-labelledby={@id}
       >
@@ -287,7 +287,7 @@ defmodule RefoodWeb.CoreComponents do
             <.link
               tabindex="-1"
               role="menuitem"
-              class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100"
+              class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100"
               phx-click={hide_dropdown("##{@id}-dropdown")}
               {link}
             >
@@ -373,7 +373,7 @@ defmodule RefoodWeb.CoreComponents do
           name={@name}
           value="true"
           checked={@checked}
-          class="rounded border-zinc-300 text-zinc-900 focus:ring-0"
+          class="rounded-sm border-zinc-300 text-zinc-900 focus:ring-0 focus:ring-blue-500"
           {@rest}
         />
         {@label}
@@ -390,7 +390,7 @@ defmodule RefoodWeb.CoreComponents do
       <select
         id={@id}
         name={@name}
-        class="mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
+        class="mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-xs focus:border-zinc-400 focus:ring-0 focus:ring-blue-500 sm:text-sm"
         multiple={@multiple}
         {@rest}
       >
@@ -410,7 +410,7 @@ defmodule RefoodWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
+          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6",
           "min-h-[6rem] phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
           @errors != [] && "border-rose-400 focus:border-rose-400"
@@ -433,7 +433,7 @@ defmodule RefoodWeb.CoreComponents do
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
         class={[
-          "mt-2 block w-full rounded-lg border text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
+          "mt-2 block w-full rounded-lg border border-gray-200 text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6",
           "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
           @errors != [] && "border-rose-400 focus:border-rose-400"
@@ -602,7 +602,7 @@ defmodule RefoodWeb.CoreComponents do
 
   def table_search_input(assigns) do
     ~H"""
-    <div class="relative w-fit border-round border-zinc-300 focus:border-zinc-400 focus:ring-0">
+    <div class="relative w-fit border-round border-zinc-300 focus:border-zinc-400 focus:ring-0 focus:ring-blue-500">
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
         <.icon name="hero-magnifying-glass" class="h-5 w-5" />
       </div>

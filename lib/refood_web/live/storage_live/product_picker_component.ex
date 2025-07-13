@@ -35,14 +35,14 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
 
   def search_input(assigns) do
     ~H"""
-    <div class="relative flex flex-row items-center space-x-2">
+    <div class="relative flex flex-row items-center gap-2">
       <.icon name="hero-magnifying-glass" class="h-6 w-6" />
       <input
         id="search-input"
         {@rest}
         value={@value}
         type="text"
-        class="h-12 flex-grow border-round border-zinc-300 focus:border-zinc-400 rounded-lg focus:ring-0 pl-3 pr-3 text-gray-800 placeholder-gray-400 text-xl "
+        class="h-12 grow border-round border-zinc-300 focus:border-zinc-400 rounded-lg focus:ring-0 pl-3 pr-3 text-gray-800 placeholder-gray-400 text-xl "
         placeholder="Buscar produtos..."
         role="combobox"
         aria-expanded="false"
@@ -60,7 +60,7 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
   def results(assigns) do
     ~H"""
     <ul
-      class="mb-2 py-2 text-sm text-gray-800 flex space-y-2 flex-col hover"
+      class="mb-2 py-2 text-sm text-gray-800 flex flex-col gap-2 hover"
       id="options"
       role="listbox"
     >
@@ -103,7 +103,7 @@ defmodule RefoodWeb.StorageLive.ProductPickerComponent do
   def result_item(assigns) do
     ~H"""
     <li
-      class="cursor-default select-none rounded-md px-4 py-2 text-xl bg-zinc-100 hover:bg-zinc-800 hover:text-white hover:cursor-pointer flex flex-row space-x-2 items-center"
+      class="cursor-default select-none rounded-md px-4 py-2 text-xl bg-zinc-100 hover:bg-zinc-800 hover:text-white hover:cursor-pointer flex flex-row gap-2 items-center"
       id={"option-#{@product.id}"}
       role="option"
       tabindex="-1"
