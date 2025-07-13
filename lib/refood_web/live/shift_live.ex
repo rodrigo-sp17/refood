@@ -104,8 +104,8 @@ defmodule RefoodWeb.ShiftLive do
             </div>
             <div class="basis-1/5 flex items-center gap-1">
               <%= if family.restrictions do %>
-                <.icon name="hero-exclamation-triangle-solid text-red-500" />
-                <p class="text-red-500">{family.restrictions}</p>
+                <.icon name="hero-exclamation-triangle-solid text-red-700" />
+                <p class="text-red-700">{family.restrictions}</p>
               <% else %>
                 -
               <% end %>

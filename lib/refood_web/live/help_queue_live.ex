@@ -6,11 +6,13 @@ defmodule RefoodWeb.HelpQueueLive do
 
   alias Refood.Families
   alias RefoodWeb.HelpQueueLive.NewHelpRequest
+  alias RefoodWeb.HelpQueueLive.ChangeQueuePosition
 
   @impl true
   def mount(_params, _session, socket) do
     assigns = [
       queue: Families.list_queue(),
+      selected_family: nil,
       view_to_show: nil,
       sort: %{},
       filter: ""
@@ -30,6 +32,15 @@ defmodule RefoodWeb.HelpQueueLive do
       on_cancel={JS.push("hide-view")}
     />
 
+    <.live_component
+      :if={@view_to_show == :change_order}
+      module={ChangeQueuePosition}
+      id="change-queue-order"
+      family={@selected_family}
+      on_created={fn family -> send(self(), {:updated_family, family}) end}
+      on_cancel={JS.push("hide-view")}
+    />
+
     <.header>
       Lista de Espera
       <:actions>
@@ -42,7 +53,7 @@ defmodule RefoodWeb.HelpQueueLive do
           <div class="flex items-center justify-between p-4">
             <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
           </div>
-        </:top_controls>
+        </:top_controls>s
         <:col
           :let={family}
           id="position"
@@ -50,7 +61,13 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:queue_position, &1)}
           label="Posição"
         >
+        <div class="flex flex-row gap-5 justify-center items-center">
+        <.link phx-click="show-change-order" phx-value-id={family.id}>
+            <.icon name="hero-arrows-up-down" class="h-5 w-5 hover:bg-blue-500" />
+        </.link>
+
           {"#{family.queue_position}"}
+        </div>
         </:col>
         <:col :let={family} id="family-id" sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
           {String.slice(family.id, 0, 8)}
@@ -136,6 +153,16 @@ defmodule RefoodWeb.HelpQueueLive do
   @impl true
   def handle_event("show-new-request", _, socket) do
     {:noreply, assign(socket, :view_to_show, :new_request)}
+  end
+
+  @impl true
+  def handle_event("show-change-order", %{"id" => family_id}, socket) do
+    assigns = [
+      view_to_show: :change_order,
+      selected_family: Families.get_family!(family_id)
+    ]
+
+    {:noreply, assign(socket, assigns)}
   end
 
   @impl true

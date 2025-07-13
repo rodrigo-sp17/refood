@@ -197,6 +197,9 @@ defmodule Refood.Families do
     |> Repo.all()
   end
 
+  @spec get_family!(integer()) :: Family.t()
+  def get_family!(family_id), do: Repo.get(Family, family_id)
+
   def list_absences(params) do
     query = from(a in Absence)
 
