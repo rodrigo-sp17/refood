@@ -13,6 +13,7 @@ defmodule Refood.Families.Family do
     field :adults, :integer
     field :children, :integer, default: 0
     field :restrictions, :string
+    field :notes, :string
 
     field :phone_number, :string
     field :email, :string
@@ -37,7 +38,8 @@ defmodule Refood.Families.Family do
       :restrictions,
       :phone_number,
       :email,
-      :queue_position
+      :queue_position,
+      :notes
     ])
     |> cast_assoc(:address,
       with: &Address.changeset/2,
@@ -89,7 +91,8 @@ defmodule Refood.Families.Family do
       :weekdays,
       :phone_number,
       :email,
-      :status
+      :status,
+      :notes
     ])
     |> validate_required([:name, :status, :adults, :children])
     |> unique_constraint([:number])

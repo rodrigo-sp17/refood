@@ -46,6 +46,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
               </div>
             </.inputs_for>
           </div>
+          <.input field={f[:notes]} type="textarea" label="Notas" />
           <.error :if={@changeset.action}>
             Oops, algo de errado aconteceu!
           </.error>

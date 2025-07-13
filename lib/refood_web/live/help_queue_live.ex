@@ -48,7 +48,7 @@ defmodule RefoodWeb.HelpQueueLive do
       </:actions>
     </.header>
     <div class="mt-11 bg-white rounded-xl">
-      <.table id="queue" rows={@queue} row_click={&JS.push("show-request", value: %{id: &1.id})}>
+      <.table id="help-queue" rows={@queue} row_click={&JS.push("show-request", value: %{id: &1.id})}>
         <:top_controls>
           <div class="flex items-center justify-between p-4">
             <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
@@ -70,7 +70,7 @@ defmodule RefoodWeb.HelpQueueLive do
         </div>
         </:col>
         <:col :let={family} id="family-id" sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
-          {String.slice(family.id, 0, 8)}
+          {String.slice(family.id, 0, 6)}
         </:col>
         <:col :let={family} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
           {family.name}
@@ -118,16 +118,7 @@ defmodule RefoodWeb.HelpQueueLive do
           on_sort={&on_sort(:region, &1)}
           label="Região"
         >
-          {family.address.region}
-        </:col>
-        <:col
-          :let={family}
-          id="city"
-          sort={@sort[:region]}
-          on_sort={&on_sort(:region, &1)}
-          label="Cidade"
-        >
-          {family.address.city}
+          {family.address.region} / {family.address.city}
         </:col>
         <:col
           :let={family}

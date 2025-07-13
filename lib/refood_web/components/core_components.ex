@@ -537,7 +537,7 @@ defmodule RefoodWeb.CoreComponents do
     <div class="overflow-y-auto px-4 sm:overflow-visible sm:px-0">
       {render_slot(@top_controls)}
       <table class="w-[40rem] sm:w-full">
-        <thead class="border-t border-zinc-200 text-base text-left leading-6 text-black-500">
+        <thead class="border-y border-zinc-200 text-base text-left text-black-500 leading-6">
           <tr>
             <th :for={col <- @col} class="py-4 pl-4 w-6 font-semibold hover:bg-zinc-50">
               <div
@@ -571,7 +571,7 @@ defmodule RefoodWeb.CoreComponents do
               </div>
             </td>
             <td :if={@action != []} class="relative w-14 px-6">
-              <div class="relative whitespace-nowrap py-4 text-right text-sm font-medium">
+              <div class="relative py-4 text-right text-sm font-medium">
                 <span class="absolute -inset-y-px -right-4 left-0 group-hover:bg-zinc-50 sm:rounded-r-xl" />
                 <span
                   :for={action <- @action}
