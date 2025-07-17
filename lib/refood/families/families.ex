@@ -126,6 +126,10 @@ defmodule Refood.Families do
 
   defp do_move_queue_position(family_id, _, _), do: {:ok, Repo.get(Family, family_id)}
 
+  def change_activate_family(family, attrs) do
+    Family.activate_family(family, attrs)
+  end
+
   def activate_family(family_id, attrs) do
     Repo.transact(fn ->
       with {:ok, family} <- do_activate_family(family_id, attrs) do

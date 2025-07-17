@@ -2,17 +2,18 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
   @moduledoc """
   Shows/edits a help request.
   """
-
   use RefoodWeb, :live_component
 
   alias Refood.Families
+  alias RefoodWeb.FamiliesLive.MoveToActive
 
   @impl true
   def update(%{family: family} = assigns, socket) do
     updated_assigns =
       Map.merge(assigns, %{
         changeset: Families.change_update_help_request(family, %{}),
-        edit: false
+        edit: false,
+        activate: false
       })
 
     {:ok, assign(socket, updated_assigns)}
@@ -22,7 +23,16 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
   def render(assigns) do
     ~H"""
     <div>
-      <.modal show id={@id} on_cancel={@on_cancel}>
+      <MoveToActive.form
+        :if={@activate}
+        target={@myself}
+        id="move-to-active-form"
+        for={@changeset}
+        family={@family}
+        on_cancel={JS.push("hide-view")}
+      />
+
+      <.modal :if={!@activate} show id={@id} on_cancel={@on_cancel}>
         <.header>
           Pedido de ajuda para {@family.name}
           <:actions>
@@ -82,6 +92,9 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
             <.button :if={@edit} class="w-full">Salvar</.button>
           </:actions>
         </.simple_form>
+        <.button :if={!@edit} phx-target={@myself} phx-click="show-move-to-active" class="w-full">
+          Mover para ativo
+        </.button>
       </.modal>
     </div>
     """
@@ -89,7 +102,24 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
 
   @impl true
   def handle_event("edit-help-request", _, socket) do
-    {:noreply, assign(socket, edit: true)}
+    assigns = [
+      edit: true,
+      activate: false,
+      changeset: Families.change_update_help_request(socket.assigns.family, %{})
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("show-move-to-active", _, socket) do
+    assigns = [
+      edit: false,
+      activate: true,
+      changeset: Families.change_activate_family(socket.assigns.family, %{})
+    ]
+
+    {:noreply, assign(socket, assigns)}
   end
 
   @impl true
@@ -102,5 +132,27 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :changeset, changeset)}
     end
+  end
+
+  @impl true
+  def handle_event("move-to-active", %{"family" => attrs}, socket) do
+    case Families.activate_family(socket.assigns.family.id, attrs) do
+      {:ok, activated_family} ->
+        socket.assigns.on_created.(activated_family)
+        {:noreply, put_flash(socket, :info, "Sucesso!")}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :changeset, changeset)}
+    end
+  end
+
+  def handle_info({:updated_family, _}, socket) do
+    assigns = [
+      edit: false,
+      activate: false,
+      changeset: Families.change_update_help_request(socket.assigns.family, %{})
+    ]
+
+    {:noreply, assign(socket, assigns)}
   end
 end

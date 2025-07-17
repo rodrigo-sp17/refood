@@ -333,7 +333,7 @@ defmodule RefoodWeb.CoreComponents do
   attr :type, :string,
     default: "text",
     values: ~w(checkbox color date datetime-local email file hidden month number password
-               range radio search select tel text textarea time url week)
+               range radio search select tel text textarea time url week checkgroup)
 
   attr :field, Phoenix.HTML.FormField,
     doc: "a form field struct retrieved from the form, for example: @form[:email]"
@@ -383,6 +383,37 @@ defmodule RefoodWeb.CoreComponents do
     """
   end
 
+  def input(%{type: "checkgroup"} = assigns) do
+    ~H"""
+    <div phx-feedback-for={@name} class="text-sm">
+      <.label for={@id}>{@label}</.label>
+      <div class={[
+        "mt-2 block w-full rounded-lg border border-gray-200 text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6 phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
+        @errors == [] && "border-zinc-300 focus:border-zinc-400",
+        @errors != [] && "border-rose-400 focus:border-rose-400"
+      ]}>
+        <div class="p-2 grid grid-cols-1 gap-2 text-sm items-baseline">
+          <div :for={{label, value} <- @options} class="">
+            <label for={"#{@name}-#{value}"} class="">
+              <input
+                type="checkbox"
+                id={"#{@name}-#{value}"}
+                name={@name}
+                value={value}
+                checked={@value && value in @value}
+                class="mr-2 h-4 w-4 rounded"
+                {@rest}
+              />
+              {label}
+            </label>
+          </div>
+        </div>
+      </div>
+      <.error :for={msg <- @errors}>{msg}</.error>
+    </div>
+    """
+  end
+
   def input(%{type: "select"} = assigns) do
     ~H"""
     <div phx-feedback-for={@name}>
@@ -390,7 +421,7 @@ defmodule RefoodWeb.CoreComponents do
       <select
         id={@id}
         name={@name}
-        class="mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-xs focus:border-zinc-400 focus:ring-0 focus:ring-blue-500 sm:text-sm"
+        class="mt-2 block w-full rounded-lg border border-gray-300 bg-white shadow-xs focus:border-zinc-400 focus:ring-0 focus:ring-blue-500 sm:text-sm"
         multiple={@multiple}
         {@rest}
       >
