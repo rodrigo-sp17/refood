@@ -37,13 +37,13 @@ defmodule RefoodWeb.FamiliesLive.MoveToActive do
                 multiple={true}
                 label="Dia(s) da semana"
                 options={[
-                  {"Dom", "sunday"},
-                  {"Seg", "monday"},
-                  {"Ter", "tuesday"},
-                  {"Qua", "wednesday"},
-                  {"Qui", "thursday"},
-                  {"Sex", "friday"},
-                  {"Sab", "saturday"}
+                  {"Dom", :sunday},
+                  {"Seg", :monday},
+                  {"Ter", :tuesday},
+                  {"Qua", :wednesday},
+                  {"Qui", :thursday},
+                  {"Sex", :friday},
+                  {"Sab", :saturday}
                 ]}
                 value={@family.weekdays}
               />

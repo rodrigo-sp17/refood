@@ -98,7 +98,7 @@ defmodule Refood.Families.Family do
       :notes
     ])
     |> validate_required([:name, :status, :adults, :children])
-    |> unique_constraint([:number])
+    |> unique_constraint([:number], message: "número já assimilado")
   end
 
   def weekday_from_date(%Date{} = date) do

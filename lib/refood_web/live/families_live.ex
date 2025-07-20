@@ -6,11 +6,13 @@ defmodule RefoodWeb.FamiliesLive do
 
   alias Refood.Families
   alias Refood.Families.Family
+  alias RefoodWeb.FamiliesLive.FamilyDetails
 
   @impl true
   def mount(_params, _session, socket) do
     assigns = [
       families: Families.list_families(),
+      selected_family: nil,
       view_to_show: nil,
       sort: %{},
       filter: ""
@@ -22,6 +24,15 @@ defmodule RefoodWeb.FamiliesLive do
   @impl true
   def render(assigns) do
     ~H"""
+    <.live_component
+      :if={@view_to_show == :show_family_details}
+      module={FamilyDetails}
+      id="show-family-details"
+      family={@selected_family}
+      on_created={fn family -> send(self(), {:updated_family, family}) end}
+      on_cancel={JS.push("hide-view")}
+    />
+
     <.header>
       Famílias
       <:actions>
@@ -49,6 +60,15 @@ defmodule RefoodWeb.FamiliesLive do
         </:col>
         <:col :let={family} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
           {family.name}
+        </:col>
+        <:col
+          :let={family}
+          id="phone-number"
+          sort={@sort[:phone_number]}
+          on_sort={&on_sort(:phone_number, &1)}
+          label="Tel."
+        >
+          {family.phone_number}
         </:col>
         <:col
           :let={family}
@@ -95,17 +115,27 @@ defmodule RefoodWeb.FamiliesLive do
         >
           {length(family.absences)}
         </:col>
-        <:action :let={family}>
-          <.link phx-click="show-edit-family" phx-value-id={family.id}>
-            <.icon name="hero-pencil" class="h-5 w-5 hover:bg-blue-500" />
-          </.link>
-        </:action>
       </.table>
     </div>
     """
   end
 
   defp on_sort(col_id, sort), do: JS.push("on-sort", value: %{id: col_id, sort: sort})
+
+  @impl true
+  def handle_event("hide-view", _unsigned_params, socket) do
+    {:noreply, assign(socket, :view_to_show, nil)}
+  end
+
+  @impl true
+  def handle_event("show-family", %{"id" => family_id}, socket) do
+    assigns = [
+      view_to_show: :show_family_details,
+      selected_family: Families.get_family!(family_id)
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
 
   @impl true
   def handle_event("on-sort", %{"id" => col_id, "sort" => sort}, socket) do
@@ -148,4 +178,14 @@ defmodule RefoodWeb.FamiliesLive do
 
   defp sort_families(families, _key, nil), do: families
   defp sort_families(families, key, order), do: Enum.sort_by(families, &Map.get(&1, key), order)
+
+  @impl true
+  def handle_info({:updated_family, _}, socket) do
+    assigns = [
+      view_to_show: nil,
+      families: Families.list_families()
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
 end

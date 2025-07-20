@@ -146,16 +146,21 @@ defmodule Refood.Families do
   end
 
   defp reorder_queue do
+    # TODO: fix this reorder queue
     query = from(f in Family, where: f.status == :queued)
     Repo.update_all(query, inc: [queue_position: -1])
   end
 
+  @spec list_families(map()) :: [Family.t()]
   def list_families(params \\ %{}) do
     from(f in Family,
       as: :family,
-      left_join: absences in assoc(f, :absences),
-      as: :absences,
-      preload: [absences: absences]
+      preload: [:absences],
+      where: f.status != :queued,
+      order_by: [
+        fragment("array_position(array['active', 'paused', 'finished'], ?)", f.status),
+        f.number
+      ]
     )
     |> filter_families(params)
     |> Repo.all()
@@ -212,7 +217,18 @@ defmodule Refood.Families do
   end
 
   @spec get_family!(integer()) :: Family.t()
-  def get_family!(family_id), do: Family |> Repo.get(family_id) |> Repo.preload(:address)
+  def get_family!(family_id),
+    do: Family |> Repo.get(family_id) |> Repo.preload([:address, :absences])
+
+  def change_update_family_details(family, attrs) do
+    Family.changeset(family, attrs)
+  end
+
+  def update_family_details(family, attrs) do
+    family
+    |> change_update_family_details(attrs)
+    |> Repo.update()
+  end
 
   def list_absences(params) do
     query = from(a in Absence)
