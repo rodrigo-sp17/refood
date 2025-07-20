@@ -70,6 +70,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
             </div>
           </.inputs_for>
           <.input
+            :if={@family.status == :active}
             disabled={!@edit}
             field={f[:weekdays]}
             type="checkgroup"

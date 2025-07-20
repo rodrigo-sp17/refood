@@ -7,6 +7,7 @@ defmodule RefoodWeb.FamiliesLive do
   alias Refood.Families
   alias Refood.Families.Family
   alias RefoodWeb.FamiliesLive.FamilyDetails
+  alias RefoodWeb.FamiliesLive.NewFamily
 
   @impl true
   def mount(_params, _session, socket) do
@@ -25,6 +26,14 @@ defmodule RefoodWeb.FamiliesLive do
   def render(assigns) do
     ~H"""
     <.live_component
+      :if={@view_to_show == :new_family}
+      module={NewFamily}
+      id="new-family"
+      on_created={fn family -> send(self(), {:updated_family, family}) end}
+      on_cancel={JS.push("hide-view")}
+    />
+
+    <.live_component
       :if={@view_to_show == :show_family_details}
       module={FamilyDetails}
       id="show-family-details"
@@ -36,7 +45,7 @@ defmodule RefoodWeb.FamiliesLive do
     <.header>
       Famílias
       <:actions>
-        <.button phx-click="show-new-family">Nova família</.button>
+        <.button phx-click="show-new-family">Criar nova família</.button>
       </:actions>
     </.header>
     <div class="mt-11 bg-white rounded-xl">
@@ -56,7 +65,7 @@ defmodule RefoodWeb.FamiliesLive do
           on_sort={&on_sort(:number, &1)}
           label="No."
         >
-          {"F-#{family.number}"}
+          {family.number && "F-#{family.number}"}
         </:col>
         <:col :let={family} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
           {family.name}
@@ -104,7 +113,7 @@ defmodule RefoodWeb.FamiliesLive do
           on_sort={&on_sort(:weekdays, &1)}
           label="Dias"
         >
-          {Family.get_readable_weekdays(family, :short)}
+          {family.weekdays && Family.get_readable_weekdays(family, :short)}
         </:col>
         <:col
           :let={family}
@@ -125,6 +134,15 @@ defmodule RefoodWeb.FamiliesLive do
   @impl true
   def handle_event("hide-view", _unsigned_params, socket) do
     {:noreply, assign(socket, :view_to_show, nil)}
+  end
+
+  @impl true
+  def handle_event("show-new-family", _, socket) do
+    assigns = [
+      view_to_show: :new_family
+    ]
+
+    {:noreply, assign(socket, assigns)}
   end
 
   @impl true

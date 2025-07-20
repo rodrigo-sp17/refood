@@ -216,6 +216,19 @@ defmodule Refood.Families do
     |> Repo.all()
   end
 
+  def change_create_family(attrs) do
+    Family.changeset(%Family{}, attrs)
+  end
+
+  @doc """
+  Creates a new family.
+  """
+  def create_family(attrs) do
+    attrs
+    |> change_create_family()
+    |> Repo.insert()
+  end
+
   @spec get_family!(integer()) :: Family.t()
   def get_family!(family_id),
     do: Family |> Repo.get(family_id) |> Repo.preload([:address, :absences])

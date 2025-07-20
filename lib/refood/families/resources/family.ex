@@ -10,7 +10,7 @@ defmodule Refood.Families.Family do
   schema "families" do
     field :number, :integer
     field :name, :string
-    field :adults, :integer
+    field :adults, :integer, default: 1
     field :children, :integer, default: 0
     field :restrictions, :string
     field :notes, :string
@@ -19,7 +19,7 @@ defmodule Refood.Families.Family do
     field :email, :string
     has_one :address, Address
 
-    field :status, Ecto.Enum, values: [:queued, :active, :paused, :finished], default: :queued
+    field :status, Ecto.Enum, values: [:queued, :active, :paused, :finished], default: :finished
     field :queue_position, :integer
 
     field :weekdays, {:array, Ecto.Enum}, values: @weekdays
@@ -99,6 +99,7 @@ defmodule Refood.Families.Family do
     ])
     |> validate_required([:name, :status, :adults, :children])
     |> unique_constraint([:number], message: "número já assimilado")
+    |> cast_assoc(:address, with: &Address.changeset/2)
   end
 
   def weekday_from_date(%Date{} = date) do
