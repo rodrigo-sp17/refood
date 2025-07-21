@@ -8,7 +8,7 @@ defmodule RefoodWeb.FamiliesLive.MoveToActive do
   attr :for, :any, required: true
   attr :family, :any, required: true
   attr :on_cancel, JS, default: %JS{}
-  attr :target, :any
+  attr :target, :any, default: nil
 
   def form(assigns) do
     ~H"""

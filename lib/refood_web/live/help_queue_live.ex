@@ -8,6 +8,7 @@ defmodule RefoodWeb.HelpQueueLive do
   alias RefoodWeb.HelpQueueLive.NewHelpRequest
   alias RefoodWeb.HelpQueueLive.ChangeQueuePosition
   alias RefoodWeb.HelpQueueLive.HelpRequestDetails
+  alias RefoodWeb.FamiliesLive.MoveToActive
 
   @impl true
   def mount(_params, _session, socket) do
@@ -51,96 +52,135 @@ defmodule RefoodWeb.HelpQueueLive do
       on_cancel={JS.push("hide-view")}
     />
 
+    <MoveToActive.form
+      :if={@view_to_show == :move_to_active}
+      id="move-to-active-form"
+      for={Families.change_activate_family(@selected_family, %{})}
+      family={@selected_family}
+      on_cancel={JS.push("hide-view")}
+    />
+
+    <.modal
+      :if={@view_to_show == :remove_from_queue}
+      id="remove-from-queue-form"
+      show
+      on_cancel={JS.push("hide-view")}
+    >
+      <div class="flex flex-col gap-10">
+        <h2 class="text-2xl text-center">
+          Deseja remover {@selected_family.name} da fila de ajuda?
+        </h2>
+        <div class="flex justify-center gap-8 h-12">
+          <button
+            phx-click={JS.push("hide-view")}
+            class="basis-1/3 rounded-3xl bg-transparent text-black hover:bg-black hover:text-white border border-black px-6"
+          >
+            Cancelar
+          </button>
+          <button
+            phx-click="remove-from-queue"
+            phx-value-id={@selected_family.id}
+            class="basis-1/3 rounded-3xl bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 px-6"
+          >
+            Remover
+          </button>
+        </div>
+      </div>
+    </.modal>
+
     <.header>
       Lista de Espera
       <:actions>
         <.button phx-click="show-new-request">Criar pedido de ajuda</.button>
       </:actions>
     </.header>
-    <div class="mt-11 bg-white rounded-xl">
-      <.table id="help-queue" rows={@queue} row_click={&JS.push("show-request", value: %{id: &1.id})}>
-        <:top_controls>
-          <div class="flex items-center justify-between p-4">
-            <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
-          </div>
-        </:top_controls>s
-        <:col
-          :let={family}
-          id="position"
-          sort={@sort[:queue_position]}
-          on_sort={&on_sort(:queue_position, &1)}
-          label="Posição"
-        >
-          <div class="flex flex-row gap-5 justify-center items-center">
-            <.link phx-click="show-change-order" phx-value-id={family.id}>
-              <.icon name="hero-arrows-up-down" class="h-5 w-5 hover:bg-blue-500" />
-            </.link>
 
-            {"#{family.queue_position}"}
-          </div>
-        </:col>
-        <:col :let={family} id="family-id" sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
-          {String.slice(family.id, 0, 6)}
-        </:col>
-        <:col :let={family} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
-          {family.name}
-        </:col>
-        <:col
-          :let={family}
-          id="adults"
-          sort={@sort[:adults]}
-          on_sort={&on_sort(:adults, &1)}
-          label="Adultos"
-        >
-          {family.adults}
-        </:col>
-        <:col
-          :let={family}
-          id="children"
-          sort={@sort[:children]}
-          on_sort={&on_sort(:children, &1)}
-          label="Crianças"
-        >
-          {family.children}
-        </:col>
-        <:col
-          :let={family}
-          id="phone-number"
-          sort={@sort[:phone_number]}
-          on_sort={&on_sort(:phone_number, &1)}
-          label="Tel."
-        >
-          {family.phone_number}
-        </:col>
-        <:col
-          :let={family}
-          id="email"
-          sort={@sort[:email]}
-          on_sort={&on_sort(:email, &1)}
-          label="Email"
-        >
-          {family.email}
-        </:col>
-        <:col
-          :let={family}
-          id="region"
-          sort={@sort[:region]}
-          on_sort={&on_sort(:region, &1)}
-          label="Região"
-        >
-          {family.address.region} / {family.address.city}
-        </:col>
-        <:col
-          :let={family}
-          id="inserted-at"
-          sort={@sort[:inserted_at]}
-          on_sort={&on_sort(:inserted_at, &1)}
-          label="Criado em"
-        >
-          {family.inserted_at}
-        </:col>
-      </.table>
-    </div>
+    <.table id="help-queue" rows={@queue} row_click={&JS.push("show-request", value: %{id: &1.id})}>
+      <:top_controls>
+        <div class="flex items-center justify-between p-4">
+          <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
+        </div>
+      </:top_controls>s
+      <:col
+        :let={family}
+        id="position"
+        sort={@sort[:queue_position]}
+        on_sort={&on_sort(:queue_position, &1)}
+        label="Posição"
+      >
+        <div class="flex flex-row gap-5 justify-center items-center">
+          <.link phx-click="show-change-order" phx-value-id={family.id}>
+            <.icon name="hero-arrows-up-down" class="h-5 w-5 hover:bg-blue-500" />
+          </.link>
+
+          {"#{family.queue_position}"}
+        </div>
+      </:col>
+      <:col :let={family} id="family-id" sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
+        {String.slice(family.id, 0, 6)}
+      </:col>
+      <:col :let={family} id="name" sort={@sort[:name]} on_sort={&on_sort(:name, &1)} label="Nome">
+        {family.name}
+      </:col>
+      <:col
+        :let={family}
+        id="adults"
+        sort={@sort[:adults]}
+        on_sort={&on_sort(:adults, &1)}
+        label="Adultos"
+      >
+        {family.adults}
+      </:col>
+      <:col
+        :let={family}
+        id="children"
+        sort={@sort[:children]}
+        on_sort={&on_sort(:children, &1)}
+        label="Crianças"
+      >
+        {family.children}
+      </:col>
+      <:col
+        :let={family}
+        id="phone-number"
+        sort={@sort[:phone_number]}
+        on_sort={&on_sort(:phone_number, &1)}
+        label="Tel."
+      >
+        {family.phone_number}
+      </:col>
+      <:col :let={family} id="email" sort={@sort[:email]} on_sort={&on_sort(:email, &1)} label="Email">
+        {family.email}
+      </:col>
+      <:col
+        :let={family}
+        id="region"
+        sort={@sort[:region]}
+        on_sort={&on_sort(:region, &1)}
+        label="Região"
+      >
+        {family.address.region} / {family.address.city}
+      </:col>
+      <:col
+        :let={family}
+        id="inserted-at"
+        sort={@sort[:inserted_at]}
+        on_sort={&on_sort(:inserted_at, &1)}
+        label="Criado em"
+      >
+        {family.inserted_at}
+      </:col>
+      <:action :let={family}>
+        <.dropdown id={"dropdown-" <> family.id}>
+          <:link on_click="activate-family" phx-value-id={family.id}>
+            Iniciar ajuda
+          </:link>
+          <:link on_click="show-remove-from-queue" phx-value-id={family.id}>
+            Remover da lista de espera
+          </:link>
+        </.dropdown>
+      </:action>
+    </.table>
     """
   end
 
@@ -169,6 +209,59 @@ defmodule RefoodWeb.HelpQueueLive do
     ]
 
     {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("activate-family", %{"id" => family_id}, socket) do
+    assigns = [
+      view_to_show: :move_to_active,
+      selected_family: Families.get_family!(family_id)
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("move-to-active", %{"family" => attrs}, socket) do
+    case Families.activate_family(socket.assigns.selected_family.id, attrs) do
+      {:ok, _activated_family} ->
+        assigns = [
+          view_to_show: nil,
+          queue: Families.list_queue()
+        ]
+
+        {:noreply,
+         socket |> put_flash(:info, "Família movida para ajuda regular!") |> assign(assigns)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :changeset, changeset)}
+    end
+  end
+
+  @impl true
+  def handle_event("show-remove-from-queue", %{"id" => family_id}, socket) do
+    assigns = [
+      view_to_show: :remove_from_queue,
+      selected_family: Families.get_family!(family_id)
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_event("remove-from-queue", %{"id" => family_id}, socket) do
+    case Families.deactivate_family(family_id) do
+      {:ok, _deactivated} ->
+        assigns = [
+          queue: Families.list_queue(),
+          view_to_show: nil
+        ]
+
+        {:noreply, socket |> put_flash(:info, "Família removida!") |> assign(assigns)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :changeset, changeset)}
+    end
   end
 
   @impl true

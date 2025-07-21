@@ -199,6 +199,7 @@ defmodule Refood.Families do
       as: :family,
       left_join: swap in assoc(f, :swaps),
       on: swap.to == ^date or swap.from == ^date,
+      where: f.status == :active,
       where:
         ^weekday in f.weekdays or
           exists(from(s in Swap, where: s.family_id == parent_as(:family).id and s.to == ^date)),
@@ -240,6 +241,21 @@ defmodule Refood.Families do
   def update_family_details(family, attrs) do
     family
     |> change_update_family_details(attrs)
+    |> Repo.update()
+  end
+
+  def deactivate_family(family_id) do
+    family_id
+    |> get_family!()
+    |> Family.deactivate_family()
+    |> Repo.update()
+  end
+
+  def move_to_queue(family_id) do
+    family_id
+    |> get_family!()
+    |> Family.move_to_queue()
+    |> add_latest_queue_position()
     |> Repo.update()
   end
 

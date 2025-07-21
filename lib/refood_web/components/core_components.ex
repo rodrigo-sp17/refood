@@ -143,7 +143,7 @@ defmodule RefoodWeb.CoreComponents do
 
   def flash_group(assigns) do
     ~H"""
-    <.flash kind={:info} title="Succeso!" flash={@flash} />
+    <.flash kind={:info} title="Sucesso!" flash={@flash} />
     <.flash kind={:error} title="Erro!" flash={@flash} />
     <.flash
       id="client-error"
@@ -258,43 +258,33 @@ defmodule RefoodWeb.CoreComponents do
     attr :navigate, :string
     attr :href, :string
     attr :method, :any
+    attr :on_click, :string
   end
 
   def dropdown(assigns) do
     ~H"""
-    <div class="relative">
-      <div>
-        <.link
-          id={@id}
-          phx-click={show_dropdown("##{@id}-dropdown")}
-          phx-hook="Menu"
-          aria-haspopup="true"
-        >
-          <div class="flex w-10 h-10 shrink-0 grow-0 rounded-full items-center justify-center hover:bg-gray-100">
-            <.icon name="hero-ellipsis-vertical" class="h-8 w-8" />
-          </div>
-        </.link>
-      </div>
-      <div
-        id={"#{@id}-dropdown"}
-        phx-click-away={hide_dropdown("##{@id}-dropdown")}
-        class="hidden w-40 z-10 mx-3 origin-top absolute right-0 left-0 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black/5 divide-y divide-gray-200"
-        role="menu"
-        aria-labelledby={@id}
-      >
-        <div class="py-1" role="none">
-          <%= for link <- @link do %>
-            <.link
-              tabindex="-1"
-              role="menuitem"
-              class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-              phx-click={hide_dropdown("##{@id}-dropdown")}
-              {link}
-            >
-              {render_slot(link)}
-            </.link>
-          <% end %>
-        </div>
+    <.link id={@id} phx-click={show_dropdown("##{@id}-dropdown")} phx-hook="Menu" aria-haspopup="true">
+      <.icon name="hero-ellipsis-vertical" class="h-6 w-6" />
+    </.link>
+    <div
+      id={"#{@id}-dropdown"}
+      phx-click-away={hide_dropdown("##{@id}-dropdown")}
+      class="hidden mx-3 origin-top-right right-0 absolute z-10 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black/5 divide-y divide-gray-200"
+      role="menu"
+      aria-labelledby={@id}
+    >
+      <div class="py-1">
+        <%= for link <- @link do %>
+          <.link
+            tabindex="-1"
+            role="menuitem"
+            class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+            phx-click={hide_dropdown("##{@id}-dropdown") |> JS.push(link.on_click)}
+            {link}
+          >
+            {render_slot(link)}
+          </.link>
+        <% end %>
       </div>
     </div>
     """
@@ -565,9 +555,9 @@ defmodule RefoodWeb.CoreComponents do
       end
 
     ~H"""
-    <div class="overflow-y-auto px-4 sm:overflow-visible sm:px-0">
+    <div class="overflow-y-auto mt-11 px-4 sm:overflow-visible sm:px-0 bg-white rounded-xl">
       {render_slot(@top_controls)}
-      <table class="w-[40rem] sm:w-full">
+      <table class="w-[40rem] sm:w-full bg-white">
         <thead class="border-y border-zinc-200 text-base text-left text-black-500 leading-6">
           <tr>
             <th :for={col <- @col} class="py-4 pl-4 w-6 font-semibold hover:bg-zinc-50">
@@ -602,7 +592,7 @@ defmodule RefoodWeb.CoreComponents do
               </div>
             </td>
             <td :if={@action != []} class="relative w-14 px-6">
-              <div class="relative py-4 text-right text-sm font-medium">
+              <div class="relative whitespace-nowrap py-4 text-right text-sm font-medium">
                 <span class="absolute -inset-y-px -right-4 left-0 group-hover:bg-zinc-50 sm:rounded-r-xl" />
                 <span
                   :for={action <- @action}

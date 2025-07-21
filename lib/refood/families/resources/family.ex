@@ -83,6 +83,21 @@ defmodule Refood.Families.Family do
     |> put_change(:status, :active)
   end
 
+  def deactivate_family(family) do
+    family
+    |> change(%{})
+    |> put_change(:queue_position, nil)
+    |> put_change(:status, :finished)
+    |> put_change(:number, nil)
+  end
+
+  def move_to_queue(family) do
+    family
+    |> change(%{})
+    |> put_change(:status, :queued)
+    |> put_change(:number, nil)
+  end
+
   def changeset(schema \\ %__MODULE__{}, attrs) do
     schema
     |> cast(attrs, [
