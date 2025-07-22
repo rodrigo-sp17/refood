@@ -11,11 +11,6 @@ defmodule RefoodWeb.Nav do
     active_tab =
       case {socket.view, socket.assigns.live_action} do
         {RefoodWeb.ShiftLive, _} -> :shift
-        {RefoodWeb.StoragesLive, _} -> :storages
-        {RefoodWeb.StoragesLive.NewStorageLive, _} -> :storages
-        {RefoodWeb.StorageLive, _} -> :storagesF
-        {RefoodWeb.StorageLive.NewItemLive, _} -> :storages
-        {RefoodWeb.ProductsLive, _} -> :products
         {RefoodWeb.FamiliesLive, _} -> :families
         {RefoodWeb.HelpQueueLive, _} -> :help_queue
       end
