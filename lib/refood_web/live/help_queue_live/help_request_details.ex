@@ -21,7 +21,7 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
   def render(assigns) do
     ~H"""
     <div>
-      <.modal :if={!@activate} show id={@id} on_cancel={@on_cancel}>
+      <.modal show id={@id} on_cancel={@on_cancel}>
         <.header>
           Pedido de ajuda para {@family.name}
           <:actions>

@@ -147,6 +147,7 @@ defmodule Refood.Families do
 
   defp reorder_queue do
     # TODO: fix this reorder queue
+    # TODO: fix moving to finished reordering
     query = from(f in Family, where: f.status == :queued)
     Repo.update_all(query, inc: [queue_position: -1])
   end

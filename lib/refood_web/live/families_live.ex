@@ -10,8 +10,6 @@ defmodule RefoodWeb.FamiliesLive do
   alias RefoodWeb.FamiliesLive.NewFamily
   alias RefoodWeb.FamiliesLive.MoveToActive
 
-  # TODO: add confirmation for for enqueueing
-
   @impl true
   def mount(_params, _session, socket) do
     assigns = [
@@ -53,33 +51,28 @@ defmodule RefoodWeb.FamiliesLive do
       on_cancel={JS.push("hide-view")}
     />
 
-    <.modal
-      :if={@view_to_show == :move_to_finished}
-      id="move-to-finished-form"
-      show
+    <.confirmation_modal
+      :if={@view_to_show == :confirm_move_to_finished}
+      id="confirm-move-to-finished"
+      question={"Deseja remover F-#{@selected_family.number} da ajuda regular?"}
+      type={:delete}
+      confirm_text="Remover"
+      deny_text="Cancelar"
+      on_confirm={JS.push("move-to-finished", value: %{"id" => @selected_family.id})}
       on_cancel={JS.push("hide-view")}
-    >
-      <div class="flex flex-col gap-10">
-        <h2 class="text-2xl text-center">
-          Deseja remover F-{@selected_family.number} da ajuda regular?
-        </h2>
-        <div class="flex justify-center gap-8 h-12">
-          <button
-            phx-click={JS.push("hide-view")}
-            class="basis-1/3 rounded-3xl bg-transparent text-black hover:bg-black hover:text-white border border-black px-6"
-          >
-            Cancelar
-          </button>
-          <button
-            phx-click="move-to-finished"
-            phx-value-id={@selected_family.id}
-            class="basis-1/3 rounded-3xl bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 px-6"
-          >
-            Remover
-          </button>
-        </div>
-      </div>
-    </.modal>
+    />
+
+    <.confirmation_modal
+      :if={@view_to_show == :confirm_enqueue_family}
+      id="confirm-enqueue-family"
+      question={"Deseja mover #{@selected_family.name} para a fila de espera?"}
+      confirm_text="Mover"
+      deny_text="Cancelar"
+      on_confirm={
+        JS.push("enqueue-family", value: %{"id" => @selected_family.id}, page_loading: true)
+      }
+      on_cancel={JS.push("hide-view")}
+    />
 
     <.header>
       Famílias
@@ -87,7 +80,11 @@ defmodule RefoodWeb.FamiliesLive do
         <.button phx-click="show-new-family">Criar nova família</.button>
       </:actions>
     </.header>
-    <.table id="families" rows={@families} row_click={&JS.push("show-family", value: %{id: &1.id})}>
+    <.table
+      id="families"
+      rows={@families}
+      row_click={&JS.push("show-family", value: %{id: &1.id}, page_loading: true)}
+    >
       <:top_controls>
         <div class="flex items-center justify-between p-4">
           <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
@@ -164,13 +161,23 @@ defmodule RefoodWeb.FamiliesLive do
       </:col>
       <:action :let={family}>
         <.dropdown id={"dropdown-" <> family.id}>
-          <:link :if={family.status !== :active} on_click="activate-family" phx-value-id={family.id}>
+          <:link
+            :if={family.status !== :active}
+            on_click={JS.push("activate-family", value: %{id: family.id}, page_loading: true)}
+          >
             Iniciar ajuda
           </:link>
-          <:link :if={family.status == :active} on_click="deactivate-family" phx-value-id={family.id}>
+          <:link
+            :if={family.status == :active}
+            on_click={
+              JS.push("confirm-move-to-finished", value: %{id: family.id}, page_loading: true)
+            }
+          >
             Parar ajuda
           </:link>
-          <:link on_click="enqueue-family" phx-value-id={family.id}>
+          <:link on_click={
+            JS.push("confirm-enqueue-family", value: %{id: family.id}, page_loading: true)
+          }>
             Mover para lista de espera
           </:link>
         </.dropdown>
@@ -218,7 +225,7 @@ defmodule RefoodWeb.FamiliesLive do
   @impl true
   def handle_event("move-to-active", %{"family" => attrs}, socket) do
     case Families.activate_family(socket.assigns.selected_family.id, attrs) do
-      {:ok, activated_family} ->
+      {:ok, _activated_family} ->
         assigns = [
           view_to_show: nil,
           families: Families.list_families()
@@ -233,9 +240,9 @@ defmodule RefoodWeb.FamiliesLive do
   end
 
   @impl true
-  def handle_event("deactivate-family", %{"id" => family_id}, socket) do
+  def handle_event("confirm-move-to-finished", %{"id" => family_id}, socket) do
     assigns = [
-      view_to_show: :move_to_finished,
+      view_to_show: :confirm_move_to_finished,
       selected_family: Families.get_family!(family_id)
     ]
 
@@ -257,6 +264,16 @@ defmodule RefoodWeb.FamiliesLive do
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :changeset, changeset)}
     end
+  end
+
+  @impl true
+  def handle_event("confirm-enqueue-family", %{"id" => family_id}, socket) do
+    assigns = [
+      view_to_show: :confirm_enqueue_family,
+      selected_family: Families.get_family!(family_id)
+    ]
+
+    {:noreply, assign(socket, assigns)}
   end
 
   @impl true

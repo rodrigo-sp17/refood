@@ -90,6 +90,50 @@ defmodule RefoodWeb.CoreComponents do
   end
 
   @doc """
+  Renders a confirmation (confirm/deny) modal.
+  """
+  attr :id, :string, required: true
+  attr :question, :string, default: "Do you wish proceed?"
+  attr :type, :atom, values: [:normal, :delete], default: :normal
+  attr :confirm_text, :string, default: "Yes"
+  attr :on_confirm, JS, default: %JS{}
+  attr :deny_text, :string, default: "No"
+  attr :on_deny, JS, default: %JS{}
+  attr :on_cancel, JS, default: %JS{}
+
+  def confirmation_modal(assigns) do
+    ~H"""
+    <.modal id={@id} show on_cancel={@on_cancel}>
+      <div class="flex flex-col gap-10">
+        <h2 class="text-2xl text-center">
+          {@question}
+        </h2>
+        <div class="flex justify-center gap-8 h-12">
+          <button
+            phx-remove={hide_modal(@id)}
+            phx-click={JS.exec(@on_deny || @on_cancel, "phx-remove")}
+            class="basis-1/3 rounded-3xl bg-transparent text-black hover:bg-black hover:text-white border border-black px-6"
+          >
+            {@deny_text}
+          </button>
+          <button
+            phx-remove={hide_modal(@id)}
+            phx-click={JS.exec(@on_confirm, "phx-remove")}
+            class={[
+              "basis-1/3 border rounded-3xl text-white hover:bg-transparent px-6 ",
+              @type == :normal && "bg-black text-white hover:text-black hover:bg-black",
+              @type == :delete && "bg-red-500 hover:text-red-500 border-red-500"
+            ]}
+          >
+            {@confirm_text}
+          </button>
+        </div>
+      </div>
+    </.modal>
+    """
+  end
+
+  @doc """
   Renders flash notices.
 
   ## Examples
@@ -258,7 +302,7 @@ defmodule RefoodWeb.CoreComponents do
     attr :navigate, :string
     attr :href, :string
     attr :method, :any
-    attr :on_click, :string
+    attr :on_click, :any
   end
 
   def dropdown(assigns) do
@@ -279,7 +323,8 @@ defmodule RefoodWeb.CoreComponents do
             tabindex="-1"
             role="menuitem"
             class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-            phx-click={hide_dropdown("##{@id}-dropdown") |> JS.push(link.on_click)}
+            phx-remove={hide_dropdown("##{@id}-dropdown")}
+            phx-click={link.on_click}
             {link}
           >
             {render_slot(link)}

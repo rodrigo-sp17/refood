@@ -27,32 +27,17 @@ defmodule RefoodWeb.ShiftLive do
       Turno
     </.header>
 
-    <.modal
+    <.confirmation_modal
       :if={@view_to_show == :add_absence}
       id="add-absence"
-      show
+      question="A família avisou com antecedência sobre a falta?"
+      type={:delete}
+      confirm_text="Não avisou"
+      on_confirm={JS.push("add-absence", value: %{"warned" => false})}
+      deny_text="Avisou"
+      on_deny={JS.push("add-absence", value: %{"warned" => true})}
       on_cancel={JS.push("cancel-modal")}
-    >
-      <div class="flex flex-col gap-10">
-        <h2 class="text-2xl text-center">A família avisou com antecedência sobre a falta?</h2>
-        <div class="flex justify-center gap-8 h-12">
-          <button
-            phx-click="add-absence"
-            phx-value-warned="true"
-            class="basis-1/3 rounded-3xl bg-transparent text-black hover:bg-black hover:text-white border border-black px-6"
-          >
-            Avisou
-          </button>
-          <button
-            phx-click="add-absence"
-            phx-value-warned="false"
-            class="basis-1/3 rounded-3xl bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 px-6"
-          >
-            Não avisou
-          </button>
-        </div>
-      </div>
-    </.modal>
+    />
 
     <.modal :if={@view_to_show == :add_swap} id="add-swap" show on_cancel={JS.push("cancel-modal")}>
       <div class="flex flex-col gap-10">

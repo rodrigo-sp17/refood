@@ -60,33 +60,16 @@ defmodule RefoodWeb.HelpQueueLive do
       on_cancel={JS.push("hide-view")}
     />
 
-    <.modal
-      :if={@view_to_show == :remove_from_queue}
-      id="remove-from-queue-form"
-      show
+    <.confirmation_modal
+      :if={@view_to_show == :confirm_remove_from_queue}
+      id="confirm-remove-from-queue"
+      question={"Deseja remover #{@selected_family.name} da fila de espera?"}
+      type={:delete}
+      confirm_text="Remover"
+      deny_text="Cancelar"
+      on_confirm={JS.push("remove-from-queue", value: %{"id" => @selected_family.id})}
       on_cancel={JS.push("hide-view")}
-    >
-      <div class="flex flex-col gap-10">
-        <h2 class="text-2xl text-center">
-          Deseja remover {@selected_family.name} da fila de ajuda?
-        </h2>
-        <div class="flex justify-center gap-8 h-12">
-          <button
-            phx-click={JS.push("hide-view")}
-            class="basis-1/3 rounded-3xl bg-transparent text-black hover:bg-black hover:text-white border border-black px-6"
-          >
-            Cancelar
-          </button>
-          <button
-            phx-click="remove-from-queue"
-            phx-value-id={@selected_family.id}
-            class="basis-1/3 rounded-3xl bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 px-6"
-          >
-            Remover
-          </button>
-        </div>
-      </div>
-    </.modal>
+    />
 
     <.header>
       Lista de Espera
@@ -95,7 +78,11 @@ defmodule RefoodWeb.HelpQueueLive do
       </:actions>
     </.header>
 
-    <.table id="help-queue" rows={@queue} row_click={&JS.push("show-request", value: %{id: &1.id})}>
+    <.table
+      id="help-queue"
+      rows={@queue}
+      row_click={&JS.push("show-request", value: %{id: &1.id}, page_loading: true)}
+    >
       <:top_controls>
         <div class="flex items-center justify-between p-4">
           <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
@@ -168,14 +155,16 @@ defmodule RefoodWeb.HelpQueueLive do
         on_sort={&on_sort(:inserted_at, &1)}
         label="Criado em"
       >
-        {family.inserted_at}
+        {DateTime.to_date(family.inserted_at)}
       </:col>
       <:action :let={family}>
         <.dropdown id={"dropdown-" <> family.id}>
-          <:link on_click="activate-family" phx-value-id={family.id}>
+          <:link on_click={JS.push("activate-family", value: %{id: family.id}, page_loading: true)}>
             Iniciar ajuda
           </:link>
-          <:link on_click="show-remove-from-queue" phx-value-id={family.id}>
+          <:link on_click={
+            JS.push("confirm-remove-from-queue", value: %{id: family.id}, page_loading: true)
+          }>
             Remover da lista de espera
           </:link>
         </.dropdown>
@@ -239,9 +228,9 @@ defmodule RefoodWeb.HelpQueueLive do
   end
 
   @impl true
-  def handle_event("show-remove-from-queue", %{"id" => family_id}, socket) do
+  def handle_event("confirm-remove-from-queue", %{"id" => family_id}, socket) do
     assigns = [
-      view_to_show: :remove_from_queue,
+      view_to_show: :confirm_remove_from_queue,
       selected_family: Families.get_family!(family_id)
     ]
 
