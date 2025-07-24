@@ -5,6 +5,7 @@ defmodule RefoodWeb.ShiftLive do
   use RefoodWeb, :live_view
 
   alias Refood.Families
+  alias RefoodWeb.HelpQueueLive.NewHelpRequest
 
   @impl true
   def mount(_params, _session, socket) do
@@ -26,6 +27,13 @@ defmodule RefoodWeb.ShiftLive do
     <.header>
       Turno
     </.header>
+
+    <.live_component
+      :if={@view_to_show == :new_request}
+      module={NewHelpRequest}
+      id="new-help-request"
+      on_cancel={JS.push("cancel-modal")}
+    />
 
     <.confirmation_modal
       :if={@view_to_show == :add_absence}
@@ -139,7 +147,7 @@ defmodule RefoodWeb.ShiftLive do
           </div>
         </div>
       </div>
-      <.button class="py-5">Novo pedido de ajuda</.button>
+      <.button class="w-100 py-5" phx-click="show-new-request">Criar pedido de ajuda</.button>
     </div>
     """
   end
@@ -230,7 +238,18 @@ defmodule RefoodWeb.ShiftLive do
   end
 
   @impl true
+  def handle_event("show-new-request", _, socket) do
+    {:noreply, assign(socket, :view_to_show, :new_request)}
+  end
+
+  @impl true
   def handle_event("cancel-modal", _, socket) do
+    assigns = [selected_family: nil, view_to_show: nil]
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_info({:help_request_created, _}, socket) do
     assigns = [selected_family: nil, view_to_show: nil]
     {:noreply, assign(socket, assigns)}
   end

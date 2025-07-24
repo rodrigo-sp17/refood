@@ -80,8 +80,9 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
   def handle_event("add-help-request", %{"family" => help_request_attrs}, socket) do
     case HelpQueue.request_help(help_request_attrs) do
       {:ok, created_request} ->
-        socket.assigns.on_created.(created_request)
-        {:noreply, put_flash(socket, :info, "Pedido de ajuda registrado!")}
+        send(self(), {:help_request_created, created_request})
+        send(self(), {:put_flash, [:info, "Pedido de ajuda registrado!"]})
+        {:noreply, socket}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :changeset, changeset)}

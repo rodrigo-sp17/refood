@@ -31,7 +31,6 @@ defmodule RefoodWeb.HelpQueueLive do
       :if={@view_to_show == :new_request}
       module={NewHelpRequest}
       id="new-help-request"
-      on_created={fn family -> send(self(), {:updated_family, family}) end}
       on_cancel={JS.push("hide-view")}
     />
 
@@ -303,6 +302,16 @@ defmodule RefoodWeb.HelpQueueLive do
 
   @impl true
   def handle_info({:updated_family, _}, socket) do
+    assigns = [
+      view_to_show: nil,
+      queue: HelpQueue.list_queue()
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_info({:help_request_created, _}, socket) do
     assigns = [
       view_to_show: nil,
       queue: HelpQueue.list_queue()
