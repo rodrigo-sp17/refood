@@ -5,6 +5,7 @@ defmodule RefoodWeb.HelpQueueLive do
   use RefoodWeb, :live_view
 
   alias Refood.Families
+  alias Refood.Families.HelpQueue
   alias RefoodWeb.HelpQueueLive.NewHelpRequest
   alias RefoodWeb.HelpQueueLive.ChangeQueuePosition
   alias RefoodWeb.HelpQueueLive.HelpRequestDetails
@@ -13,7 +14,7 @@ defmodule RefoodWeb.HelpQueueLive do
   @impl true
   def mount(_params, _session, socket) do
     assigns = [
-      queue: Families.list_queue(),
+      queue: HelpQueue.list_queue(),
       selected_family: nil,
       view_to_show: nil,
       sort: %{},
@@ -55,7 +56,7 @@ defmodule RefoodWeb.HelpQueueLive do
     <MoveToActive.form
       :if={@view_to_show == :move_to_active}
       id="move-to-active-form"
-      for={Families.change_activate_family(@selected_family, %{})}
+      for={HelpQueue.change_activate_family(@selected_family, %{})}
       family={@selected_family}
       on_cancel={JS.push("hide-view")}
     />
@@ -212,11 +213,11 @@ defmodule RefoodWeb.HelpQueueLive do
 
   @impl true
   def handle_event("move-to-active", %{"family" => attrs}, socket) do
-    case Families.activate_family(socket.assigns.selected_family.id, attrs) do
+    case HelpQueue.activate_family(socket.assigns.selected_family.id, attrs) do
       {:ok, _activated_family} ->
         assigns = [
           view_to_show: nil,
-          queue: Families.list_queue()
+          queue: HelpQueue.list_queue()
         ]
 
         {:noreply,
@@ -239,10 +240,10 @@ defmodule RefoodWeb.HelpQueueLive do
 
   @impl true
   def handle_event("remove-from-queue", %{"id" => family_id}, socket) do
-    case Families.deactivate_family(family_id) do
+    case HelpQueue.remove_from_queue(family_id) do
       {:ok, _deactivated} ->
         assigns = [
-          queue: Families.list_queue(),
+          queue: HelpQueue.list_queue(),
           view_to_show: nil
         ]
 
@@ -281,7 +282,7 @@ defmodule RefoodWeb.HelpQueueLive do
   def handle_event("on-filter", %{"value" => value}, socket) do
     assigns = [
       filter: value,
-      queue: Families.list_queue(%{q: value})
+      queue: HelpQueue.list_queue(%{q: value})
     ]
 
     {:noreply, assign(socket, assigns)}
@@ -291,7 +292,7 @@ defmodule RefoodWeb.HelpQueueLive do
   def handle_event("on-reset-filter", _, socket) do
     assigns = [
       filter: "",
-      queue: Families.list_queue()
+      queue: HelpQueue.list_queue()
     ]
 
     {:noreply, assign(socket, assigns)}
@@ -304,7 +305,7 @@ defmodule RefoodWeb.HelpQueueLive do
   def handle_info({:updated_family, _}, socket) do
     assigns = [
       view_to_show: nil,
-      queue: Families.list_queue()
+      queue: HelpQueue.list_queue()
     ]
 
     {:noreply, assign(socket, assigns)}

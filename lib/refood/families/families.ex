@@ -10,146 +10,19 @@ defmodule Refood.Families do
   alias Refood.Families.Swap
   alias Refood.Repo
 
-  def change_request_help(attrs) do
-    Family.request_help(attrs)
-  end
-
-  def request_help(attrs) do
-    attrs
-    |> change_request_help()
-    |> add_latest_queue_position()
-    |> Repo.insert()
-  end
-
-  def change_update_help_request(family, attrs) do
-    Family.update_help_request(family, attrs)
-  end
-
-  def update_help_request(family, attrs) do
-    family
-    |> change_update_help_request(attrs)
-    |> Repo.update()
-  end
-
-  defp add_latest_queue_position(changeset) do
-    latest_position =
-      Repo.one(
-        from(family in Family,
-          order_by: [desc_nulls_last: :queue_position],
-          limit: 1,
-          select: family.queue_position
-        )
-      )
-
-    put_change(changeset, :queue_position, (latest_position || 0) + 1)
-  end
-
-  def list_queue(params \\ %{}) do
-    from(family in Family,
-      as: :family,
-      join: address in assoc(family, :address),
-      as: :address,
-      order_by: [asc: :queue_position],
-      where: family.status == :queued,
-      preload: [address: address]
-    )
-    |> filter_queue(params)
-    |> Repo.all()
-  end
-
-  defp filter_queue(query, params) do
-    Enum.reduce(params, query, fn
-      {:q, q}, query when is_binary(q) ->
-        parsed_q = "%#{q}%"
-
-        query
-        |> where(
-          [family: f, address: a],
-          ilike(f.name, ^parsed_q) or ilike(f.phone_number, ^parsed_q) or
-            ilike(f.email, ^parsed_q) or ilike(a.region, ^parsed_q) or ilike(a.city, ^parsed_q)
-        )
-        |> maybe_search_family_number(q)
-
-      _, query ->
-        query
-    end)
-  end
-
-  def move_queue_position(family_id, new_position) do
-    case Repo.get(Family, family_id) do
-      %{queue_position: current} when is_integer(current) ->
-        do_move_queue_position(family_id, current, new_position)
-    end
-  end
-
-  defp do_move_queue_position(family_id, current, new) when current < new do
-    base_query = from(f in Family, where: f.status == :queued)
-
-    Repo.transact(fn ->
-      Repo.update_all(from(f in base_query, where: f.id == ^family_id),
-        set: [queue_position: nil]
-      )
-
-      Repo.update_all(
-        from(f in base_query, where: f.queue_position > ^current and f.queue_position <= ^new),
-        inc: [queue_position: -1]
-      )
-
-      Repo.update_all(from(f in base_query, where: f.id == ^family_id),
-        set: [queue_position: new]
-      )
-
-      {:ok, Repo.get(Family, family_id)}
-    end)
-  end
-
-  defp do_move_queue_position(family_id, current, new) when new < current do
-    base_query = from(f in Family, where: f.status == :queued)
-
-    Repo.transact(fn ->
-      Repo.update_all(from(f in base_query, where: f.id == ^family_id),
-        set: [queue_position: nil]
-      )
-
-      Repo.update_all(
-        from(f in base_query, where: f.queue_position >= ^new and f.queue_position < ^current),
-        inc: [queue_position: 1]
-      )
-
-      Repo.update_all(from(f in base_query, where: f.id == ^family_id),
-        set: [queue_position: new]
-      )
-
-      {:ok, Repo.get(Family, family_id)}
-    end)
-  end
-
-  defp do_move_queue_position(family_id, _, _), do: {:ok, Repo.get(Family, family_id)}
-
-  def change_activate_family(family, attrs) do
+  def change_reactivate_family(family, attrs) do
     Family.activate_family(family, attrs)
   end
 
-  def activate_family(family_id, attrs) do
-    Repo.transact(fn ->
-      with {:ok, family} <- do_activate_family(family_id, attrs) do
-        reorder_queue()
-        {:ok, family}
-      end
-    end)
-  end
+  @doc """
+  Moves a finished family back to active help.
+  """
+  def reactivate_family(family_id, attrs) do
+    %{status: :finished} = family = Repo.get(Family, family_id)
 
-  defp do_activate_family(family_id, attrs) do
-    Repo.get(Family, family_id)
+    family
     |> Family.activate_family(attrs)
     |> Repo.update()
-  end
-
-  defp reorder_queue do
-    # TODO: fix this reorder queue
-    # TODO: fix moving to finished reordering
-    query = from(f in Family, where: f.status == :queued)
-    Repo.update_all(query, inc: [queue_position: -1])
   end
 
   @spec list_families(map()) :: [Family.t()]
@@ -249,14 +122,6 @@ defmodule Refood.Families do
     family_id
     |> get_family!()
     |> Family.deactivate_family()
-    |> Repo.update()
-  end
-
-  def move_to_queue(family_id) do
-    family_id
-    |> get_family!()
-    |> Family.move_to_queue()
-    |> add_latest_queue_position()
     |> Repo.update()
   end
 

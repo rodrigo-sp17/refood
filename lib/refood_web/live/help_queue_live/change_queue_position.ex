@@ -4,7 +4,7 @@ defmodule RefoodWeb.HelpQueueLive.ChangeQueuePosition do
   """
   use RefoodWeb, :live_component
 
-  alias Refood.Families
+  alias Refood.Families.HelpQueue
 
   @impl true
   def update(assigns, socket) do
@@ -57,7 +57,7 @@ defmodule RefoodWeb.HelpQueueLive.ChangeQueuePosition do
 
   @impl true
   def handle_event("change-queue-position", %{"new_position" => new_position}, socket) do
-    case Families.move_queue_position(socket.assigns.family.id, new_position) do
+    case HelpQueue.move_queue_position(socket.assigns.family.id, new_position) do
       {:ok, created_request} ->
         socket.assigns.on_created.(created_request)
         {:noreply, put_flash(socket, :info, "Posição trocada!")}

@@ -31,6 +31,7 @@ defmodule Refood.Families.Family do
 
   def request_help(attrs) do
     update_help_request(%__MODULE__{}, attrs)
+    |> put_change(:status, :queued)
   end
 
   def update_help_request(schema, attrs) do

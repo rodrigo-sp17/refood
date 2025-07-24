@@ -5,6 +5,7 @@ defmodule RefoodWeb.FamiliesLive do
   use RefoodWeb, :live_view
 
   alias Refood.Families
+  alias Refood.Families.HelpQueue
   alias Refood.Families.Family
   alias RefoodWeb.FamiliesLive.FamilyDetails
   alias RefoodWeb.FamiliesLive.NewFamily
@@ -46,7 +47,7 @@ defmodule RefoodWeb.FamiliesLive do
     <MoveToActive.form
       :if={@view_to_show == :move_to_active}
       id="move-to-active-form"
-      for={Families.change_activate_family(@selected_family, %{})}
+      for={Families.change_reactivate_family(@selected_family, %{})}
       family={@selected_family}
       on_cancel={JS.push("hide-view")}
     />
@@ -224,7 +225,7 @@ defmodule RefoodWeb.FamiliesLive do
 
   @impl true
   def handle_event("move-to-active", %{"family" => attrs}, socket) do
-    case Families.activate_family(socket.assigns.selected_family.id, attrs) do
+    case Families.reactivate_family(socket.assigns.selected_family.id, attrs) do
       {:ok, _activated_family} ->
         assigns = [
           view_to_show: nil,
@@ -278,7 +279,7 @@ defmodule RefoodWeb.FamiliesLive do
 
   @impl true
   def handle_event("enqueue-family", %{"id" => family_id}, socket) do
-    case Families.move_to_queue(family_id) do
+    case HelpQueue.move_to_queue(family_id) do
       {:ok, _enqueued} ->
         assigns = [
           view_to_show: nil,

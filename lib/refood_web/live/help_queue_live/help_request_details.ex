@@ -4,13 +4,13 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
   """
   use RefoodWeb, :live_component
 
-  alias Refood.Families
+  alias Refood.Families.HelpQueue
 
   @impl true
   def update(%{family: family} = assigns, socket) do
     updated_assigns =
       Map.merge(assigns, %{
-        changeset: Families.change_update_help_request(family, %{}),
+        changeset: HelpQueue.change_update_help_request(family, %{}),
         edit: false
       })
 
@@ -88,7 +88,7 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
   def handle_event("edit-help-request", _, socket) do
     assigns = [
       edit: true,
-      changeset: Families.change_update_help_request(socket.assigns.family, %{})
+      changeset: HelpQueue.change_update_help_request(socket.assigns.family, %{})
     ]
 
     {:noreply, assign(socket, assigns)}
@@ -96,7 +96,7 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
 
   @impl true
   def handle_event("update-help-request", %{"family" => family_attrs}, socket) do
-    case Families.update_help_request(socket.assigns.family, family_attrs) do
+    case HelpQueue.update_help_request(socket.assigns.family, family_attrs) do
       {:ok, created_request} ->
         socket.assigns.on_created.(created_request)
         {:noreply, put_flash(socket, :info, "Sucesso!")}
@@ -109,7 +109,7 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
   def handle_info({:updated_family, _}, socket) do
     assigns = [
       edit: false,
-      changeset: Families.change_update_help_request(socket.assigns.family, %{})
+      changeset: HelpQueue.change_update_help_request(socket.assigns.family, %{})
     ]
 
     {:noreply, assign(socket, assigns)}

@@ -4,12 +4,12 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
   """
   use RefoodWeb, :live_component
 
-  alias Refood.Families
+  alias Refood.Families.HelpQueue
 
   @impl true
   def mount(socket) do
     assigns = [
-      changeset: Families.change_request_help(%{})
+      changeset: HelpQueue.change_request_help(%{})
     ]
 
     {:ok, assign(socket, assigns)}
@@ -78,7 +78,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
 
   @impl true
   def handle_event("add-help-request", %{"family" => help_request_attrs}, socket) do
-    case Families.request_help(help_request_attrs) do
+    case HelpQueue.request_help(help_request_attrs) do
       {:ok, created_request} ->
         socket.assigns.on_created.(created_request)
         {:noreply, put_flash(socket, :info, "Pedido de ajuda registrado!")}

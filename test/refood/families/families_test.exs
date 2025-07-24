@@ -3,194 +3,6 @@ defmodule Refood.FamiliesTest do
 
   alias Refood.Families
 
-  describe "request_help/1" do
-    test "creates a family and assigns latest queue position" do
-      insert(:family, name: "Joao", status: :queued, queue_position: 1)
-      insert(:family, name: "Maria", status: :queued, queue_position: 2)
-      insert(:family, name: "Abreu", status: :active, queue_position: nil)
-
-      attrs = %{
-        address: %{
-          region: "Bonfim",
-          city: "Porto",
-          zipcode: "12345"
-        },
-        phone_number: "+351123456789",
-        email: "jane@gmail.com",
-        adults: 2,
-        children: 0,
-        name: "Jane Silva"
-      }
-
-      assert {:ok, family} = Families.request_help(attrs)
-
-      assert %{
-               id: _,
-               number: nil,
-               status: :queued,
-               queue_position: 3,
-               address: %{
-                 region: "Bonfim",
-                 city: "Porto",
-                 zipcode: "12345"
-               },
-               phone_number: "+351123456789",
-               email: "jane@gmail.com",
-               adults: 2,
-               children: 0,
-               name: "Jane Silva",
-               weekdays: nil
-             } = family |> Repo.reload() |> Repo.preload(:address)
-    end
-
-    test "error if no contact info" do
-      attrs = %{
-        address: %{
-          region: "Bonfim",
-          city: "Porto",
-          zipcode: "12345"
-        },
-        adults: 2,
-        children: 0,
-        name: "Jane Silva"
-      }
-
-      assert {:error, changeset} = Families.request_help(attrs)
-
-      assert %{email: [_], phone_number: [_]} = errors_on(changeset)
-    end
-
-    test "error if no address info" do
-      attrs = %{
-        phone_number: "+351123456789",
-        email: "jane@gmail.com",
-        adults: 2,
-        children: 0,
-        name: "Jane Silva"
-      }
-
-      assert {:error, changeset} = Families.request_help(attrs)
-
-      assert %{address: ["endereço requerido"]} == errors_on(changeset)
-    end
-  end
-
-  describe "list_queue" do
-    test "lists the queue of families waiting for help" do
-      insert(:family, status: :queued, queue_position: 1)
-      insert(:family, status: :queued, queue_position: 3)
-      insert(:family, status: :queued, queue_position: 2)
-      insert(:family, status: :active, queue_position: nil)
-
-      assert [
-               %{queue_position: 1, address: %{city: _}},
-               %{queue_position: 2, address: %{city: _}},
-               %{queue_position: 3, address: %{city: _}}
-             ] = Families.list_queue()
-    end
-  end
-
-  describe "move_queue_position/2" do
-    test "moves the position up in queue" do
-      family_1 = insert(:family, status: :queued, queue_position: 1)
-      family_2 = insert(:family, status: :queued, queue_position: 2)
-      family_3 = insert(:family, status: :queued, queue_position: 3)
-      family_4 = insert(:family, status: :queued, queue_position: 4)
-      family_5 = insert(:family, status: :queued, queue_position: 5)
-      active_family = insert(:family, status: :active, queue_position: nil)
-
-      assert {:ok, %{queue_position: 4}} = Families.move_queue_position(family_2.id, 4)
-
-      assert Repo.reload(family_1).queue_position == 1
-      assert Repo.reload(family_3).queue_position == 2
-      assert Repo.reload(family_4).queue_position == 3
-      assert Repo.reload(family_2).queue_position == 4
-      assert Repo.reload(family_5).queue_position == 5
-      assert is_nil(Repo.reload(active_family).queue_position)
-    end
-
-    test "moves the position down in queue" do
-      family_1 = insert(:family, status: :queued, queue_position: 1)
-      family_2 = insert(:family, status: :queued, queue_position: 2)
-      family_3 = insert(:family, status: :queued, queue_position: 3)
-      family_4 = insert(:family, status: :queued, queue_position: 4)
-      family_5 = insert(:family, status: :queued, queue_position: 5)
-      active_family = insert(:family, status: :active, queue_position: nil)
-
-      assert {:ok, %{queue_position: 2}} = Families.move_queue_position(family_4.id, 2)
-
-      assert Repo.reload(family_1).queue_position == 1
-      assert Repo.reload(family_4).queue_position == 2
-      assert Repo.reload(family_2).queue_position == 3
-      assert Repo.reload(family_3).queue_position == 4
-      assert Repo.reload(family_5).queue_position == 5
-      assert is_nil(Repo.reload(active_family).queue_position)
-    end
-  end
-
-  describe "activate_family" do
-    test "activates a family to a specific number" do
-      %{id: family_id} = insert(:family, status: :queued, number: nil, queue_position: 1)
-      family_2 = insert(:family, status: :queued, number: nil, queue_position: 2)
-      family_3 = insert(:family, status: :queued, number: nil, queue_position: 3)
-      active_family = insert(:family, status: :active, number: 6, queue_position: nil)
-
-      attrs = %{
-        number: 7,
-        weekdays: [:monday, :tuesday]
-      }
-
-      assert {:ok, family} = Families.activate_family(family_id, attrs)
-
-      assert %{number: 7, weekdays: [:monday, :tuesday], queue_position: nil} = family
-
-      assert Repo.reload(family_2).queue_position == 1
-      assert Repo.reload(family_3).queue_position == 2
-      assert is_nil(Repo.reload(active_family).queue_position)
-    end
-
-    test "errors if number is already activated to a different family" do
-      %{id: family_id} = insert(:family, status: :queued, number: nil, queue_position: 1)
-      active_family = insert(:family, status: :active, number: 6, queue_position: nil)
-
-      attrs = %{
-        number: 6,
-        weekdays: [:monday, :tuesday]
-      }
-
-      assert {:error, changeset} =
-               Families.activate_family(family_id, attrs)
-
-      assert errors_on(changeset) == %{number: ["número já assimilado"]}
-
-      assert Repo.reload(active_family).number == 6
-    end
-
-    test "errors if no weekdays" do
-      %{id: family_id} = insert(:family, status: :queued, weekdays: nil, queue_position: 1)
-
-      attrs = %{
-        number: 6,
-        weekdays: []
-      }
-
-      assert {:error, changeset} = Families.activate_family(family_id, attrs)
-
-      assert errors_on(changeset) == %{weekdays: ["dias da semana requeridos"]}
-    end
-
-    test "swaps number if its free and family is already activated" do
-      %{id: family_id} =
-        insert(:family, status: :active, number: 6, weekdays: [:wednesday], queue_position: 1)
-
-      attrs = %{number: 7}
-
-      assert {:ok, family} = Families.activate_family(family_id, attrs)
-
-      assert %{number: 7, weekdays: [:wednesday], queue_position: nil} = family
-    end
-  end
-
   describe "list_families" do
     test "lists families if they exist" do
       _f1 = insert(:family, name: "Joao", weekdays: [:monday, :tuesday])
@@ -207,12 +19,27 @@ defmodule Refood.FamiliesTest do
 
   describe "list_families_by_date/1" do
     setup do
-      f1 = insert(:family, name: "Joao", weekdays: [:monday, :tuesday])
-      f2 = insert(:family, name: "Maria", weekdays: [:thursday, :friday])
+      f1 = insert(:family, status: :active, name: "Joao", weekdays: [:monday, :tuesday])
+      f2 = insert(:family, status: :active, name: "Maria", weekdays: [:thursday, :friday])
       insert(:absence, family: f2, date: ~D[2024-06-11])
-      f3 = insert(:family, name: "Abreu", weekdays: [:tuesday, :wednesday, :thursday])
+
+      f3 =
+        insert(:family,
+          status: :active,
+          name: "Abreu",
+          weekdays: [:tuesday, :wednesday, :thursday]
+        )
+
       insert(:absence, family: f3, date: ~D[2024-06-11])
       insert(:absence, family: f3, date: ~D[2024-06-10])
+
+      insert(:family,
+        status: :finished,
+        name: "Lima",
+        weekdays: [:tuesday, :wednesday, :thursday]
+      )
+
+      insert(:family, status: :queued, name: "Caio", weekdays: [:tuesday, :wednesday, :thursday])
 
       %{families: [f1, f2, f3]}
     end
@@ -246,12 +73,17 @@ defmodule Refood.FamiliesTest do
       saturday = ~D[2024-06-08]
       sunday = ~D[2024-06-09]
       monday = ~D[2024-06-10]
-      no_swap_family = insert(:family, weekdays: [:sunday])
+      no_swap_family = insert(:family, status: :active, weekdays: [:sunday])
 
       %{family: in_swap_family} =
-        insert(:swap, family: build(:family, weekdays: [:monday]), to: sunday, from: monday)
+        insert(:swap,
+          family: build(:family, status: :active, weekdays: [:monday]),
+          to: sunday,
+          from: monday
+        )
 
-      %{family: out_swap_family} = insert(:swap, to: saturday, from: sunday)
+      %{family: out_swap_family} =
+        insert(:swap, to: saturday, from: sunday, family: build(:family, status: :active))
 
       assert families = Families.list_families_by_date(sunday)
 
@@ -269,7 +101,7 @@ defmodule Refood.FamiliesTest do
     test "returns only the swap relative for the day" do
       saturday = ~D[2024-06-08]
       sunday = ~D[2024-06-09]
-      family = insert(:family, weekdays: [:saturday])
+      family = insert(:family, status: :active, weekdays: [:saturday])
 
       swap = insert(:swap, family: family, from: saturday, to: sunday)
       unrelated_swap = insert(:swap, family: family, from: ~D[2024-06-15], to: ~D[2024-06-16])
