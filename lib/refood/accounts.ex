@@ -67,17 +67,28 @@ defmodule Refood.Accounts do
 
   ## Examples
 
-      iex> register_user(%{field: value})
+      iex> register_user(calling_user, %{field: value})
       {:ok, %User{}}
 
-      iex> register_user(%{field: bad_value})
+      iex> register_user(calling_user, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def register_user(attrs) do
+  def register_user(%{role: :admin}, attrs) do
+    with {:ok, user} <- do_register(attrs),
+         {:ok, email} <- deliver_user_confirmation_instructions(user, &confirmation_url/1) do
+      {:ok, {user, email}}
+    end
+  end
+
+  defp do_register(attrs) do
     %User{}
     |> User.registration_changeset(attrs)
     |> Repo.insert()
+  end
+
+  defp confirmation_url(url) do
+    Application.fetch_env!(:refood, :base_url) <> "/users/confirm/#{url}"
   end
 
   @doc """
@@ -350,4 +361,43 @@ defmodule Refood.Accounts do
       {:error, :user, changeset, _} -> {:error, changeset}
     end
   end
+
+  ###############################################################
+  ## User Management
+  ###############################################################
+
+  @doc """
+  Lists all users without sensitive information.
+  """
+  def list_users(%{role: :admin}) do
+    from(user in User,
+      select: [:id, :role, :name, :email, :inserted_at, :updated_at, :confirmed_at],
+      order_by: [:inserted_at]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Deletes a non-admin user
+  """
+  def delete_user(%{role: :admin}, %{role: to_delete_role} = user)
+      when to_delete_role !== :admin do
+    Ecto.Multi.new()
+    |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
+    |> Ecto.Multi.delete(:user, user)
+    |> Repo.transaction()
+  end
+
+  def delete_user(_, _), do: {:error, "Não é possível remover admins"}
+
+  @doc """
+  Updates a user when available.
+  """
+  def update_user(%{role: :admin}, %{role: role} = user, attrs) when role !== :admin do
+    user
+    |> User.update_details_changeset(attrs)
+    |> Repo.update()
+  end
+
+  def update_user(_, _, _), do: {:error, "Não é possível alterar admins"}
 end

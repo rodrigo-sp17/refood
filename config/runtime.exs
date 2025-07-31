@@ -113,3 +113,5 @@ if config_env() == :prod do
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 end
+
+config :refood, base_url: "http://localhost:4000"

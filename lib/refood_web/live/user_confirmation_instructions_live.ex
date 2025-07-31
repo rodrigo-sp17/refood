@@ -21,8 +21,7 @@ defmodule RefoodWeb.UserConfirmationInstructionsLive do
       </.simple_form>
 
       <p class="text-center mt-4">
-        <.link href={~p"/users/register"}>Register</.link>
-        | <.link href={~p"/users/log_in"}>Log in</.link>
+        <.link href={~p"/users/log_in"}>Log in</.link>
       </p>
     </div>
     """
@@ -46,6 +45,6 @@ defmodule RefoodWeb.UserConfirmationInstructionsLive do
     {:noreply,
      socket
      |> put_flash(:info, info)
-     |> redirect(to: ~p"/")}
+     |> redirect(to: ~p"/users/log_in")}
   end
 end

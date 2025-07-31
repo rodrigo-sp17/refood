@@ -77,10 +77,17 @@
         role="menu"
         phx-click-away={hide_dropdown("#dropdown-logged-in-user")}
       >
-        <.link class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100" href="/users/settings">
+        <.link
+          class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+          href="/users/settings"
+        >
           Configurações
         </.link>
-        <.link class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100" href={~p"/users/log_out"} method="delete">
+        <.link
+          class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+          href={~p"/users/log_out"}
+          method="delete"
+        >
           Log out
         </.link>
       </div>

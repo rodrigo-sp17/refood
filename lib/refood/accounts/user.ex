@@ -42,6 +42,9 @@ defmodule Refood.Accounts.User do
     |> cast(attrs, [:name, :role, :email, :password])
     |> validate_email(opts)
     |> validate_password(opts)
+    |> validate_required([:name, :role])
+    |> validate_exclusion(:role, [:admin], message: "role inexistente e/ou inválido")
+    |> validate_inclusion(:role, [:manager, :shift])
   end
 
   defp validate_email(changeset, opts) do
@@ -159,5 +162,12 @@ defmodule Refood.Accounts.User do
     else
       add_error(changeset, :current_password, "is not valid")
     end
+  end
+
+  def update_details_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name, :role])
+    |> validate_required([:name, :role])
+    |> validate_exclusion(:role, [:admin], message: "role inexistente e/ou inválido")
   end
 end

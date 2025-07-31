@@ -4,6 +4,7 @@ defmodule Refood.AccountsTest do
   alias Refood.Accounts
 
   import Refood.AccountsFixtures
+  import Swoosh.TestAssertions
   alias Refood.Accounts.{User, UserToken}
 
   describe "get_user_by_email/1" do
@@ -38,7 +39,7 @@ defmodule Refood.AccountsTest do
   describe "get_user!/1" do
     test "raises if id is invalid" do
       assert_raise Ecto.NoResultsError, fn ->
-        Accounts.get_user!(-1)
+        Accounts.get_user!(Ecto.UUID.generate())
       end
     end
 
@@ -48,9 +49,10 @@ defmodule Refood.AccountsTest do
     end
   end
 
-  describe "register_user/1" do
+  describe "register_user/2" do
     test "requires email and password to be set" do
-      {:error, changeset} = Accounts.register_user(%{})
+      admin = insert(:user, role: :admin)
+      {:error, changeset} = Accounts.register_user(admin, %{})
 
       assert %{
                password: ["can't be blank"],
@@ -59,7 +61,10 @@ defmodule Refood.AccountsTest do
     end
 
     test "validates email and password when given" do
-      {:error, changeset} = Accounts.register_user(%{email: "not valid", password: "not valid"})
+      admin = insert(:user, role: :admin)
+
+      {:error, changeset} =
+        Accounts.register_user(admin, %{email: "not valid", password: "not valid"})
 
       assert %{
                email: ["must have the @ sign and no spaces"],
@@ -68,36 +73,55 @@ defmodule Refood.AccountsTest do
     end
 
     test "validates maximum values for email and password for security" do
+      admin = insert(:user, role: :admin)
       too_long = String.duplicate("db", 100)
-      {:error, changeset} = Accounts.register_user(%{email: too_long, password: too_long})
+      {:error, changeset} = Accounts.register_user(admin, %{email: too_long, password: too_long})
       assert "should be at most 160 character(s)" in errors_on(changeset).email
       assert "should be at most 72 character(s)" in errors_on(changeset).password
     end
 
     test "validates email uniqueness" do
+      admin = insert(:user, role: :admin)
       %{email: email} = user_fixture()
-      {:error, changeset} = Accounts.register_user(%{email: email})
+      {:error, changeset} = Accounts.register_user(admin, %{email: email})
       assert "has already been taken" in errors_on(changeset).email
 
       # Now try with the upper cased email too, to check that email case is ignored.
-      {:error, changeset} = Accounts.register_user(%{email: String.upcase(email)})
+      {:error, changeset} = Accounts.register_user(admin, %{email: String.upcase(email)})
       assert "has already been taken" in errors_on(changeset).email
     end
 
-    test "registers users with a hashed password" do
+    test "does not register admin users" do
+      admin = insert(:user, role: :admin)
+
       email = unique_user_email()
-      {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
+
+      {:error, changeset} =
+        Accounts.register_user(admin, valid_user_attributes(email: email, role: :admin))
+
+      assert "role inexistente e/ou inválido" in errors_on(changeset).role
+    end
+
+    test "registers users with a hashed password" do
+      admin = insert(:user, role: :admin)
+      email = unique_user_email()
+
+      {:ok, {user, _confirmation_email}} =
+        Accounts.register_user(admin, valid_user_attributes(email: email))
+
       assert user.email == email
       assert is_binary(user.hashed_password)
       assert is_nil(user.confirmed_at)
       assert is_nil(user.password)
+
+      assert_email_sent(subject: "Confirmation instructions")
     end
   end
 
   describe "change_user_registration/2" do
     test "returns a changeset" do
       assert %Ecto.Changeset{} = changeset = Accounts.change_user_registration(%User{})
-      assert changeset.required == [:password, :email]
+      assert changeset.required == [:name, :role, :password, :email]
     end
 
     test "allows fields to be set" do
@@ -503,6 +527,74 @@ defmodule Refood.AccountsTest do
   describe "inspect/2 for the User module" do
     test "does not include password" do
       refute inspect(%User{password: "123456"}) =~ "password: \"123456\""
+    end
+  end
+
+  describe "list_users/1" do
+    test "lists all users without important info" do
+      user = insert(:user, role: :admin)
+      _user_2 = insert(:user, role: :manager)
+      _user_3 = insert(:user, role: :shift)
+
+      assert [_, _, _] = users = Accounts.list_users(user)
+
+      assert returned_user = Enum.find(users, &(&1.id == user.id))
+
+      assert is_nil(returned_user.hashed_password)
+      assert is_nil(returned_user.current_password)
+    end
+  end
+
+  describe "delete_user/1" do
+    test "deletes a non-admin user" do
+      admin = insert(:user, role: :admin)
+
+      to_delete = insert(:user, role: :manager)
+      _ = Accounts.generate_user_session_token(to_delete)
+
+      {:ok, _} = Accounts.delete_user(admin, to_delete)
+
+      refute Repo.get_by(UserToken, user_id: to_delete.id)
+      refute Repo.reload(to_delete)
+    end
+
+    test "error if attempting to delete admin user" do
+      admin = insert(:user, role: :admin)
+
+      to_delete = insert(:user, role: :admin)
+      _ = Accounts.generate_user_session_token(to_delete)
+
+      assert {:error, "Não é possível remover admins"} =
+               Accounts.delete_user(admin, to_delete)
+
+      assert Repo.get_by(UserToken, user_id: to_delete.id)
+      assert Repo.reload(to_delete)
+    end
+  end
+
+  describe "update_user/1" do
+    test "updates user details" do
+      admin = insert(:user, role: :admin)
+      user = insert(:user, role: :manager)
+
+      assert {:ok, %{name: "New name"}} = Accounts.update_user(admin, user, %{name: "New name"})
+    end
+
+    test "cannot update admin users" do
+      admin = insert(:user, role: :admin)
+      user = insert(:user, role: :admin)
+
+      assert {:error, "Não é possível alterar admins"} =
+               Accounts.update_user(admin, user, %{name: "New name"})
+    end
+
+    test "cannot update role" do
+      admin = insert(:user, role: :admin)
+      user = insert(:user, role: :manager)
+
+      assert {:error, changeset} = Accounts.update_user(admin, user, %{role: :admin})
+
+      assert "role inexistente e/ou inválido" in errors_on(changeset).role
     end
   end
 end

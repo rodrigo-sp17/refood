@@ -1,6 +1,16 @@
 defmodule Refood.Factory do
   use ExMachina.Ecto, repo: Refood.Repo
 
+  def user_factory do
+    %Refood.Accounts.User{
+      name: sequence(:user_name, &"Jim #{&1}"),
+      role: :manager,
+      email: sequence(:email, &"jim#{&1}@mail.com"),
+      password: "1234567890",
+      hashed_password: "$2b$12$4RKfJP5waBnZNEpIUhrcXOXeCn1oi4cCOnD9wzv1mAvZRopurTZKO"
+    }
+  end
+
   def product_factory do
     %Refood.Inventory.Product{
       id: Ecto.UUID.generate(),

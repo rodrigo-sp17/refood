@@ -49,7 +49,12 @@ defmodule RefoodWeb.UserSettingsLive do
             id="hidden_user_email"
             value={@current_email}
           />
-          <.input field={@password_form[:password]} type="password" label="Nova palavra-passe" required />
+          <.input
+            field={@password_form[:password]}
+            type="password"
+            label="Nova palavra-passe"
+            required
+          />
           <.input
             field={@password_form[:password_confirmation]}
             type="password"
