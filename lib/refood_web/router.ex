@@ -1,6 +1,8 @@
 defmodule RefoodWeb.Router do
   use RefoodWeb, :router
 
+  import RefoodWeb.UserAuth
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -8,6 +10,7 @@ defmodule RefoodWeb.Router do
     plug :put_root_layout, html: {RefoodWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :fetch_current_user
   end
 
   pipeline :api do
@@ -18,12 +21,12 @@ defmodule RefoodWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    get "/storages/:storage_id/items/download", ExportController, :download_storage_csv
   end
 
   live_session :authenticated,
     on_mount: [
-      RefoodWeb.Nav
+      RefoodWeb.Nav,
+      {RefoodWeb.UserAuth, :ensure_authenticated}
     ] do
     scope "/shift", RefoodWeb do
       pipe_through :browser
@@ -82,17 +85,41 @@ defmodule RefoodWeb.Router do
     end
   end
 
-  # Window with daily families -> UI only
-  # Authentication
-  # Family register (name, number, quantity, restrictions)
-  # Day exchange
-  # Fault register
-  # New family solicitation -> add a new one (can't remove, only admins)
-  # Family queue -> check who is there
-  # Queue status ->
-  # Authentication and log in (a token, admin accounts)
-  # What kind of users? we have managers, shifts, rounds
-  # Family and register -> For managers -> (name, number, quantity, absency register, )
-  # Family Register -> For managers
-  # Queue
+  ## Authentication routes
+
+  scope "/", RefoodWeb do
+    pipe_through [:browser, :redirect_if_user_is_authenticated]
+
+    live_session :redirect_if_user_is_authenticated,
+      on_mount: [{RefoodWeb.UserAuth, :redirect_if_user_is_authenticated}] do
+      live "/users/register", UserRegistrationLive, :new
+      live "/users/log_in", UserLoginLive, :new
+      live "/users/reset_password", UserForgotPasswordLive, :new
+      live "/users/reset_password/:token", UserResetPasswordLive, :edit
+    end
+
+    post "/users/log_in", UserSessionController, :create
+  end
+
+  scope "/", RefoodWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :require_authenticated_user,
+      on_mount: [{RefoodWeb.UserAuth, :ensure_authenticated}] do
+      live "/users/settings", UserSettingsLive, :edit
+      live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
+    end
+  end
+
+  scope "/", RefoodWeb do
+    pipe_through [:browser]
+
+    delete "/users/log_out", UserSessionController, :delete
+
+    live_session :current_user,
+      on_mount: [{RefoodWeb.UserAuth, :mount_current_user}] do
+      live "/users/confirm/:token", UserConfirmationLive, :edit
+      live "/users/confirm", UserConfirmationInstructionsLive, :new
+    end
+  end
 end

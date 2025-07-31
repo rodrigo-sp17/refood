@@ -11,42 +11,58 @@
 # and so on) as they will fail if something goes wrong.
 
 alias Refood.Families.Family
+alias Refood.Families.HelpQueue
 alias Refood.Repo
 
 if Mix.env() == :dev do
   [
     %{
       number: 9,
-      name: "Abdul",
+      name: "Joao Silva",
       adults: 2,
       children: 2,
       restrictions: "- doces",
+      phone_number: "+351913002777",
+      status: :active,
+      address: %{region: "Bonfim", city: "Porto"},
       weekdays: [:wednesday, :friday]
     },
     %{
       number: 12,
-      name: "Vania",
+      name: "Maria Almeida",
       adults: 2,
       children: 2,
       restrictions: nil,
+      email: "maria.almeida@hotmail.com",
+      phone_number: "351123456789",
+      status: :active,
+      address: %{region: "Bonfim", city: "Porto"},
       weekdays: [:monday, :wednesday]
     },
     %{
-      number: 22,
-      name: "Santiago",
-      adults: 2,
-      children: 2,
-      restrictions: nil,
-      weekdays: [:wednesday, :saturday]
-    },
-    %{
-      number: 35,
+      number: nil,
       name: "Marlene",
       adults: 1,
       children: 0,
       restrictions: nil,
+      status: :finished,
+      address: %{region: "Bonfim", city: "Porto"},
       weekdays: [:wednesday, :friday]
     }
   ]
   |> Enum.map(&(Family.changeset(&1) |> Repo.insert!()))
+
+  [
+    %{
+      name: "Santiago Oliveira",
+      adults: 2,
+      children: 2,
+      restrictions: nil,
+      status: :queued,
+      email: "santiago.oliveira@hotmail.com",
+      address: %{region: "Bonfim", city: "Porto"},
+      queue_positon: 1
+    }
+  ]
+  |> Enum.map(&HelpQueue.request_help/1)
 end
