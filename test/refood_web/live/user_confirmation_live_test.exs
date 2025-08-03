@@ -14,7 +14,7 @@ defmodule RefoodWeb.UserConfirmationLiveTest do
   describe "Confirm user" do
     test "renders confirmation page", %{conn: conn} do
       {:ok, _lv, html} = live(conn, ~p"/users/confirm/some-token")
-      assert html =~ "Confirm Account"
+      assert html =~ "Confirmar conta"
     end
 
     test "confirms the given token once", %{conn: conn, user: user} do
@@ -29,12 +29,12 @@ defmodule RefoodWeb.UserConfirmationLiveTest do
         lv
         |> form("#confirmation_form")
         |> render_submit()
-        |> follow_redirect(conn, "/")
+        |> follow_redirect(conn, "/shift")
 
       assert {:ok, conn} = result
 
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
-               "User confirmed successfully"
+               "Usuário confirmado!"
 
       assert Accounts.get_user!(user.id).confirmed_at
       refute get_session(conn, :user_token)
@@ -47,7 +47,7 @@ defmodule RefoodWeb.UserConfirmationLiveTest do
         lv
         |> form("#confirmation_form")
         |> render_submit()
-        |> follow_redirect(conn, "/")
+        |> follow_redirect(conn, "/users/log_in")
 
       assert {:ok, conn} = result
 
@@ -65,7 +65,7 @@ defmodule RefoodWeb.UserConfirmationLiveTest do
         lv
         |> form("#confirmation_form")
         |> render_submit()
-        |> follow_redirect(conn, "/")
+        |> follow_redirect(conn, "/shift")
 
       assert {:ok, conn} = result
       refute Phoenix.Flash.get(conn.assigns.flash, :error)
@@ -78,7 +78,7 @@ defmodule RefoodWeb.UserConfirmationLiveTest do
         lv
         |> form("#confirmation_form")
         |> render_submit()
-        |> follow_redirect(conn, ~p"/")
+        |> follow_redirect(conn, ~p"/users/log_in")
 
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~
                "User confirmation link is invalid or it has expired"

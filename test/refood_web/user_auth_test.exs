@@ -22,7 +22,7 @@ defmodule RefoodWeb.UserAuthTest do
       conn = UserAuth.log_in_user(conn, user)
       assert token = get_session(conn, :user_token)
       assert get_session(conn, :live_socket_id) == "users_sessions:#{Base.url_encode64(token)}"
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/shift"
       assert Accounts.get_user_by_session_token(token)
     end
 
@@ -60,7 +60,7 @@ defmodule RefoodWeb.UserAuthTest do
       refute get_session(conn, :user_token)
       refute conn.cookies[@remember_me_cookie]
       assert %{max_age: 0} = conn.resp_cookies[@remember_me_cookie]
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/users/log_in"
       refute Accounts.get_user_by_session_token(user_token)
     end
 
@@ -79,7 +79,7 @@ defmodule RefoodWeb.UserAuthTest do
       conn = conn |> fetch_cookies() |> UserAuth.log_out_user()
       refute get_session(conn, :user_token)
       assert %{max_age: 0} = conn.resp_cookies[@remember_me_cookie]
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/users/log_in"
     end
   end
 
@@ -216,7 +216,7 @@ defmodule RefoodWeb.UserAuthTest do
     test "redirects if user is authenticated", %{conn: conn, user: user} do
       conn = conn |> assign(:current_user, user) |> UserAuth.redirect_if_user_is_authenticated([])
       assert conn.halted
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/shift"
     end
 
     test "does not redirect if user is not authenticated", %{conn: conn} do
@@ -234,7 +234,7 @@ defmodule RefoodWeb.UserAuthTest do
       assert redirected_to(conn) == ~p"/users/log_in"
 
       assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-               "You must log in to access this page."
+               "Deve fazer log in para acessar a página."
     end
 
     test "stores the path to redirect to on GET", %{conn: conn} do

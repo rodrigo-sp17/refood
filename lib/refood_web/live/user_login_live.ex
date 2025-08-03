@@ -17,7 +17,7 @@ defmodule RefoodWeb.UserLoginLive do
         <:actions>
           <.input field={@form[:remember_me]} type="checkbox" label="Mantenha-me logado" />
           <.link href={~p"/users/reset_password"} class="text-sm font-semibold">
-            Esqueceu sua senha?
+            Esqueceu sua palavra-passe?
           </.link>
         </:actions>
         <:actions>

@@ -25,7 +25,6 @@ defmodule RefoodWeb.Router do
 
   live_session :authenticated,
     on_mount: [
-      RefoodWeb.Nav,
       {RefoodWeb.UserAuth, :ensure_authenticated}
     ] do
     scope "/shift", RefoodWeb do
@@ -45,21 +44,17 @@ defmodule RefoodWeb.Router do
 
       live "/", FamiliesLive, :index
     end
+  end
 
-    scope "/products", RefoodWeb do
+  live_session :authenticated_admin,
+    on_mount: [
+      {RefoodWeb.UserAuth, :ensure_authenticated},
+      {RefoodWeb.UserAuth, :ensure_admin}
+    ] do
+    scope "/user-management", RefoodWeb do
       pipe_through :browser
 
-      live "/", ProductsLive, :index
-      live "/new", ProductsLive, :new
-    end
-
-    scope "/storages", RefoodWeb do
-      pipe_through :browser
-
-      live "/", StoragesLive, :index
-      live "/new", StoragesLive, :new
-      live "/:id", StorageLive, :show
-      live "/:id/items/new", StorageLive.NewItemLive, :new_item
+      live "/", UsersLive, :index
     end
   end
 
@@ -92,7 +87,6 @@ defmodule RefoodWeb.Router do
 
     live_session :redirect_if_user_is_authenticated,
       on_mount: [{RefoodWeb.UserAuth, :redirect_if_user_is_authenticated}] do
-      live "/users/register", UserRegistrationLive, :new
       live "/users/log_in", UserLoginLive, :new
       live "/users/reset_password", UserForgotPasswordLive, :new
       live "/users/reset_password/:token", UserResetPasswordLive, :edit

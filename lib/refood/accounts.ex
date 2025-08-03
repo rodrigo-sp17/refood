@@ -369,18 +369,47 @@ defmodule Refood.Accounts do
   @doc """
   Lists all users without sensitive information.
   """
-  def list_users(%{role: :admin}) do
+  def list_users(%User{role: :admin}, params \\ %{}) do
     from(user in User,
+      as: :user,
       select: [:id, :role, :name, :email, :inserted_at, :updated_at, :confirmed_at],
       order_by: [:inserted_at]
     )
+    |> filter_users(params)
     |> Repo.all()
+  end
+
+  defp filter_users(query, params) do
+    Enum.reduce(params, query, fn
+      {:q, q}, query when is_binary(q) ->
+        parsed_q = "%#{q}%"
+
+        query
+        |> where(
+          [user: u],
+          ilike(u.name, ^parsed_q) or ilike(u.email, ^parsed_q) or ilike(u.role, ^parsed_q)
+        )
+
+      _, query ->
+        query
+    end)
+  end
+
+  @doc """
+  Gets an editable user. Only admins can see users for editing.
+  """
+  def get_editable_user!(%User{role: :admin}, user_id) when is_binary(user_id) do
+    from(user in User,
+      select: [:id, :role, :name, :email, :inserted_at, :updated_at, :confirmed_at],
+      where: user.id == ^user_id and user.role != :admin
+    )
+    |> Repo.one()
   end
 
   @doc """
   Deletes a non-admin user
   """
-  def delete_user(%{role: :admin}, %{role: to_delete_role} = user)
+  def delete_user(%User{role: :admin}, %{role: to_delete_role} = user)
       when to_delete_role !== :admin do
     Ecto.Multi.new()
     |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
@@ -390,10 +419,14 @@ defmodule Refood.Accounts do
 
   def delete_user(_, _), do: {:error, "Não é possível remover admins"}
 
+  def change_update_user_details(user, attrs \\ %{}) do
+    User.update_details_changeset(user, attrs)
+  end
+
   @doc """
   Updates a user when available.
   """
-  def update_user(%{role: :admin}, %{role: role} = user, attrs) when role !== :admin do
+  def update_user(%User{role: :admin}, %{role: role} = user, attrs) when role !== :admin do
     user
     |> User.update_details_changeset(attrs)
     |> Repo.update()

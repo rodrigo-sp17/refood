@@ -99,7 +99,7 @@ defmodule Refood.AccountsTest do
       {:error, changeset} =
         Accounts.register_user(admin, valid_user_attributes(email: email, role: :admin))
 
-      assert "role inexistente e/ou inválido" in errors_on(changeset).role
+      assert "Função inexistente e/ou inválida" in errors_on(changeset).role
     end
 
     test "registers users with a hashed password" do
@@ -588,13 +588,13 @@ defmodule Refood.AccountsTest do
                Accounts.update_user(admin, user, %{name: "New name"})
     end
 
-    test "cannot update role" do
+    test "cannot update role to admin" do
       admin = insert(:user, role: :admin)
       user = insert(:user, role: :manager)
 
       assert {:error, changeset} = Accounts.update_user(admin, user, %{role: :admin})
 
-      assert "role inexistente e/ou inválido" in errors_on(changeset).role
+      assert "Função inexistente e/ou inválida" in errors_on(changeset).role
     end
   end
 end

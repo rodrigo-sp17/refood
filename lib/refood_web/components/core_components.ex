@@ -187,8 +187,8 @@ defmodule RefoodWeb.CoreComponents do
 
   def flash_group(assigns) do
     ~H"""
-    <.flash kind={:info} title="Sucesso!" flash={@flash} />
-    <.flash kind={:error} title="Erro!" flash={@flash} />
+    <.flash id="sucess-flash" kind={:info} title="Sucesso!" flash={@flash} />
+    <.flash id="error-flash" kind={:error} title="Erro!" flash={@flash} />
     <.flash
       id="client-error"
       kind={:error}

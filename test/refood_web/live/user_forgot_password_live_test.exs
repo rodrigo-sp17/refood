@@ -11,8 +11,7 @@ defmodule RefoodWeb.UserForgotPasswordLiveTest do
     test "renders email page", %{conn: conn} do
       {:ok, lv, html} = live(conn, ~p"/users/reset_password")
 
-      assert html =~ "Forgot your password?"
-      assert has_element?(lv, ~s|a[href="#{~p"/users/register"}"]|, "Register")
+      assert html =~ "Esqueceu sua palavra-passe?"
       assert has_element?(lv, ~s|a[href="#{~p"/users/log_in"}"]|, "Log in")
     end
 
@@ -21,7 +20,7 @@ defmodule RefoodWeb.UserForgotPasswordLiveTest do
         conn
         |> log_in_user(user_fixture())
         |> live(~p"/users/reset_password")
-        |> follow_redirect(conn, ~p"/")
+        |> follow_redirect(conn, ~p"/shift")
 
       assert {:ok, _conn} = result
     end
@@ -39,9 +38,10 @@ defmodule RefoodWeb.UserForgotPasswordLiveTest do
         lv
         |> form("#reset_password_form", user: %{"email" => user.email})
         |> render_submit()
-        |> follow_redirect(conn, "/")
+        |> follow_redirect(conn, "/users/log_in")
 
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "If your email is in our system"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
+               "Se o email está em nosso sistema, receberá brevemente instruções para resetar a palavra-passe."
 
       assert Repo.get_by!(Accounts.UserToken, user_id: user.id).context ==
                "reset_password"
@@ -54,9 +54,11 @@ defmodule RefoodWeb.UserForgotPasswordLiveTest do
         lv
         |> form("#reset_password_form", user: %{"email" => "unknown@example.com"})
         |> render_submit()
-        |> follow_redirect(conn, "/")
+        |> follow_redirect(conn, "/users/log_in")
 
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "If your email is in our system"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
+               "Se o email está em nosso sistema, receberá brevemente instruções para resetar a palavra-passe."
+
       assert Repo.all(Accounts.UserToken) == []
     end
   end

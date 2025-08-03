@@ -12,8 +12,8 @@ defmodule RefoodWeb.UserSettingsLiveTest do
         |> log_in_user(user_fixture())
         |> live(~p"/users/settings")
 
-      assert html =~ "Change Email"
-      assert html =~ "Change Password"
+      assert html =~ "Trocar email"
+      assert html =~ "Trocar palavra-passe"
     end
 
     test "redirects if user is not logged in", %{conn: conn} do
@@ -21,7 +21,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
 
       assert {:redirect, %{to: path, flash: flash}} = redirect
       assert path == ~p"/users/log_in"
-      assert %{"error" => "You must log in to access this page."} = flash
+      assert %{"error" => "Deve fazer log in para acessar a página."} = flash
     end
   end
 
@@ -45,7 +45,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
         })
         |> render_submit()
 
-      assert result =~ "A link to confirm your email"
+      assert result =~ "Um link para confirmar a troca de email"
       assert Accounts.get_user_by_email(user.email)
     end
 
@@ -61,7 +61,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
           "user" => %{"email" => "with spaces"}
         })
 
-      assert result =~ "Change Email"
+      assert result =~ "Trocar email"
       assert result =~ "must have the @ sign and no spaces"
     end
 
@@ -76,7 +76,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
         })
         |> render_submit()
 
-      assert result =~ "Change Email"
+      assert result =~ "Trocar email"
       assert result =~ "did not change"
       assert result =~ "is not valid"
     end
@@ -113,7 +113,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
       assert get_session(new_password_conn, :user_token) != get_session(conn, :user_token)
 
       assert Phoenix.Flash.get(new_password_conn.assigns.flash, :info) =~
-               "Password updated successfully"
+               "Palavra-passe atualizada!"
 
       assert Accounts.get_user_by_email_and_password(user.email, new_password)
     end
@@ -132,7 +132,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
           }
         })
 
-      assert result =~ "Change Password"
+      assert result =~ "Trocar palavra-passe"
       assert result =~ "should be at least 12 character(s)"
       assert result =~ "does not match password"
     end
@@ -151,7 +151,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
         })
         |> render_submit()
 
-      assert result =~ "Change Password"
+      assert result =~ "Trocar palavra-passe"
       assert result =~ "should be at least 12 character(s)"
       assert result =~ "does not match password"
       assert result =~ "is not valid"
@@ -177,7 +177,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
       assert {:live_redirect, %{to: path, flash: flash}} = redirect
       assert path == ~p"/users/settings"
       assert %{"info" => message} = flash
-      assert message == "Email changed successfully."
+      assert message == "Email trocado com sucesso."
       refute Accounts.get_user_by_email(user.email)
       assert Accounts.get_user_by_email(email)
 
@@ -186,7 +186,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
       assert {:live_redirect, %{to: path, flash: flash}} = redirect
       assert path == ~p"/users/settings"
       assert %{"error" => message} = flash
-      assert message == "Email change link is invalid or it has expired."
+      assert message == "Link de email inválido ou expirado."
     end
 
     test "does not update email with invalid token", %{conn: conn, user: user} do
@@ -194,7 +194,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
       assert {:live_redirect, %{to: path, flash: flash}} = redirect
       assert path == ~p"/users/settings"
       assert %{"error" => message} = flash
-      assert message == "Email change link is invalid or it has expired."
+      assert message == "Link de email inválido ou expirado."
       assert Accounts.get_user_by_email(user.email)
     end
 
@@ -204,7 +204,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
       assert {:redirect, %{to: path, flash: flash}} = redirect
       assert path == ~p"/users/log_in"
       assert %{"error" => message} = flash
-      assert message == "You must log in to access this page."
+      assert message == "Deve fazer log in para acessar a página."
     end
   end
 end

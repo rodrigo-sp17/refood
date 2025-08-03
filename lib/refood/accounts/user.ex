@@ -43,7 +43,7 @@ defmodule Refood.Accounts.User do
     |> validate_email(opts)
     |> validate_password(opts)
     |> validate_required([:name, :role])
-    |> validate_exclusion(:role, [:admin], message: "role inexistente e/ou inválido")
+    |> validate_exclusion(:role, [:admin], message: "Função inexistente e/ou inválida")
     |> validate_inclusion(:role, [:manager, :shift])
   end
 
@@ -168,6 +168,6 @@ defmodule Refood.Accounts.User do
     user
     |> cast(attrs, [:name, :role])
     |> validate_required([:name, :role])
-    |> validate_exclusion(:role, [:admin], message: "role inexistente e/ou inválido")
+    |> validate_exclusion(:role, [:admin], message: "Função inexistente e/ou inválida")
   end
 end

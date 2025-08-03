@@ -21,15 +21,15 @@ defmodule RefoodWeb.UserResetPasswordLiveTest do
     test "renders reset password with valid token", %{conn: conn, token: token} do
       {:ok, _lv, html} = live(conn, ~p"/users/reset_password/#{token}")
 
-      assert html =~ "Reset Password"
+      assert html =~ "Resetar palavra-passe"
     end
 
     test "does not render reset password with invalid token", %{conn: conn} do
       {:error, {:redirect, to}} = live(conn, ~p"/users/reset_password/invalid")
 
       assert to == %{
-               flash: %{"error" => "Reset password link is invalid or it has expired."},
-               to: ~p"/"
+               flash: %{"error" => "Link de reset inválido ou expirado."},
+               to: ~p"/users/log_in"
              }
     end
 
@@ -64,7 +64,7 @@ defmodule RefoodWeb.UserResetPasswordLiveTest do
         |> follow_redirect(conn, ~p"/users/log_in")
 
       refute get_session(conn, :user_token)
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Password reset successfully"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Palavra-passe resetada."
       assert Accounts.get_user_by_email_and_password(user.email, "new valid password")
     end
 
@@ -81,7 +81,7 @@ defmodule RefoodWeb.UserResetPasswordLiveTest do
         )
         |> render_submit()
 
-      assert result =~ "Reset Password"
+      assert result =~ "Resetar palavra-passe"
       assert result =~ "should be at least 12 character(s)"
       assert result =~ "does not match password"
     end
@@ -98,21 +98,6 @@ defmodule RefoodWeb.UserResetPasswordLiveTest do
         |> follow_redirect(conn, ~p"/users/log_in")
 
       assert conn.resp_body =~ "Log in"
-    end
-
-    test "redirects to registration page when the Register button is clicked", %{
-      conn: conn,
-      token: token
-    } do
-      {:ok, lv, _html} = live(conn, ~p"/users/reset_password/#{token}")
-
-      {:ok, conn} =
-        lv
-        |> element(~s|main a:fl-contains("Register")|)
-        |> render_click()
-        |> follow_redirect(conn, ~p"/users/register")
-
-      assert conn.resp_body =~ "Register"
     end
   end
 end

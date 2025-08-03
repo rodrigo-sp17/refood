@@ -50,7 +50,13 @@
 
         <.link navigate={~p"/families"}>
           <div class={"#{if @socket.view == RefoodWeb.FamiliesLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
-            <.icon name="hero-users-solid" class="w-6 h-6 mx-1" /> Famílias
+            <.icon name="hero-user-group-solid" class="w-6 h-6 mx-1" /> Famílias
+          </div>
+        </.link>
+
+        <.link :if={@current_user.role == :admin} navigate={~p"/user-management"}>
+          <div class={"#{if @socket.view == RefoodWeb.UsersLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+            <.icon name="hero-users-solid" class="w-6 h-6 mx-1" /> Usuários
           </div>
         </.link>
       </nav>

@@ -15,7 +15,7 @@ defmodule RefoodWeb.UserSessionController do
   end
 
   def create(conn, params) do
-    create(conn, params, "Bem-vindo de volta!")
+    create(conn, params, "Bem-vindo(a) de volta!")
   end
 
   defp create(conn, %{"user" => user_params}, info) do
@@ -36,7 +36,7 @@ defmodule RefoodWeb.UserSessionController do
 
   def delete(conn, _params) do
     conn
-    |> put_flash(:info, "Log out com sucesso!.")
+    |> put_flash(:info, "Log out com sucesso!")
     |> UserAuth.log_out_user()
   end
 end
