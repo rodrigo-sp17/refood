@@ -25,7 +25,13 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
         <.header>
           Família {if @family.status == :active, do: "F-#{@family.number} - ", else: "de"} {@family.name}
           <:actions>
-            <.button :if={!@edit} phx-target={@myself} phx-click="edit-family">Editar</.button>
+            <.button
+              :if={@current_user.role in [:admin, :manager] && !@edit}
+              phx-target={@myself}
+              phx-click="edit-family"
+            >
+              Editar
+            </.button>
           </:actions>
         </.header>
 
@@ -114,26 +120,30 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
 
   @impl true
   def handle_event("edit-family", _, socket) do
-    assigns = [
-      edit: true
-    ]
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      assigns = [
+        edit: true
+      ]
 
-    {:noreply, assign(socket, assigns)}
+      {:noreply, assign(socket, assigns)}
+    end
   end
 
   @impl true
   def handle_event("update-family", %{"family" => family_attrs}, socket) do
-    case Families.update_family_details(socket.assigns.family, family_attrs) do
-      {:ok, created_request} ->
-        socket.assigns.on_created.(created_request)
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      case Families.update_family_details(socket.assigns.family, family_attrs) do
+        {:ok, created_request} ->
+          socket.assigns.on_created.(created_request)
 
-        {:noreply,
-         socket
-         |> put_flash(:info, "Sucesso!")
-         |> assign(edit: false)}
+          {:noreply,
+           socket
+           |> put_flash(:info, "Sucesso!")
+           |> assign(edit: false)}
 
-      {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, :changeset, changeset)}
+        {:error, %Ecto.Changeset{} = changeset} ->
+          {:noreply, assign(socket, :changeset, changeset)}
+      end
     end
   end
 end

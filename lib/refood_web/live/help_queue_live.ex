@@ -158,7 +158,7 @@ defmodule RefoodWeb.HelpQueueLive do
         {DateTime.to_date(family.inserted_at)}
       </:col>
       <:action :let={family}>
-        <.dropdown id={"dropdown-" <> family.id}>
+        <.dropdown :if={@current_user.role in [:admin, :manager]} id={"dropdown-" <> family.id}>
           <:link on_click={JS.push("activate-family", value: %{id: family.id}, page_loading: true)}>
             Iniciar ajuda
           </:link>
@@ -182,12 +182,14 @@ defmodule RefoodWeb.HelpQueueLive do
 
   @impl true
   def handle_event("show-change-order", %{"id" => family_id}, socket) do
-    assigns = [
-      view_to_show: :change_order,
-      selected_family: Families.get_family!(family_id)
-    ]
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      assigns = [
+        view_to_show: :change_order,
+        selected_family: Families.get_family!(family_id)
+      ]
 
-    {:noreply, assign(socket, assigns)}
+      {:noreply, assign(socket, assigns)}
+    end
   end
 
   @impl true
@@ -202,54 +204,62 @@ defmodule RefoodWeb.HelpQueueLive do
 
   @impl true
   def handle_event("activate-family", %{"id" => family_id}, socket) do
-    assigns = [
-      view_to_show: :move_to_active,
-      selected_family: Families.get_family!(family_id)
-    ]
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      assigns = [
+        view_to_show: :move_to_active,
+        selected_family: Families.get_family!(family_id)
+      ]
 
-    {:noreply, assign(socket, assigns)}
+      {:noreply, assign(socket, assigns)}
+    end
   end
 
   @impl true
   def handle_event("move-to-active", %{"family" => attrs}, socket) do
-    case HelpQueue.activate_family(socket.assigns.selected_family.id, attrs) do
-      {:ok, _activated_family} ->
-        assigns = [
-          view_to_show: nil,
-          queue: HelpQueue.list_queue()
-        ]
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      case HelpQueue.activate_family(socket.assigns.selected_family.id, attrs) do
+        {:ok, _activated_family} ->
+          assigns = [
+            view_to_show: nil,
+            queue: HelpQueue.list_queue()
+          ]
 
-        {:noreply,
-         socket |> put_flash(:info, "Família movida para ajuda regular!") |> assign(assigns)}
+          {:noreply,
+           socket |> put_flash(:info, "Família movida para ajuda regular!") |> assign(assigns)}
 
-      {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, :changeset, changeset)}
+        {:error, %Ecto.Changeset{} = changeset} ->
+          {:noreply, assign(socket, :changeset, changeset)}
+      end
     end
   end
 
   @impl true
   def handle_event("confirm-remove-from-queue", %{"id" => family_id}, socket) do
-    assigns = [
-      view_to_show: :confirm_remove_from_queue,
-      selected_family: Families.get_family!(family_id)
-    ]
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      assigns = [
+        view_to_show: :confirm_remove_from_queue,
+        selected_family: Families.get_family!(family_id)
+      ]
 
-    {:noreply, assign(socket, assigns)}
+      {:noreply, assign(socket, assigns)}
+    end
   end
 
   @impl true
   def handle_event("remove-from-queue", %{"id" => family_id}, socket) do
-    case HelpQueue.remove_from_queue(family_id) do
-      {:ok, _deactivated} ->
-        assigns = [
-          queue: HelpQueue.list_queue(),
-          view_to_show: nil
-        ]
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      case HelpQueue.remove_from_queue(family_id) do
+        {:ok, _deactivated} ->
+          assigns = [
+            queue: HelpQueue.list_queue(),
+            view_to_show: nil
+          ]
 
-        {:noreply, socket |> put_flash(:info, "Família removida!") |> assign(assigns)}
+          {:noreply, socket |> put_flash(:info, "Família removida!") |> assign(assigns)}
 
-      {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, :changeset, changeset)}
+        {:error, %Ecto.Changeset{} = changeset} ->
+          {:noreply, assign(socket, :changeset, changeset)}
+      end
     end
   end
 

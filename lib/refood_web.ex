@@ -55,6 +55,8 @@ defmodule RefoodWeb do
         layout: {RefoodWeb.Layouts, :app},
         container: {:div, class: "relative h-screen flex overflow-hidden bg-white"}
 
+      import RefoodWeb.Authorization
+
       def handle_info({:put_flash, [type, message]}, socket) do
         {:noreply, put_flash(socket, type, message)}
       end
@@ -66,6 +68,8 @@ defmodule RefoodWeb do
   def live_component do
     quote do
       use Phoenix.LiveComponent
+
+      import RefoodWeb.Authorization
 
       unquote(html_helpers())
     end
