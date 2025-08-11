@@ -9,7 +9,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
   @impl true
   def mount(socket) do
     assigns = [
-      changeset: HelpQueue.change_request_help(%{})
+      form: to_form(HelpQueue.change_request_help(%{}))
     ]
 
     {:ok, assign(socket, assigns)}
@@ -24,12 +24,19 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
           Criar pedido de ajuda
         </.header>
 
-        <.simple_form :let={f} for={@changeset} phx-target={@myself} phx-submit="add-help-request">
-          <.input field={f[:name]} type="text" label="Nome" />
+        <.simple_form
+          id="new-help-request-form"
+          for={@form}
+          phx-target={@myself}
+          phx-change="validate"
+          phx-submit="add-help-request"
+        >
+          <.input required field={@form[:name]} type="text" label="Nome" />
           <div class="flex gap-4 justify-stretch">
             <div class="w-full">
               <.input
-                field={f[:adults]}
+                required
+                field={@form[:adults]}
                 type="number"
                 min="0"
                 step="1"
@@ -40,7 +47,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
             </div>
             <div class="w-full">
               <.input
-                field={f[:children]}
+                field={@form[:children]}
                 type="number"
                 min="0"
                 step="1"
@@ -50,10 +57,10 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
               />
             </div>
           </div>
-          <.input field={f[:phone_number]} type="tel" label="Telefone" />
-          <.input field={f[:email]} type="email" label="Email" />
+          <.input field={@form[:phone_number]} type="tel" label="Telefone" />
+          <.input field={@form[:email]} type="email" label="Email" />
           <div class="flex gap-4 justify-stretch">
-            <.inputs_for :let={fa} field={f[:address]}>
+            <.inputs_for :let={fa} field={@form[:address]}>
               <div class="w-full">
                 <.input field={fa[:region]} type="text" label="Região" />
               </div>
@@ -62,11 +69,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
               </div>
             </.inputs_for>
           </div>
-          <.input field={f[:notes]} type="textarea" label="Notas" />
-          <.error :if={@changeset.action}>
-            Oops, algo de errado aconteceu!
-          </.error>
-
+          <.input field={@form[:notes]} type="textarea" label="Notas" />
           <:actions>
             <.button class="w-full">Salvar</.button>
           </:actions>
@@ -74,6 +77,14 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
       </.modal>
     </div>
     """
+  end
+
+  @impl true
+  def handle_event("validate", %{"family" => help_request_attrs}, socket) do
+    form =
+      to_form(HelpQueue.change_request_help(help_request_attrs), action: :validate)
+
+    {:noreply, assign(socket, form: form)}
   end
 
   @impl true
@@ -85,7 +96,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
         {:noreply, socket}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, :changeset, changeset)}
+        {:noreply, assign(socket, form: to_form(changeset))}
     end
   end
 end

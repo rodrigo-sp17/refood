@@ -22,6 +22,33 @@ defmodule RefoodWeb.ShiftLive do
   end
 
   @impl true
+  def handle_params(%{"new-request" => _}, _uri, socket) do
+    {:noreply, assign(socket, view_to_show: :new_request)}
+  end
+
+  @impl true
+  def handle_params(%{"new-absence" => _, "family_id" => family_id}, _uri, socket) do
+    assigns = [selected_family: family_id, view_to_show: :new_absence]
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_params(%{"new-swap" => _, "family_id" => family_id}, _, socket) do
+    assigns = [
+      selected_family: family_id,
+      view_to_show: :new_swap,
+      form: to_form(Families.swap_changeset())
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_params(_, _uri, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <.header>
@@ -36,7 +63,7 @@ defmodule RefoodWeb.ShiftLive do
     />
 
     <.confirmation_modal
-      :if={@view_to_show == :add_absence}
+      :if={@view_to_show == :new_absence}
       id="add-absence"
       question="A família avisou com antecedência sobre a falta?"
       type={:delete}
@@ -47,15 +74,11 @@ defmodule RefoodWeb.ShiftLive do
       on_cancel={JS.push("cancel-modal")}
     />
 
-    <.modal :if={@view_to_show == :add_swap} id="add-swap" show on_cancel={JS.push("cancel-modal")}>
+    <.modal :if={@view_to_show == :new_swap} id="add-swap" show on_cancel={JS.push("cancel-modal")}>
       <div class="flex flex-col gap-10">
         <h2 class="text-2xl text-center">Para qual dia deseja trocar?</h2>
-        <.simple_form :let={f} for={@changeset} phx-submit="add-swap">
-          <.input type="date" field={f[:to]} />
-          <.error :if={@changeset.action}>
-            Oops, algo de errado aconteceu!
-          </.error>
-
+        <.simple_form id="add-swap-form" for={@form} phx-submit="add-swap">
+          <.input type="date" field={@form[:to]} />
           <:actions>
             <.button>Trocar</.button>
           </:actions>
@@ -109,8 +132,7 @@ defmodule RefoodWeb.ShiftLive do
                   family.absences == [] && Enum.empty?(family.swaps) &&
                     Date.compare(@date, Date.utc_today()) in [:gt, :eq]
                 }
-                phx-click="show-swap"
-                phx-value-family_id={family.id}
+                patch={"/shift/#{family.id}?new-swap"}
                 class="underline underline-offset-4"
               >
                 Trocar dia
@@ -121,14 +143,11 @@ defmodule RefoodWeb.ShiftLive do
               >
                 Troca
               </div>
-              <.button
-                :if={family.absences == []}
-                phx-click="show-absence"
-                phx-value-family_id={family.id}
-                class="flex items-center gap-1 rounded-3xl bg-transparent text-black border border-black px-6"
-              >
-                Marcar falta
-              </.button>
+              <.link :if={family.absences == []} patch={"/shift/#{family.id}?new-absence"}>
+                <.button class="flex items-center gap-1 rounded-3xl bg-transparent text-black border border-black px-6">
+                  Marcar falta
+                </.button>
+              </.link>
               <div :for={absence <- family.absences}>
                 <div
                   :if={absence.warned}
@@ -147,7 +166,11 @@ defmodule RefoodWeb.ShiftLive do
           </div>
         </div>
       </div>
-      <.button class="w-100 py-5" phx-click="show-new-request">Criar pedido de ajuda</.button>
+      <.link patch="/shift?new-request">
+        <.button class="w-100 py-5">
+          Criar pedido de ajuda
+        </.button>
+      </.link>
     </div>
     """
   end
@@ -177,12 +200,6 @@ defmodule RefoodWeb.ShiftLive do
   end
 
   @impl true
-  def handle_event("show-absence", %{"family_id" => family_id}, socket) do
-    assigns = [selected_family: family_id, view_to_show: :add_absence]
-    {:noreply, assign(socket, assigns)}
-  end
-
-  @impl true
   def handle_event("add-absence", %{"warned" => warned?}, socket) do
     %{selected_family: family_id, date: date} = socket.assigns
 
@@ -199,21 +216,8 @@ defmodule RefoodWeb.ShiftLive do
         {:noreply, socket |> assign(assigns) |> put_flash(:info, "Falta registrada!")}
 
       {:error, changeset} ->
-        assigns = base_assigns ++ [changeset: changeset]
-
-        {:noreply, assign(socket, assigns)}
+        {:noreply, put_flash(socket, :error, "Falha em registrar falta: #{changeset.errors}")}
     end
-  end
-
-  @impl true
-  def handle_event("show-swap", %{"family_id" => family_id}, socket) do
-    assigns = [
-      selected_family: family_id,
-      view_to_show: :add_swap,
-      changeset: Families.swap_changeset()
-    ]
-
-    {:noreply, assign(socket, assigns)}
   end
 
   @impl true
@@ -233,19 +237,14 @@ defmodule RefoodWeb.ShiftLive do
         {:noreply, socket |> assign(assigns) |> put_flash(:info, "Troca efetuada!")}
 
       {:error, changeset} ->
-        {:noreply, assign(socket, :changeset, changeset)}
+        {:noreply, assign(socket, form: to_form(changeset))}
     end
   end
 
   @impl true
-  def handle_event("show-new-request", _, socket) do
-    {:noreply, assign(socket, :view_to_show, :new_request)}
-  end
-
-  @impl true
   def handle_event("cancel-modal", _, socket) do
-    assigns = [selected_family: nil, view_to_show: nil]
-    {:noreply, assign(socket, assigns)}
+    socket = assign(socket, selected_family: nil, view_to_show: nil)
+    {:noreply, push_patch(socket, to: "/shift")}
   end
 
   @impl true
