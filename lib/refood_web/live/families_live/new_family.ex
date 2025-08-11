@@ -10,7 +10,7 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
   def update(assigns, socket) do
     updated_assigns =
       Map.merge(assigns, %{
-        changeset: Families.change_create_family(%{})
+        form: to_form(Families.change_create_family(%{}))
       })
 
     {:ok, assign(socket, updated_assigns)}
@@ -22,12 +22,18 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
     <div>
       <.modal show id={@id} on_cancel={@on_cancel}>
         <.header>Criar nova família</.header>
-        <.simple_form :let={f} for={@changeset} phx-target={@myself} phx-submit="create-family">
-          <.input field={f[:name]} type="text" label="Nome" />
+        <.simple_form
+          id="new-family-form"
+          for={@form}
+          phx-change="validate"
+          phx-target={@myself}
+          phx-submit="create-family"
+        >
+          <.input field={@form[:name]} type="text" label="Nome" />
           <div class="flex gap-4 justify-stretch">
             <div class="w-full">
               <.input
-                field={f[:adults]}
+                field={@form[:adults]}
                 type="number"
                 min="0"
                 step="1"
@@ -38,7 +44,7 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
             </div>
             <div class="w-full">
               <.input
-                field={f[:children]}
+                field={@form[:children]}
                 type="number"
                 min="0"
                 step="1"
@@ -48,9 +54,9 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
               />
             </div>
           </div>
-          <.input field={f[:phone_number]} type="tel" label="Telefone" />
-          <.input field={f[:email]} type="email" label="Email" />
-          <.inputs_for :let={fa} field={f[:address]}>
+          <.input field={@form[:phone_number]} type="tel" label="Telefone" />
+          <.input field={@form[:email]} type="email" label="Email" />
+          <.inputs_for :let={fa} field={@form[:address]}>
             <.input field={fa[:line_1]} type="text" label="Endereço" />
             <.input field={fa[:line_2]} type="text" label="Complemento" />
             <div class="flex gap-4 justify-stretch">
@@ -62,12 +68,8 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
               </div>
             </div>
           </.inputs_for>
-          <.input field={f[:restrictions]} type="textarea" label="Restrições" />
-          <.input field={f[:notes]} type="textarea" label="Notas" />
-          <.error :if={@changeset.action}>
-            Oops, algo de errado aconteceu!
-          </.error>
-
+          <.input field={@form[:restrictions]} type="textarea" label="Restrições" />
+          <.input field={@form[:notes]} type="textarea" label="Notas" />
           <:actions>
             <.button class="w-full">Salvar</.button>
           </:actions>
@@ -75,6 +77,14 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
       </.modal>
     </div>
     """
+  end
+
+  @impl true
+  def handle_event("validate", %{"family" => family_attrs}, socket) do
+    form =
+      to_form(Families.change_create_family(family_attrs), action: :validate)
+
+    {:noreply, assign(socket, form: form)}
   end
 
   @impl true
@@ -89,7 +99,7 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
          |> assign(edit: false)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, :changeset, changeset)}
+        {:noreply, assign(socket, form: to_form(changeset))}
     end
   end
 end

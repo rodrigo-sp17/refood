@@ -44,7 +44,8 @@ defmodule RefoodWeb.Router do
     scope "/families", RefoodWeb do
       pipe_through :browser
 
-      live "/", FamiliesLive, :index
+      live "/", FamiliesLive
+      live "/:family_id", FamiliesLive
     end
   end
 

@@ -25,6 +25,68 @@ defmodule RefoodWeb.FamiliesLive do
   end
 
   @impl true
+  def handle_params(%{"new-family" => _}, _uri, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      assigns = [
+        view_to_show: :new_family
+      ]
+
+      {:noreply, assign(socket, assigns)}
+    end
+  end
+
+  @impl true
+  def handle_params(%{"details" => _, "family_id" => family_id}, _uri, socket) do
+    assigns = [
+      view_to_show: :show_family_details,
+      selected_family: Families.get_family!(family_id)
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_params(%{"move-to-active" => _, "family_id" => family_id}, _uri, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      assigns = [
+        view_to_show: :move_to_active,
+        selected_family: Families.get_family!(family_id)
+      ]
+
+      {:noreply, assign(socket, assigns)}
+    end
+  end
+
+  @impl true
+  def handle_params(%{"move-to-finished" => _, "family_id" => family_id}, _uri, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      assigns = [
+        view_to_show: :confirm_move_to_finished,
+        selected_family: Families.get_family!(family_id)
+      ]
+
+      {:noreply, assign(socket, assigns)}
+    end
+  end
+
+  @impl true
+  def handle_params(%{"move-to-queue" => _, "family_id" => family_id}, _uri, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      assigns = [
+        view_to_show: :confirm_enqueue_family,
+        selected_family: Families.get_family!(family_id)
+      ]
+
+      {:noreply, assign(socket, assigns)}
+    end
+  end
+
+  @impl true
+  def handle_params(_, _uri, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <.live_component
@@ -79,9 +141,11 @@ defmodule RefoodWeb.FamiliesLive do
     <.header>
       Famílias
       <:actions>
-        <.button :if={@current_user.role in [:admin, :manager]} phx-click="show-new-family">
-          Criar nova família
-        </.button>
+        <.link patch="/families?new-family">
+          <.button :if={@current_user.role in [:admin, :manager]}>
+            Criar nova família
+          </.button>
+        </.link>
       </:actions>
     </.header>
     <.table
@@ -165,23 +229,13 @@ defmodule RefoodWeb.FamiliesLive do
       </:col>
       <:action :let={family}>
         <.dropdown :if={@current_user.role in [:admin, :manager]} id={"dropdown-" <> family.id}>
-          <:link
-            :if={family.status !== :active}
-            on_click={JS.push("activate-family", value: %{id: family.id}, page_loading: true)}
-          >
+          <:link :if={family.status !== :active} patch={"/families/#{family.id}?move-to-active"}>
             Iniciar ajuda
           </:link>
-          <:link
-            :if={family.status == :active}
-            on_click={
-              JS.push("confirm-move-to-finished", value: %{id: family.id}, page_loading: true)
-            }
-          >
+          <:link :if={family.status == :active} patch={"/families/#{family.id}?move-to-finished"}>
             Parar ajuda
           </:link>
-          <:link on_click={
-            JS.push("confirm-enqueue-family", value: %{id: family.id}, page_loading: true)
-          }>
+          <:link patch={"/families/#{family.id}?move-to-queue"}>
             Mover para lista de espera
           </:link>
         </.dropdown>
@@ -194,40 +248,13 @@ defmodule RefoodWeb.FamiliesLive do
 
   @impl true
   def handle_event("hide-view", _unsigned_params, socket) do
-    {:noreply, assign(socket, :view_to_show, nil)}
-  end
-
-  @impl true
-  def handle_event("show-new-family", _, socket) do
-    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
-      assigns = [
-        view_to_show: :new_family
-      ]
-
-      {:noreply, assign(socket, assigns)}
-    end
+    socket = assign(socket, selected_family: nil, view_to_show: nil)
+    {:noreply, push_patch(socket, to: "/families")}
   end
 
   @impl true
   def handle_event("show-family", %{"id" => family_id}, socket) do
-    assigns = [
-      view_to_show: :show_family_details,
-      selected_family: Families.get_family!(family_id)
-    ]
-
-    {:noreply, assign(socket, assigns)}
-  end
-
-  @impl true
-  def handle_event("activate-family", %{"id" => family_id}, socket) do
-    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
-      assigns = [
-        view_to_show: :move_to_active,
-        selected_family: Families.get_family!(family_id)
-      ]
-
-      {:noreply, assign(socket, assigns)}
-    end
+    {:noreply, push_patch(socket, to: "/families/#{family_id}?details")}
   end
 
   @impl true
@@ -250,18 +277,6 @@ defmodule RefoodWeb.FamiliesLive do
   end
 
   @impl true
-  def handle_event("confirm-move-to-finished", %{"id" => family_id}, socket) do
-    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
-      assigns = [
-        view_to_show: :confirm_move_to_finished,
-        selected_family: Families.get_family!(family_id)
-      ]
-
-      {:noreply, assign(socket, assigns)}
-    end
-  end
-
-  @impl true
   def handle_event("move-to-finished", %{"id" => family_id}, socket) do
     with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
       case Families.deactivate_family(family_id) do
@@ -277,18 +292,6 @@ defmodule RefoodWeb.FamiliesLive do
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply, assign(socket, :changeset, changeset)}
       end
-    end
-  end
-
-  @impl true
-  def handle_event("confirm-enqueue-family", %{"id" => family_id}, socket) do
-    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
-      assigns = [
-        view_to_show: :confirm_enqueue_family,
-        selected_family: Families.get_family!(family_id)
-      ]
-
-      {:noreply, assign(socket, assigns)}
     end
   end
 

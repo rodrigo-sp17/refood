@@ -29,7 +29,13 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
           </:actions>
         </.header>
 
-        <.simple_form id="help-request-details-form" for={@form} phx-change="validate" phx-target={@myself} phx-submit="update-help-request">
+        <.simple_form
+          id="help-request-details-form"
+          for={@form}
+          phx-change="validate"
+          phx-target={@myself}
+          phx-submit="update-help-request"
+        >
           <.input disabled={!@edit} field={@form[:name]} type="text" label="Nome" />
           <div class="flex gap-4 justify-stretch">
             <div class="w-full">

@@ -10,7 +10,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
   def update(%{family: family} = assigns, socket) do
     updated_assigns =
       Map.merge(assigns, %{
-        changeset: Families.change_update_family_details(family, %{}),
+        form: to_form(Families.change_update_family_details(family, %{})),
         edit: false
       })
 
@@ -35,13 +35,19 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
           </:actions>
         </.header>
 
-        <.simple_form :let={f} for={@changeset} phx-target={@myself} phx-submit="update-family">
-          <.input disabled={!@edit} field={f[:name]} type="text" label="Nome" />
+        <.simple_form
+          id="family-details-form"
+          for={@form}
+          phx-change="validate"
+          phx-target={@myself}
+          phx-submit="update-family"
+        >
+          <.input disabled={!@edit} field={@form[:name]} type="text" label="Nome" />
           <div class="flex gap-4 justify-stretch">
             <div class="w-full">
               <.input
                 disabled={!@edit}
-                field={f[:adults]}
+                field={@form[:adults]}
                 type="number"
                 min="0"
                 step="1"
@@ -52,7 +58,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
             <div class="w-full">
               <.input
                 disabled={!@edit}
-                field={f[:children]}
+                field={@form[:children]}
                 type="number"
                 min="0"
                 step="1"
@@ -61,9 +67,9 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
               />
             </div>
           </div>
-          <.input disabled={!@edit} field={f[:phone_number]} type="tel" label="Telefone" />
-          <.input disabled={!@edit} field={f[:email]} type="email" label="Email" />
-          <.inputs_for :let={fa} field={f[:address]}>
+          <.input disabled={!@edit} field={@form[:phone_number]} type="tel" label="Telefone" />
+          <.input disabled={!@edit} field={@form[:email]} type="email" label="Email" />
+          <.inputs_for :let={fa} field={@form[:address]}>
             <.input disabled={!@edit} field={fa[:line_1]} type="text" label="Endereço" />
             <.input disabled={!@edit} field={fa[:line_2]} type="text" label="Complemento" />
             <div class="flex gap-4 justify-stretch">
@@ -78,7 +84,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
           <.input
             :if={@family.status == :active}
             disabled={!@edit}
-            field={f[:weekdays]}
+            field={@form[:weekdays]}
             type="checkgroup"
             multiple={true}
             label="Dia(s) da semana"
@@ -92,8 +98,8 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
               {"Sab", :saturday}
             ]}
           />
-          <.input disabled={!@edit} field={f[:restrictions]} type="textarea" label="Restrições" />
-          <.input disabled={!@edit} field={f[:notes]} type="textarea" label="Notas" />
+          <.input disabled={!@edit} field={@form[:restrictions]} type="textarea" label="Restrições" />
+          <.input disabled={!@edit} field={@form[:notes]} type="textarea" label="Notas" />
           <div>
             <.label for="absence-list">Faltas</.label>
             <div id="absence-list">
@@ -104,11 +110,6 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
               </.list>
             </div>
           </div>
-
-          <.error :if={@changeset.action}>
-            Oops, algo de errado aconteceu!
-          </.error>
-
           <:actions>
             <.button :if={@edit} class="w-full">Salvar</.button>
           </:actions>
@@ -116,6 +117,16 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
       </.modal>
     </div>
     """
+  end
+
+  @impl true
+  def handle_event("validate", %{"family" => attrs}, socket) do
+    assigns = [
+      edit: true,
+      form: to_form(Families.change_update_family_details(socket.assigns.family, attrs))
+    ]
+
+    {:noreply, assign(socket, assigns)}
   end
 
   @impl true
@@ -142,7 +153,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
            |> assign(edit: false)}
 
         {:error, %Ecto.Changeset{} = changeset} ->
-          {:noreply, assign(socket, :changeset, changeset)}
+          {:noreply, assign(socket, form: to_form(changeset))}
       end
     end
   end

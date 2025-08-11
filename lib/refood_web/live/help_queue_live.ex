@@ -130,9 +130,9 @@ defmodule RefoodWeb.HelpQueueLive do
     <.header>
       Lista de Espera
       <:actions>
-      <.link patch={"/help-queue?new-request"}>
-        <.button>Criar pedido de ajuda</.button>
-      </.link>
+        <.link patch="/help-queue?new-request">
+          <.button>Criar pedido de ajuda</.button>
+        </.link>
       </:actions>
     </.header>
 
@@ -154,7 +154,7 @@ defmodule RefoodWeb.HelpQueueLive do
         label="Posição"
       >
         <div class="flex flex-row gap-5 justify-center items-center">
-          <.link patch={"/help-queue/#{family.id}?change-order"} >
+          <.link patch={"/help-queue/#{family.id}?change-order"}>
             <.icon name="hero-arrows-up-down" class="h-5 w-5 hover:bg-blue-500" />
           </.link>
 
