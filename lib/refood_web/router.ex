@@ -38,6 +38,7 @@ defmodule RefoodWeb.Router do
       pipe_through :browser
 
       live "/", HelpQueueLive
+      live "/:family_id", HelpQueueLive
     end
 
     scope "/families", RefoodWeb do
