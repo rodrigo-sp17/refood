@@ -53,6 +53,13 @@ defmodule RefoodWeb.ShiftLive do
     ~H"""
     <.header>
       Turno
+      <:actions>
+        <.link patch="/shift?new-request">
+          <.button>
+            Criar pedido de ajuda
+          </.button>
+        </.link>
+      </:actions>
     </.header>
 
     <.live_component
@@ -104,18 +111,15 @@ defmodule RefoodWeb.ShiftLive do
           <.icon name="hero-chevron-right" class="bg-black group-hover:bg-white" />
         </button>
       </div>
-      <div class="flex flex-col bg-white rounded-lg divide-y w-full">
-        <div class="px-6 py-4">
-          <h4 class="text-xl font-medium relative">Famílias</h4>
-        </div>
+      <div class="flex flex-col bg-white rounded-lg border divide-y w-full">
         <div class="px-6 flex flex-col divide-y">
           <div :if={@families == []} class="h-16 flex justify-center items-center">
             Nenhuma família para o dia.
           </div>
           <div :for={family <- @families} class="py-4 flex justify-between items-center">
-            <div class="text-xl font-bold w-24">F-{family.number}</div>
-            <div class="text-lg basis-1/6">{family.name}</div>
-            <div class="text-lg basis-1/6 flex items-center gap-3">
+            <div class="text-xl font-bold w-11">F-{family.number}</div>
+            <div class="text-lg basis-1/10">{family.name}</div>
+            <div class="text-lg basis-1/10 flex items-center gap-3">
               <.icon name="hero-users-solid" />{family.adults} + {family.children}
             </div>
             <div class="basis-1/5 flex items-center gap-1">
@@ -166,11 +170,6 @@ defmodule RefoodWeb.ShiftLive do
           </div>
         </div>
       </div>
-      <.link patch="/shift?new-request">
-        <.button class="w-100 py-5">
-          Criar pedido de ajuda
-        </.button>
-      </.link>
     </div>
     """
   end
