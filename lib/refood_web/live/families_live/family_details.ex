@@ -85,6 +85,41 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
               <.input edit={@edit} field={@form[:phone_number]} type="tel" label="Telefone" />
             </div>
           </div>
+          <.input
+            edit={@edit}
+            field={@form[:speaks_portuguese]}
+            type="checkbox"
+            label="Fala Português?"
+          />
+          <div class="flex gap-4 justify-stretch">
+            <div class="flex-1/2">
+              <.input
+                edit={@edit}
+                field={@form[:help_requested_at]}
+                type="datetime-local"
+                label="Ajuda pedida em"
+              />
+            </div>
+            <div class="flex-1/2">
+              <.input
+                edit={@edit}
+                field={@form[:last_contacted_at]}
+                type="datetime-local"
+                label="Último contacto em"
+              />
+            </div>
+          </div>
+          <div class="flex gap-4 justify-stretch">
+            <div class="flex-1/3">
+              <.input edit={@edit} field={@form[:cc]} type="text" label="CC" />
+            </div>
+            <div class="flex-1/3">
+              <.input edit={@edit} field={@form[:nif]} type="text" label="NIF" />
+            </div>
+            <div class="flex-1/3">
+              <.input edit={@edit} field={@form[:niss]} type="text" label="NISS" />
+            </div>
+          </div>
           <.form_section class="pt-10">Morada</.form_section>
           <.inputs_for :let={fa} field={@form[:address]}>
             <.input edit={@edit} field={fa[:line_1]} type="text" label="Endereço" />

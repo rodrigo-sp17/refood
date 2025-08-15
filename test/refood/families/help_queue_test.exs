@@ -19,7 +19,9 @@ defmodule Refood.Families.HelpQueueTest do
         email: "jane@gmail.com",
         adults: 2,
         children: 0,
-        name: "Jane Silva"
+        name: "Jane Silva",
+        help_requested_at: ~U[2025-01-01T00:00:00Z],
+        speaks_portuguese: false
       }
 
       assert {:ok, family} = HelpQueue.request_help(attrs)
@@ -39,7 +41,9 @@ defmodule Refood.Families.HelpQueueTest do
                adults: 2,
                children: 0,
                name: "Jane Silva",
-               weekdays: nil
+               weekdays: nil,
+               help_requested_at: ~U[2025-01-01T00:00:00Z],
+               speaks_portuguese: false
              } = family |> Repo.reload() |> Repo.preload(:address)
     end
 
@@ -66,7 +70,8 @@ defmodule Refood.Families.HelpQueueTest do
         email: "jane@gmail.com",
         adults: 2,
         children: 0,
-        name: "Jane Silva"
+        name: "Jane Silva",
+        help_requested_at: ~U[2025-01-01T00:00:00Z]
       }
 
       assert {:error, changeset} = HelpQueue.request_help(attrs)

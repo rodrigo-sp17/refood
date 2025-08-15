@@ -14,10 +14,15 @@ defmodule Refood.Families.Family do
     field :children, :integer, default: 0
     field :restrictions, :string
     field :notes, :string
+    field :speaks_portuguese, :boolean, default: true
 
     field :phone_number, :string
     field :email, :string
     has_one :address, Address
+
+    field :cc, :string
+    field :nif, :string
+    field :niss, :string
 
     field :status, Ecto.Enum, values: [:queued, :active, :paused, :finished], default: :finished
     field :queue_position, :integer
@@ -25,6 +30,9 @@ defmodule Refood.Families.Family do
     field :weekdays, {:array, Ecto.Enum}, values: @weekdays
     has_many :absences, Absence
     has_many :swaps, Swap
+
+    field :help_requested_at, :utc_datetime
+    field :last_contacted_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end
@@ -43,7 +51,10 @@ defmodule Refood.Families.Family do
       :restrictions,
       :phone_number,
       :email,
-      :notes
+      :notes,
+      :speaks_portuguese,
+      :help_requested_at,
+      :last_contacted_at
     ])
     |> cast_assoc(:address,
       with: &Address.changeset/2,
@@ -57,6 +68,7 @@ defmodule Refood.Families.Family do
       message: "deve ser igual ou maior que 0"
     )
     |> validate_format(:email, ~r/@/)
+    |> validate_required([:speaks_portuguese, :help_requested_at])
   end
 
   defp validate_contact_info_required(changeset) do
@@ -111,9 +123,15 @@ defmodule Refood.Families.Family do
       :phone_number,
       :email,
       :status,
-      :notes
+      :notes,
+      :cc,
+      :nif,
+      :niss,
+      :speaks_portuguese,
+      :help_requested_at,
+      :last_contacted_at
     ])
-    |> validate_required([:name, :status, :adults, :children])
+    |> validate_required([:name, :status, :adults, :children, :speaks_portuguese])
     |> unique_constraint([:number], message: "número já assimilado")
     |> cast_assoc(:address, with: &Address.changeset/2)
   end

@@ -64,6 +64,17 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
               <.input field={@form[:phone_number]} type="tel" label="Telefone" />
             </div>
           </div>
+          <.input field={@form[:speaks_portuguese]} type="checkbox" label="Fala Português?" />
+          <div class="flex gap-4 justify-stretch items-center">
+            <div>
+              <.input
+                field={@form[:help_requested_at]}
+                type="datetime-local"
+                label="Ajuda pedida em"
+                value={DateTime.utc_now()}
+              />
+            </div>
+          </div>
           <div class="flex gap-4 justify-stretch">
             <.inputs_for :let={fa} field={@form[:address]}>
               <div class="w-full">

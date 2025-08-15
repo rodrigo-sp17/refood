@@ -208,12 +208,12 @@ defmodule RefoodWeb.HelpQueueLive do
       </:col>
       <:col
         :let={family}
-        id="inserted-at"
-        sort={@sort[:inserted_at]}
-        on_sort={&on_sort(:inserted_at, &1)}
-        label="Criado em"
+        id="help_requested_at"
+        sort={@sort[:help_requested_at]}
+        on_sort={&on_sort(:help_requested_at, &1)}
+        label="Pedido em"
       >
-        {DateTime.to_date(family.inserted_at)}
+        {family.help_requested_at && DateTime.to_date(family.help_requested_at)}
       </:col>
       <:action :let={family}>
         <.dropdown :if={@current_user.role in [:admin, :manager]} id={"dropdown-" <> family.id}>
