@@ -17,13 +17,10 @@ defmodule RefoodWeb.UsersLive.UserDetails do
   def render(assigns) do
     ~H"""
     <div>
-      <.modal show id={@id} on_cancel={@on_cancel}>
-        <.header>
+      <.modal show id={@id} on_cancel={@on_cancel} edit={@edit} target={@myself}>
+        <:header>
           Usuário {@user.name}
-          <:actions>
-            <.button :if={!@edit} phx-target={@myself} phx-click="edit-user">Editar</.button>
-          </:actions>
-        </.header>
+        </:header>
         <.simple_form
           :let={f}
           id="update-user-details-form"
@@ -31,10 +28,10 @@ defmodule RefoodWeb.UsersLive.UserDetails do
           phx-target={@myself}
           phx-submit="update-user"
         >
-          <.input disabled={!@edit} field={f[:name]} type="text" label="Nome" required />
-          <.input disabled field={f[:email]} type="email" label="Email" />
+          <.input edit={@edit} field={f[:name]} type="text" label="Nome" required />
+          <.input edit={false} field={f[:email]} type="email" label="Email" />
           <.input
-            disabled={!@edit}
+            edit={@edit}
             field={f[:role]}
             type="select"
             options={["manager", "shift"]}
@@ -57,7 +54,7 @@ defmodule RefoodWeb.UsersLive.UserDetails do
   end
 
   @impl true
-  def handle_event("edit-user", _, socket) do
+  def handle_event("edit", _, socket) do
     {:noreply, assign(socket, edit: true)}
   end
 

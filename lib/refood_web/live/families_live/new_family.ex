@@ -21,7 +21,7 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
     ~H"""
     <div>
       <.modal show id={@id} on_cancel={@on_cancel}>
-        <.header>Criar nova família</.header>
+        <:header>Criar nova família</:header>
         <.simple_form
           id="new-family-form"
           for={@form}
@@ -29,9 +29,12 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
           phx-target={@myself}
           phx-submit="create-family"
         >
-          <.input field={@form[:name]} type="text" label="Nome" />
+          <.form_section>Informações gerais</.form_section>
           <div class="flex gap-4 justify-stretch">
-            <div class="w-full">
+            <div class="flex-3/5">
+              <.input field={@form[:name]} type="text" label="Nome" />
+            </div>
+            <div class="flex-1/5">
               <.input
                 field={@form[:adults]}
                 type="number"
@@ -42,7 +45,7 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
                 value={1}
               />
             </div>
-            <div class="w-full">
+            <div class="flex-1/5">
               <.input
                 field={@form[:children]}
                 type="number"
@@ -54,9 +57,15 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
               />
             </div>
           </div>
-          <.input field={@form[:phone_number]} type="tel" label="Telefone" />
-          <.input field={@form[:email]} type="email" label="Email" />
-          <.inputs_for :let={fa} field={@form[:address]}>
+
+          <div class="flex gap-4 justify-stretch">
+            <div class="flex-3/5"><.input field={@form[:email]} type="email" label="Email" /></div>
+            <div class="flex-2/5">
+              <.input field={@form[:phone_number]} type="tel" label="Telefone" />
+            </div>
+          </div>
+          <.form_section class="pt-10">Morada</.form_section>
+          <.inputs_for :let={fa} id="address-block" field={@form[:address]}>
             <.input field={fa[:line_1]} type="text" label="Endereço" />
             <.input field={fa[:line_2]} type="text" label="Complemento" />
             <div class="flex gap-4 justify-stretch">
@@ -68,6 +77,8 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
               </div>
             </div>
           </.inputs_for>
+          <.form_section class="pt-10">Agregado</.form_section>
+
           <.input field={@form[:restrictions]} type="textarea" label="Restrições" />
           <.input field={@form[:notes]} type="textarea" label="Notas" />
           <:actions>

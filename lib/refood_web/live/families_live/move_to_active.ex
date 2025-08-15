@@ -14,9 +14,9 @@ defmodule RefoodWeb.FamiliesLive.MoveToActive do
     ~H"""
     <div>
       <.modal show id={@id} on_cancel={@on_cancel}>
-        <.header>
+        <:header>
           Mover {@family.name} para ajuda regular
-        </.header>
+        </:header>
         <.simple_form :let={f} for={@for} phx-target={@target} phx-submit="move-to-active">
           <div class="flex flex-row gap-10">
             <div class="w-30">

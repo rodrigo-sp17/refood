@@ -23,7 +23,7 @@ defmodule RefoodWeb.UsersLive.NewUser do
     ~H"""
     <div>
       <.modal show id={@id} on_cancel={@on_cancel}>
-        <.header>Criar novo usuário</.header>
+        <:header>Criar novo usuário</:header>
         <.simple_form
           :let={f}
           id="registration-form"

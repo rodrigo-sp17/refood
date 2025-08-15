@@ -80,7 +80,7 @@ defmodule RefoodWeb.ShiftLive do
         <.simple_form id="add-swap-form" for={@form} phx-submit="add-swap">
           <.input type="date" field={@form[:to]} />
           <:actions>
-            <.button>Trocar</.button>
+            <.button class="w-full">Trocar</.button>
           </:actions>
         </.simple_form>
       </div>

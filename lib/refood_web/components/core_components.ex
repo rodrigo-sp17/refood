@@ -39,6 +39,11 @@ defmodule RefoodWeb.CoreComponents do
   attr :id, :string, required: true
   attr :show, :boolean, default: false
   attr :on_cancel, JS, default: %JS{}
+  attr :edit, :boolean, default: nil
+  attr :target, :any, default: nil
+  attr :confirm_exit, :string, default: nil
+
+  slot :header
   slot :inner_block, required: true
 
   def modal(assigns) do
@@ -66,9 +71,39 @@ defmodule RefoodWeb.CoreComponents do
               phx-window-keydown={JS.exec("data-cancel", to: "##{@id}")}
               phx-key="escape"
               phx-click-away={JS.exec("data-cancel", to: "##{@id}")}
-              class="shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-2xl bg-white p-14 shadow-lg ring-1 transition"
+              class={[
+                "shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-2xl bg-white shadow-lg ring-1 transition"
+              ]}
             >
-              <div class="absolute top-6 right-5">
+              <div
+                :if={@header !== []}
+                class="py-4 px-7 flex flex-row justify-between items-center border-b-1 border-gray-300"
+              >
+                <div class="text-xl font-medium">
+                  {render_slot(@header)}
+                </div>
+
+                <div class="flex flex-row gap-6">
+                  <div
+                    :if={not is_nil(@edit) && !@edit}
+                    class="flex flex-row items-center gap-1 justify-center underline text-center"
+                  >
+                    <.icon name="hero-pencil" class="h-4 w-4" />
+                    <.link phx-click="edit" phx-target={@target}>
+                      Editar
+                    </.link>
+                  </div>
+                  <button
+                    phx-click={JS.exec("data-cancel", to: "##{@id}")}
+                    type="button"
+                    class="-m-3 flex-none p-3 opacity-20 hover:opacity-40"
+                    aria-label={gettext("close")}
+                  >
+                    <.icon name="hero-x-mark-solid" class="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+              <div :if={@header == []} class="absolute top-6 right-5">
                 <button
                   phx-click={JS.exec("data-cancel", to: "##{@id}")}
                   type="button"
@@ -78,7 +113,13 @@ defmodule RefoodWeb.CoreComponents do
                   <.icon name="hero-x-mark-solid" class="h-5 w-5" />
                 </button>
               </div>
-              <div id={"#{@id}-content"}>
+              <div
+                id={"#{@id}-content"}
+                class={[
+                  "px-14 pb-14",
+                  @header == [] && "pt-14"
+                ]}
+              >
                 {render_slot(@inner_block)}
               </div>
             </.focus_wrap>
@@ -100,10 +141,11 @@ defmodule RefoodWeb.CoreComponents do
   attr :deny_text, :string, default: "No"
   attr :on_deny, JS, default: %JS{}
   attr :on_cancel, JS, default: %JS{}
+  attr :show, :boolean, default: true
 
   def confirmation_modal(assigns) do
     ~H"""
-    <.modal id={@id} show on_cancel={@on_cancel}>
+    <.modal id={@id} show={@show} on_cancel={@on_cancel}>
       <div class="flex flex-col gap-10">
         <h2 class="text-2xl text-center">
           {@question}
@@ -240,13 +282,22 @@ defmodule RefoodWeb.CoreComponents do
   def simple_form(assigns) do
     ~H"""
     <.form :let={f} for={@for} as={@as} {@rest}>
-      <div class="mt-10 flex flex-col gap-8 bg-white">
+      <div class="mt-8 flex flex-col gap-8 bg-white">
         {render_slot(@inner_block, f)}
         <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
           {render_slot(action, f)}
         </div>
       </div>
     </.form>
+    """
+  end
+
+  attr :class, :any, default: nil
+  slot :inner_block, required: true
+
+  def form_section(assigns) do
+    ~H"""
+    <div class={["text-lg font-semibold", @class]}>{render_slot(@inner_block)}</div>
     """
   end
 
@@ -380,6 +431,7 @@ defmodule RefoodWeb.CoreComponents do
   attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
+  attr :edit, :boolean, default: true
 
   attr :rest, :global,
     include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
@@ -407,6 +459,7 @@ defmodule RefoodWeb.CoreComponents do
       <label class="flex items-center gap-4 text-sm leading-6 text-zinc-600">
         <input type="hidden" name={@name} value="false" />
         <input
+          disabled={!@edit}
           type="checkbox"
           id={@id}
           name={@name}
@@ -427,14 +480,17 @@ defmodule RefoodWeb.CoreComponents do
     <div phx-feedback-for={@name} class="text-sm">
       <.label for={@id}>{@label}</.label>
       <div class={[
-        "mt-2 block w-full rounded-lg border border-gray-200 text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6 phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
+        "block w-full rounded-lg border border-gray-200 text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6 phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
         @errors == [] && "border-zinc-300 focus:border-zinc-400",
-        @errors != [] && "border-rose-400 focus:border-rose-400"
+        @errors != [] && "border-rose-400 focus:border-rose-400",
+        !@edit && "border-none px-0",
+        @edit && "mt-2"
       ]}>
         <div class="p-2 grid grid-cols-1 gap-2 text-sm items-baseline">
           <div :for={{label, value} <- @options} class="">
             <label for={"#{@name}-#{value}"} class="">
               <input
+                disabled={!@edit}
                 type="checkbox"
                 id={"#{@name}-#{value}"}
                 name={@name}
@@ -458,9 +514,13 @@ defmodule RefoodWeb.CoreComponents do
     <div phx-feedback-for={@name}>
       <.label for={@id}>{@label}</.label>
       <select
+        disabled={!@edit}
         id={@id}
         name={@name}
-        class="mt-2 block w-full rounded-lg border border-gray-300 bg-white shadow-xs focus:border-zinc-400 focus:ring-0 focus:ring-blue-500 sm:text-sm"
+        class={[
+          "mt-2 block w-full rounded-lg border border-gray-300 bg-white shadow-xs focus:border-zinc-400 focus:ring-0 focus:ring-blue-500 sm:text-sm",
+          !@edit && "border-none px-0"
+        ]}
         multiple={@multiple}
         {@rest}
       >
@@ -477,13 +537,16 @@ defmodule RefoodWeb.CoreComponents do
     <div phx-feedback-for={@name}>
       <.label for={@id}>{@label}</.label>
       <textarea
+        disabled={!@edit}
         id={@id}
         name={@name}
         class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6",
+          "block w-full rounded-lg text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6",
           "min-h-[6rem] phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400"
+          @errors != [] && "border-rose-400 focus:border-rose-400",
+          !@edit && "border-none px-0",
+          @edit && "mt-2"
         ]}
         {@rest}
       ><%= Phoenix.HTML.Form.normalize_value("textarea", @value) %></textarea>
@@ -498,15 +561,18 @@ defmodule RefoodWeb.CoreComponents do
     <div phx-feedback-for={@name}>
       <.label for={@id}>{@label}</.label>
       <input
+        disabled={!@edit}
         type={@type}
         name={@name}
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
         class={[
-          "mt-2 block w-full rounded-lg border border-gray-200 text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6",
+          "block w-full rounded-lg border border-gray-200 text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6",
           "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400"
+          @errors != [] && "border-rose-400 focus:border-rose-400",
+          !@edit && "border-none px-0",
+          @edit && "mt-2"
         ]}
         {@rest}
       />

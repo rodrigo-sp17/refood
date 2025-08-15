@@ -20,9 +20,9 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
     ~H"""
     <div>
       <.modal show id={@id} on_cancel={@on_cancel}>
-        <.header>
+        <:header>
           Criar pedido de ajuda
-        </.header>
+        </:header>
 
         <.simple_form
           id="new-help-request-form"
@@ -31,21 +31,21 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
           phx-change="validate"
           phx-submit="add-help-request"
         >
-          <.input required field={@form[:name]} type="text" label="Nome" />
           <div class="flex gap-4 justify-stretch">
-            <div class="w-full">
+            <div class="flex-3/5">
+              <.input field={@form[:name]} type="text" label="Nome" />
+            </div>
+            <div class="flex-1/5">
               <.input
-                required
                 field={@form[:adults]}
                 type="number"
                 min="0"
                 step="1"
                 pattern="[0-9]*"
                 label="Adultos"
-                value={1}
               />
             </div>
-            <div class="w-full">
+            <div class="flex-1/5">
               <.input
                 field={@form[:children]}
                 type="number"
@@ -53,12 +53,17 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
                 step="1"
                 pattern="[0-9]*"
                 label="Crianças"
-                value={0}
               />
             </div>
           </div>
-          <.input field={@form[:phone_number]} type="tel" label="Telefone" />
-          <.input field={@form[:email]} type="email" label="Email" />
+          <div class="flex gap-4 justify-stretch">
+            <div class="flex-3/5">
+              <.input field={@form[:email]} type="email" label="Email" />
+            </div>
+            <div class="flex-2/5">
+              <.input field={@form[:phone_number]} type="tel" label="Telefone" />
+            </div>
+          </div>
           <div class="flex gap-4 justify-stretch">
             <.inputs_for :let={fa} field={@form[:address]}>
               <div class="w-full">
