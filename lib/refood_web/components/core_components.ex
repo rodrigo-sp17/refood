@@ -909,6 +909,31 @@ defmodule RefoodWeb.CoreComponents do
     |> JS.pop_focus()
   end
 
+  def expand_sidebar(js \\ %JS{}) do
+    js
+    |> JS.show(to: "#navbar", transition: "fade-in")
+    |> JS.show(
+      to: "#navbar",
+      display: "flex",
+      time: 300,
+      transition:
+        {"transition ease-in-out duration-300 transform", "-translate-x-full", "translate-x-0"}
+    )
+    |> JS.hide(to: "#navbar-minimal")
+  end
+
+  def retract_sidebar(js \\ %JS{}) do
+    js
+    |> JS.hide(to: "#navbar", transition: "fade-out")
+    |> JS.hide(
+      to: "#navbar",
+      time: 300,
+      transition:
+        {"transition ease-in-out duration-300 transform", "translate-x-0", "-translate-x-full"}
+    )
+    |> JS.show(to: "#navbar-minimal", display: "flex", transition: "fade-in")
+  end
+
   @doc """
   Translates an error message using gettext.
   """
