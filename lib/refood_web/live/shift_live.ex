@@ -93,85 +93,93 @@ defmodule RefoodWeb.ShiftLive do
       </div>
     </.modal>
 
-    <div class="mt-11 flex flex-col gap-8 w-9/12">
-      <div class="flex justify-center items-center gap-8">
-        <button
-          phx-click="prev-date"
-          class="flex items-center rounded-full bg-white group hover:bg-black border border-black p-1"
-        >
-          <.icon name="hero-chevron-left" class="bg-black group-hover:bg-white" />
-        </button>
-        <div class="basis-7/12 text-3xl text-center font-bold">
-          {if @date == Date.utc_today(), do: "(Hoje)"} {"#{weekday_name(Date.day_of_week(@date))}, #{@date.day} de #{month_name(@date.month)} de #{@date.year}"}
-        </div>
-        <button
-          phx-click="next-date"
-          class="flex items-center rounded-full bg-white group hover:bg-black border border-black p-1"
-        >
-          <.icon name="hero-chevron-right" class="bg-black group-hover:bg-white" />
-        </button>
+    <div class="mt-11 flex justify-center items-center gap-8 mb-8">
+      <button
+        phx-click="prev-date"
+        class="flex items-center rounded-full bg-white group hover:bg-black border border-black p-1"
+      >
+        <.icon name="hero-chevron-left" class="bg-black group-hover:bg-white" />
+      </button>
+      <div class="basis-7/12 text-3xl text-center font-bold">
+        {if @date == Date.utc_today(), do: "(Hoje)"} {"#{weekday_name(Date.day_of_week(@date))}, #{@date.day} de #{month_name(@date.month)} de #{@date.year}"}
       </div>
-      <div class="flex flex-col bg-white rounded-lg border divide-y w-full">
-        <div class="px-6 flex flex-col divide-y">
-          <div :if={@families == []} class="h-16 flex justify-center items-center">
-            Nenhuma família para o dia.
+      <button
+        phx-click="next-date"
+        class="flex items-center rounded-full bg-white group hover:bg-black border border-black p-1"
+      >
+        <.icon name="hero-chevron-right" class="bg-black group-hover:bg-white" />
+      </button>
+    </div>
+    <div
+      id="shift-table"
+      class="sm:h-full sm:overflow-y-hidden overflow-y-auto flex flex-col sm:flex-wrap items-center gap-2"
+    >
+      <div :if={@families == []} class="h-16 flex justify-center items-center">
+        Nenhuma família para o dia.
+      </div>
+      <div
+        :for={family <- @families}
+        class="max-w-5/11 min-h-[60px] px-6 py-4 bg-white flex rounded-lg justify-start items-center relative"
+      >
+        <div class="text-xl font-bold w-11">F-{family.number}</div>
+        <div class="text-lg pl-2 w-52">{family.name}</div>
+        <div class="text-lg pl-2 w-28 flex items-center gap-3">
+          <.icon name="hero-users-solid" />{family.adults} + {family.children}
+        </div>
+        <div class="px-2 w-100 flex items-center justify-between gap-1">
+          <%= if family.restrictions do %>
+            <div class="flex items-center gap-1">
+              <.icon name="hero-exclamation-triangle-solid text-red-700" />
+              <p class="text-red-700">{family.restrictions}</p>
+            </div>
+          <% else %>
+            -
+          <% end %>
+          <div
+            :if={!Enum.empty?(family.swaps)}
+            class="w-25 px-6 py-1 border rounded-3xl border-green-600 text-green-600 text-center font-bold"
+          >
+            Troca
           </div>
-          <div :for={family <- @families} class="py-4 flex justify-between items-center">
-            <div class="text-xl font-bold w-11">F-{family.number}</div>
-            <div class="text-lg basis-1/10">{family.name}</div>
-            <div class="text-lg basis-1/10 flex items-center gap-3">
-              <.icon name="hero-users-solid" />{family.adults} + {family.children}
+          <div :for={absence <- family.absences}>
+            <div
+              :if={absence.warned}
+              class="w-25 px-6 py-1 border rounded-3xl border-yellow-600 text-yellow-600 text-center font-bold"
+            >
+              Avisou
             </div>
-            <div class="basis-1/5 flex items-center gap-1">
-              <%= if family.restrictions do %>
-                <.icon name="hero-exclamation-triangle-solid text-red-700" />
-                <p class="text-red-700">{family.restrictions}</p>
-              <% else %>
-                -
-              <% end %>
-            </div>
-            <div class="basis-1/4 flex justify-end items-center gap-6">
-              <.link
-                :if={
-                  family.absences == [] && Enum.empty?(family.swaps) &&
-                    Date.compare(@date, Date.utc_today()) in [:gt, :eq]
-                }
-                patch={"/shift/#{family.id}?new-swap"}
-                class="underline underline-offset-4"
-              >
-                Trocar dia
-              </.link>
-              <div
-                :if={!Enum.empty?(family.swaps)}
-                class="w-40 px-10 py-2 border border-yellow-600 text-yellow-600 text-center font-bold"
-              >
-                Troca
-              </div>
-              <.link :if={family.absences == []} patch={"/shift/#{family.id}?new-absence"}>
-                <.button class="flex items-center gap-1 rounded-3xl bg-transparent text-black border border-black px-6">
-                  Marcar falta
-                </.button>
-              </.link>
-              <div :for={absence <- family.absences}>
-                <div
-                  :if={absence.warned}
-                  class="w-40 px-10 py-2 border border-yellow-600 text-yellow-600 text-center font-bold"
-                >
-                  Avisou
-                </div>
-                <div
-                  :if={!absence.warned}
-                  class="w-40 px-10 py-2 border border-red-500 text-red-500 text-center font-bold"
-                >
-                  Faltou
-                </div>
-              </div>
+            <div
+              :if={!absence.warned}
+              class="w-25 px-6 py-1 border rounded-3xl border-red-500 text-red-500 text-center font-bold"
+            >
+              Faltou
             </div>
           </div>
+        </div>
+        <div class="relative absolute right-0">
+          <.dropdown :if={show_dropdown?(family, @date)} id={"shift-dropdown-#{family.id}"}>
+            <:link :if={show_add_swap?(family, @date)} patch={"/shift/#{family.id}?new-swap"}>
+              Trocar dia
+            </:link>
+            <:link :if={show_add_absence?(family)} patch={"/shift/#{family.id}?new-absence"}>
+              Marcar falta
+            </:link>
+          </.dropdown>
         </div>
       </div>
     </div>
     """
+  end
+
+  defp show_dropdown?(family, date), do: show_add_absence?(family) or show_add_swap?(family, date)
+
+  defp show_add_absence?(family) do
+    family.absences == []
+  end
+
+  defp show_add_swap?(family, date) do
+    family.absences == [] && Enum.empty?(family.swaps) &&
+      Date.compare(date, Date.utc_today()) in [:gt, :eq]
   end
 
   @impl true

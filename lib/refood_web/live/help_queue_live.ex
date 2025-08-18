@@ -145,7 +145,7 @@ defmodule RefoodWeb.HelpQueueLive do
         <div class="flex items-center justify-between p-4">
           <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
         </div>
-      </:top_controls>s
+      </:top_controls>
       <:col
         :let={family}
         id="position"

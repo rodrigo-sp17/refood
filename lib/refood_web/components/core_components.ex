@@ -670,7 +670,7 @@ defmodule RefoodWeb.CoreComponents do
       end
 
     ~H"""
-    <div class="overflow-y-auto mt-11 px-4 sm:overflow-visible sm:px-0 bg-white rounded-xl">
+    <div class="overflow-y-auto mt-11 px-0 bg-white rounded-xl">
       {render_slot(@top_controls)}
       <table class="w-[40rem] sm:w-full bg-white">
         <thead class="border-y border-zinc-200 text-base text-left text-black-500 leading-6">
