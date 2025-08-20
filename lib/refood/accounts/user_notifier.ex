@@ -8,7 +8,7 @@ defmodule Refood.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"Refood", "contact@example.com"})
+      |> from({"App Refood", "refood.org.app@gmail.com"})
       |> subject(subject)
       |> text_body(body)
 

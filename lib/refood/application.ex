@@ -17,9 +17,11 @@ defmodule Refood.Application do
       # Start Finch
       {Finch, name: Refood.Finch},
       # Start the Endpoint (http/https)
-      RefoodWeb.Endpoint
+      RefoodWeb.Endpoint,
       # Start a worker by calling: Refood.Worker.start_link(arg)
-      # {Refood.Worker, arg}
+      # {Refood.Worker, arg},
+      # {Goth, name: Refood.Goth, source: source}
+      {Finch, name: Swoosh.Finch}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

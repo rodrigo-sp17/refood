@@ -53,7 +53,8 @@ defmodule Refood.MixProject do
       {:plug_cowboy, "~> 2.5"},
       {:ex_machina, "~> 2.7.0", only: [:dev, :test]},
       {:csv, "~> 3.2"},
-      {:timex, "~> 3.0"}
+      {:timex, "~> 3.0"},
+      {:mail, ">= 0.0.0"}
     ]
   end
 
