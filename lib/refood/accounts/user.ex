@@ -47,6 +47,19 @@ defmodule Refood.Accounts.User do
     |> validate_inclusion(:role, [:manager, :shift])
   end
 
+  @doc """
+  Adds an :admin user. Not be called by regular endpoints.
+  """
+  def admin_registration_changeset(attrs, opts \\ []) do
+    %__MODULE__{}
+    |> cast(attrs, [:name, :email, :password])
+    |> validate_email(opts)
+    |> validate_password(opts)
+    |> put_change(:role, :admin)
+    |> put_change(:confirmed_at, NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second))
+    |> validate_required([:name, :email, :hashed_password, :role])
+  end
+
   defp validate_email(changeset, opts) do
     changeset
     |> validate_required([:email])
