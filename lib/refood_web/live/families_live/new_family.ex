@@ -10,7 +10,7 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
   def update(assigns, socket) do
     updated_assigns =
       Map.merge(assigns, %{
-        form: to_form(Families.change_create_family(%{}))
+        form: to_form(Families.change_create_family(%{adults: 1, children: 0}))
       })
 
     {:ok, assign(socket, updated_assigns)}
@@ -42,7 +42,6 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
                 step="1"
                 pattern="[0-9]*"
                 label="Adultos"
-                value={1}
               />
             </div>
             <div class="flex-1/5">
@@ -53,7 +52,6 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
                 step="1"
                 pattern="[0-9]*"
                 label="Crianças"
-                value={0}
               />
             </div>
           </div>
