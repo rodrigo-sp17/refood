@@ -148,6 +148,23 @@ defmodule Refood.Families do
     |> Repo.insert()
   end
 
+  @doc """
+  Updates an existing absence.
+  """
+  def update_absence(absence_id, attrs) do
+    Repo.get(Absence, absence_id)
+    |> Absence.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes an existing absence.
+  """
+  def delete_absence(absence_id) do
+    Repo.get(Absence, absence_id)
+    |> Repo.delete()
+  end
+
   def add_swap(attrs, ref_date \\ Date.utc_today()) do
     family_id = attrs["family_id"] || attrs[:family_id]
     family = Repo.get!(Family, family_id)

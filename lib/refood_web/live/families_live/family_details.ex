@@ -10,6 +10,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
   def update(%{family: family} = assigns, socket) do
     updated_assigns =
       Map.merge(assigns, %{
+        view_to_show: nil,
         form: to_form(Families.change_update_family_details(family, %{})),
         edit: false
       })
@@ -32,7 +33,20 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
         on_cancel={show_modal(@id)}
       />
 
+      <.confirmation_modal
+        :if={@view_to_show == :confirm_delete_absence}
+        id="confirm-delete-absence"
+        type={:delete}
+        question={"Tem certeza de que deseja remover a falta de #{@absence.date}?"}
+        confirm_text="Remover"
+        on_confirm={JS.push("delete-absence", value: %{id: @absence.id}, target: @myself)}
+        deny_text="Cancelar"
+        on_deny={JS.push("show-view", target: @myself)}
+        on_cancel={JS.push("show-view", target: @myself)}
+      />
+
       <.modal
+        :if={@view_to_show == nil}
         show
         id={@id}
         edit={authorize_edit(assigns, @edit)}
@@ -155,12 +169,47 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
           <.input edit={@edit} field={@form[:notes]} type="textarea" label="Notas" />
           <div>
             <.label for="absence-list">Faltas</.label>
-            <div id="absence-list">
-              <.list :for={absence <- Enum.sort_by(@family.absences, & &1.date)}>
-                <:item title={absence.date}>
-                  {if absence.warned, do: "Avisou", else: "Não avisou"}
-                </:item>
-              </.list>
+            <div id="absence-list" class="mt-2 border rounded-lg">
+              <div :if={@family.absences == []} class="p-2 text-sm text-center">
+                Nenhuma falta registada
+              </div>
+              <div
+                :for={absence <- Enum.sort_by(@family.absences, & &1.date)}
+                class="p-2 flex justify-between rounded-lg  items-center relative text-sm"
+              >
+                <div class="flex gap-5">
+                  <div>{absence.date}</div>
+                  <div title={absence.date}>
+                    {if absence.warned, do: "Avisou", else: "Não avisou"}
+                  </div>
+                </div>
+                <.dropdown id={"absence-dropdown-#{absence.id}"}>
+                  <:link
+                    :if={!absence.warned}
+                    on_click={
+                      JS.push("edit-absence", value: %{id: absence.id, warned: true}, target: @myself)
+                    }
+                  >
+                    Marcar como justificada
+                  </:link>
+                  <:link
+                    :if={absence.warned}
+                    on_click={
+                      JS.push("edit-absence",
+                        value: %{id: absence.id, warned: false},
+                        target: @myself
+                      )
+                    }
+                  >
+                    Marcar como não-justificada
+                  </:link>
+                  <:link on_click={
+                    JS.push("confirm-delete-absence", value: %{id: absence.id}, target: @myself)
+                  }>
+                    <p class="text-red-500">Remover falta</p>
+                  </:link>
+                </.dropdown>
+              </div>
             </div>
           </div>
           <:actions>
@@ -178,6 +227,12 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
     else
       nil
     end
+  end
+
+  @impl true
+  def handle_event("show-view", _unsigned_params, socket) do
+    socket = assign(socket, view_to_show: nil)
+    {:noreply, socket}
   end
 
   @impl true
@@ -205,8 +260,8 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
   def handle_event("update-family", %{"family" => family_attrs}, socket) do
     with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
       case Families.update_family_details(socket.assigns.family, family_attrs) do
-        {:ok, created_request} ->
-          socket.assigns.on_created.(created_request)
+        {:ok, updated_family} ->
+          socket.assigns.on_created.(updated_family)
 
           {:noreply,
            socket
@@ -215,6 +270,55 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
 
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply, assign(socket, form: to_form(changeset))}
+      end
+    end
+  end
+
+  @impl true
+  def handle_event("edit-absence", %{"id" => absence_id, "warned" => warned}, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      case Families.update_absence(absence_id, %{warned: warned}) do
+        {:ok, absence} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Sucesso!")
+           |> assign(:family, Families.get_family!(socket.assigns.family.id))}
+
+        {:error, _} ->
+          {socket
+           |> put_flash(:error, "Falha em editar falta!")}
+      end
+    end
+  end
+
+  @impl true
+  def handle_event("confirm-delete-absence", %{"id" => absence_id}, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      absence = Enum.find(socket.assigns.family.absences, &(&1.id == absence_id))
+
+      assigns = [
+        view_to_show: :confirm_delete_absence,
+        absence: absence
+      ]
+
+      {:noreply, assign(socket, assigns)}
+    end
+  end
+
+  @impl true
+  def handle_event("delete-absence", %{"id" => absence_id}, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      case Families.delete_absence(absence_id) do
+        {:ok, absence} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Sucesso!")
+           |> assign(view_to_show: nil)
+           |> assign(family: Families.get_family!(socket.assigns.family.id))}
+
+        {:error, _} ->
+          {socket
+           |> put_flash(:error, "Falha em remover falta!")}
       end
     end
   end
