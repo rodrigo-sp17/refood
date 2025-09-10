@@ -158,6 +158,135 @@ defmodule Refood.FamiliesTest do
       refute absence.warned
     end
 
+    test "raises excessive_absences alert if family exceeded non-warned threshold" do
+      family = insert(:family)
+
+      insert(:absence, family: family, warned: false, date: ~D[2020-01-01])
+      insert(:absence, family: family, warned: false, date: ~D[2020-01-02])
+
+      attrs = %{
+        family_id: family.id,
+        warned: false,
+        date: ~D[2024-06-10]
+      }
+
+      assert {:ok, absence} = Families.add_absence(attrs)
+
+      assert absence.family_id == family.id
+      assert absence.date == ~D[2024-06-10]
+      refute absence.warned
+
+      assert %{active_alerts: [%{type: :excessive_absences, dismissed_at: nil}]} =
+               Repo.preload(family, :active_alerts, force: true)
+    end
+
+    test "raises excessive_absences alert if family exceeded non-warned threshold since last alert" do
+      family = insert(:family)
+
+      insert(:absence, family: family, warned: false, date: ~D[2020-01-01])
+      insert(:absence, family: family, warned: false, date: ~D[2020-01-02])
+
+      insert(:alert,
+        family: family,
+        type: :excessive_absences,
+        dismissed_at: ~U[2021-01-01T00:00:00Z]
+      )
+
+      insert(:absence, family: family, warned: false, date: ~D[2022-01-01])
+      insert(:absence, family: family, warned: false, date: ~D[2022-01-02])
+
+      attrs = %{
+        family_id: family.id,
+        warned: false,
+        date: ~D[2024-06-10]
+      }
+
+      assert {:ok, _absence} = Families.add_absence(attrs)
+
+      assert %{active_alerts: [%{type: :excessive_absences, dismissed_at: nil}]} =
+               Repo.preload(family, :active_alerts, force: true)
+    end
+
+    test "re-raises excessive_absences alert if alert already exists" do
+      family = insert(:family)
+
+      existing_alert =
+        insert(:alert,
+          family: family,
+          type: :excessive_absences,
+          dismissed_at: nil
+        )
+
+      insert(:absence, family: family, warned: false, date: ~D[2022-01-01])
+      insert(:absence, family: family, warned: false, date: ~D[2022-01-02])
+
+      attrs = %{
+        family_id: family.id,
+        warned: false,
+        date: ~D[2024-06-10]
+      }
+
+      assert {:ok, _absence} = Families.add_absence(attrs)
+
+      refute reload(existing_alert).dismissed_at
+
+      assert %{active_alerts: [%{type: :excessive_absences, dismissed_at: nil}]} =
+               Repo.preload(family, :active_alerts, force: true)
+    end
+
+    test "does not raise excessive_absences alert if below threshold since last alert" do
+      family = insert(:family)
+
+      insert(:absence, family: family, warned: false, date: ~D[2020-01-01])
+      insert(:absence, family: family, warned: false, date: ~D[2020-01-02])
+
+      insert(:alert,
+        family: family,
+        type: :excessive_absences,
+        dismissed_at: ~U[2021-01-01T00:00:00Z]
+      )
+
+      insert(:absence, family: family, warned: false, date: ~D[2022-01-01])
+
+      attrs = %{
+        family_id: family.id,
+        warned: false,
+        date: ~D[2024-06-10]
+      }
+
+      assert {:ok, _absence} = Families.add_absence(attrs)
+
+      assert %{active_alerts: []} =
+               Repo.preload(family, :active_alerts, force: true)
+    end
+
+    test "does not raise excessive_absences alert if only warned since last alert" do
+      family = insert(:family)
+
+      insert(:absence, family: family, warned: false, date: ~D[2020-01-01])
+      insert(:absence, family: family, warned: false, date: ~D[2020-01-02])
+
+      insert(:alert,
+        family: family,
+        type: :excessive_absences,
+        dismissed_at: ~U[2021-01-01T00:00:00Z]
+      )
+
+      insert(:absence, family: family, warned: false, date: ~D[2022-01-01])
+      insert(:absence, family: family, warned: true, date: ~D[2022-01-02])
+
+      attrs = %{
+        family_id: family.id,
+        warned: false,
+        date: ~D[2024-06-10]
+      }
+
+      assert {:ok, _absence} = Families.add_absence(attrs)
+
+      assert %{active_alerts: []} =
+               Repo.preload(family, :active_alerts, force: true)
+    end
+
     test "errors if family does not exist" do
       attrs = %{
         family_id: Ecto.UUID.generate(),
@@ -281,6 +410,108 @@ defmodule Refood.FamiliesTest do
                to: ["obrigatório"],
                from: ["obrigatório"]
              }
+    end
+  end
+
+  describe "raise_alert/2" do
+    test "raises an alert for a family if never issued before" do
+      %{id: family_id} = family = insert(:family)
+
+      assert {:ok, alert} = Families.raise_alert(family.id, :excessive_absences)
+
+      assert %{family_id: ^family_id, type: :excessive_absences, dismissed_at: nil} = alert
+    end
+
+    test "raises a new alert for a family if already issued but dismissed" do
+      %{id: family_id} = family = insert(:family)
+
+      %{id: old_alert_id} =
+        insert(:alert,
+          family: family,
+          type: :excessive_absences,
+          dismissed_at: DateTime.utc_now()
+        )
+
+      assert {:ok, alert} = Families.raise_alert(family.id, :excessive_absences)
+
+      assert %{family_id: ^family_id, type: :excessive_absences, dismissed_at: nil} = alert
+      refute alert.id == old_alert_id
+    end
+
+    test "updates the alert for a family if not dismissed" do
+      %{id: family_id} = family = insert(:family)
+
+      %{id: old_alert_id} =
+        old_alert =
+        insert(:alert,
+          family: family,
+          type: :excessive_absences,
+          dismissed_at: nil,
+          updated_at: ~U[2020-01-01T00:00:00Z]
+        )
+
+      assert {:ok, alert} = Families.raise_alert(family.id, :excessive_absences)
+
+      assert %{
+               id: ^old_alert_id,
+               family_id: ^family_id,
+               type: :excessive_absences,
+               dismissed_at: nil
+             } = alert
+
+      refute alert.updated_at == old_alert.updated_at
+    end
+
+    test "errors if invalid type" do
+      family = insert(:family)
+
+      assert {:error, changeset} = Families.raise_alert(family.id, :unknown)
+
+      assert errors_on(changeset) == %{type: ["is invalid"]}
+    end
+  end
+
+  describe "dismiss_alerts/2" do
+    test "dismiss alerts for a family if active" do
+      family = insert(:family)
+
+      old_alert =
+        insert(:alert,
+          family: family,
+          type: :excessive_absences,
+          dismissed_at: ~U[2020-01-01T00:00:00Z]
+        )
+
+      alert = insert(:alert, family: family, type: :excessive_absences, dismissed_at: nil)
+
+      assert {:ok, 1} =
+               Families.dismiss_alerts(family.id, [:excessive_absences])
+
+      assert reload(alert).dismissed_at
+      assert reload(old_alert).dismissed_at == old_alert.dismissed_at
+    end
+
+    test "noop if type does not exist" do
+      family = insert(:family)
+
+      old_alert =
+        insert(:alert,
+          family: family,
+          type: :excessive_absences,
+          dismissed_at: ~U[2020-01-01T00:00:00Z]
+        )
+
+      assert {:ok, 0} =
+               Families.dismiss_alerts(family.id, [:excessive_absences])
+
+      assert reload(old_alert).dismissed_at == old_alert.dismissed_at
+    end
+
+    test "noop if nothing to dismiss" do
+      family = insert(:family)
+
+      assert {:ok, 0} =
+               Families.dismiss_alerts(family.id, [:excessive_absences, :unknown])
     end
   end
 end

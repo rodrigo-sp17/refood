@@ -70,4 +70,14 @@ defmodule Refood.Factory do
       family: build(:family)
     }
   end
+
+  def alert_factory(attrs) do
+    %Refood.Families.Alert{
+      type: :excessive_absences,
+      dismissed_at: nil,
+      family: build(:family)
+    }
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
+  end
 end

@@ -495,7 +495,7 @@ defmodule RefoodWeb.CoreComponents do
                 id={"#{@name}-#{value}"}
                 name={@name}
                 value={value}
-                checked={@value && value in @value}
+                checked={value in @value || Atom.to_string(value) in @value}
                 class="mr-2 h-4 w-4 rounded"
                 {@rest}
               />

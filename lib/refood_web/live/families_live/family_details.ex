@@ -11,7 +11,8 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
     updated_assigns =
       Map.merge(assigns, %{
         view_to_show: nil,
-        form: to_form(Families.change_update_family_details(family, %{})),
+        form:
+          to_form(Families.change_update_family_details(family, %{weekdays: family.weekdays})),
         edit: false
       })
 
@@ -239,7 +240,10 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
   def handle_event("validate", %{"family" => attrs}, socket) do
     assigns = [
       edit: true,
-      form: to_form(Families.change_update_family_details(socket.assigns.family, attrs))
+      form:
+        to_form(Families.change_update_family_details(socket.assigns.family, attrs),
+          action: :validate
+        )
     ]
 
     {:noreply, assign(socket, assigns)}
@@ -278,7 +282,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
   def handle_event("edit-absence", %{"id" => absence_id, "warned" => warned}, socket) do
     with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
       case Families.update_absence(absence_id, %{warned: warned}) do
-        {:ok, absence} ->
+        {:ok, _absence} ->
           {:noreply,
            socket
            |> put_flash(:info, "Sucesso!")
@@ -309,7 +313,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
   def handle_event("delete-absence", %{"id" => absence_id}, socket) do
     with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
       case Families.delete_absence(absence_id) do
-        {:ok, absence} ->
+        {:ok, _absence} ->
           {:noreply,
            socket
            |> put_flash(:info, "Sucesso!")

@@ -8,6 +8,7 @@ defmodule Refood.Families do
   alias Refood.Families.Absence
   alias Refood.Families.Family
   alias Refood.Families.Swap
+  alias Refood.Families.Alert
   alias Refood.Repo
 
   def change_reactivate_family(family, attrs) do
@@ -29,7 +30,7 @@ defmodule Refood.Families do
   def list_families(params \\ %{}) do
     from(f in Family,
       as: :family,
-      preload: [:absences],
+      preload: [:absences, :active_alerts],
       where: f.status != :queued,
       order_by: [
         fragment("array_position(array['active', 'paused', 'finished'], ?)", f.status),
@@ -105,8 +106,11 @@ defmodule Refood.Families do
   end
 
   @spec get_family!(integer()) :: Family.t()
-  def get_family!(family_id),
-    do: Family |> Repo.get(family_id) |> Repo.preload([:address, :absences])
+  def get_family!(family_id) do
+    Family
+    |> Repo.get(family_id)
+    |> Repo.preload([:address, :absences, :active_alerts])
+  end
 
   def change_update_family_details(family, attrs) do
     Family.changeset(family, attrs)
@@ -142,10 +146,48 @@ defmodule Refood.Families do
     |> Repo.all()
   end
 
+  @doc """
+  Adds an absence to a Family.
+  """
   def add_absence(attrs) do
+    with {:ok, absence} <- do_add_absence(attrs) do
+      maybe_raise_excessive_absences_alert(absence.family_id)
+      {:ok, absence}
+    end
+  end
+
+  defp do_add_absence(attrs) do
     attrs
     |> Absence.changeset()
     |> Repo.insert()
+  end
+
+  defp maybe_raise_excessive_absences_alert(family_id) do
+    query =
+      from(absence in Absence,
+        left_join:
+          alert in subquery(active_or_last_dismissed_alert_query(family_id, :excessive_absences)),
+        on: true,
+        where: absence.family_id == ^family_id,
+        where: not absence.warned,
+        where: is_nil(alert.id) or absence.date > alert.dismissed_at
+      )
+
+    absences_count = Repo.aggregate(query, :count)
+
+    if absences_count >= 3 do
+      raise_alert(family_id, :excessive_absences)
+    else
+      :noop
+    end
+  end
+
+  defp active_or_last_dismissed_alert_query(family_id, type) do
+    from(alert in Alert,
+      where: alert.family_id == ^family_id and alert.type == ^type,
+      order_by: [desc_nulls_first: :dismissed_at],
+      limit: 1
+    )
   end
 
   @doc """
@@ -189,4 +231,66 @@ defmodule Refood.Families do
   end
 
   def swap_changeset(attrs \\ %{}), do: Swap.changeset(attrs)
+
+  @doc """
+  Raises an alert for a Family.
+  """
+  def raise_alert(family_id, alert_type) do
+    %Alert{family_id: family_id}
+    |> Alert.changeset(%{type: alert_type})
+    |> Repo.insert(
+      conflict_target: {:unsafe_fragment, "(family_id, type) WHERE dismissed_at IS NULL"},
+      on_conflict: {:replace, [:updated_at]},
+      returning: true
+    )
+  end
+
+  @doc """
+  Dismisses alerts for a Family, if active.
+  """
+  def dismiss_alerts(family_id, alert_types, dismissed_at \\ DateTime.utc_now())
+      when is_binary(family_id) and is_list(alert_types) do
+    filtered_types = Alert.sanitize_types(alert_types)
+
+    {count, nil} =
+      from(a in Alert,
+        where: a.family_id == ^family_id and a.type in ^filtered_types and is_nil(a.dismissed_at)
+      )
+      |> Repo.update_all(set: [dismissed_at: dismissed_at])
+
+    {:ok, count}
+  end
+
+  @doc """
+  Returns the changeset for registering a contact.
+  """
+  def change_register_contact(attrs) do
+    types = %{
+      last_contacted_at: :utc_datetime,
+      notes: :string,
+      alerts_to_dismiss: {:array, Ecto.ParameterizedType.init(Ecto.Enum, values: Alert.types())}
+    }
+
+    {%{}, types}
+    |> cast(attrs, [:last_contacted_at, :notes, :alerts_to_dismiss])
+    |> validate_required([:last_contacted_at])
+  end
+
+  @doc """
+  Registers a new contact for a Family.
+  """
+  def register_contact(family, attrs) do
+    valid_attrs =
+      attrs
+      |> change_register_contact()
+      |> apply_action!(:insert)
+
+    family_attrs = Map.take(valid_attrs, [:last_contacted_at, :notes])
+    alerts_to_dismiss = Map.get(valid_attrs, :alerts_to_dismiss, [])
+
+    with {:ok, updated_family} <- update_family_details(family, family_attrs),
+         {:ok, _} <- dismiss_alerts(family.id, alerts_to_dismiss) do
+      {:ok, updated_family}
+    end
+  end
 end

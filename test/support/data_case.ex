@@ -25,6 +25,7 @@ defmodule Refood.DataCase do
       import Ecto.Query
       import Refood.DataCase
       import Refood.Factory
+      import Refood.Repo, only: [reload: 1]
     end
   end
 

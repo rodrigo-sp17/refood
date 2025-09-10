@@ -3,6 +3,7 @@ defmodule Refood.Schema do
     quote do
       use Ecto.Schema
       import Ecto.Changeset
+      import Refood.ChangesetHelpers
       @primary_key {:id, :binary_id, autogenerate: true}
       @foreign_key_type :binary_id
     end

@@ -4,6 +4,7 @@ defmodule Refood.Families.Family do
   alias Refood.Families.Address
   alias Refood.Families.Absence
   alias Refood.Families.Swap
+  alias Refood.Families.Alert
 
   @weekdays [:monday, :tuesday, :wednesday, :thursday, :friday, :saturday, :sunday]
 
@@ -30,6 +31,8 @@ defmodule Refood.Families.Family do
     field :weekdays, {:array, Ecto.Enum}, values: @weekdays
     has_many :absences, Absence
     has_many :swaps, Swap
+
+    has_many :active_alerts, Alert, where: [dismissed_at: nil]
 
     field :help_requested_at, :utc_datetime
     field :last_contacted_at, :utc_datetime
@@ -87,8 +90,10 @@ defmodule Refood.Families.Family do
   end
 
   def activate_family(family, attrs) do
+    sanitized_attrs = sanitize_array(attrs, "weekdays")
+
     family
-    |> cast(attrs, [:number, :weekdays])
+    |> cast(sanitized_attrs, [:number, :weekdays])
     |> validate_required([:number, :weekdays])
     |> validate_length(:weekdays, min: 1, message: "dias da semana requeridos")
     |> unique_constraint([:number], message: "número já assimilado")
@@ -112,8 +117,10 @@ defmodule Refood.Families.Family do
   end
 
   def changeset(schema \\ %__MODULE__{}, attrs) do
+    sanitized_attrs = sanitize_array(attrs, "weekdays") |> dbg()
+
     schema
-    |> cast(attrs, [
+    |> cast(sanitized_attrs, [
       :number,
       :name,
       :adults,

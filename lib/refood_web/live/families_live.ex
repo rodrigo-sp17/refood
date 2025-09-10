@@ -7,9 +7,11 @@ defmodule RefoodWeb.FamiliesLive do
   alias Refood.Families
   alias Refood.Families.HelpQueue
   alias Refood.Families.Family
+  alias Refood.Families.Alert
   alias RefoodWeb.FamiliesLive.FamilyDetails
   alias RefoodWeb.FamiliesLive.NewFamily
   alias RefoodWeb.FamiliesLive.MoveToActive
+  alias RefoodWeb.FamiliesLive.RegisterContact
 
   @impl true
   def mount(_params, _session, socket) do
@@ -82,6 +84,18 @@ defmodule RefoodWeb.FamiliesLive do
   end
 
   @impl true
+  def handle_params(%{"register-contact" => _, "family_id" => family_id}, _uri, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      assigns = [
+        view_to_show: :register_contact,
+        selected_family: Families.get_family!(family_id)
+      ]
+
+      {:noreply, assign(socket, assigns)}
+    end
+  end
+
+  @impl true
   def handle_params(_, _uri, socket) do
     {:noreply, socket}
   end
@@ -103,6 +117,15 @@ defmodule RefoodWeb.FamiliesLive do
       id="show-family-details"
       family={@selected_family}
       on_created={fn family -> send(self(), {:updated_family, family}) end}
+      on_cancel={JS.push("hide-view")}
+      current_user={@current_user}
+    />
+
+    <.live_component
+      :if={@view_to_show == :register_contact}
+      module={RegisterContact}
+      id="register-contact"
+      family={@selected_family}
       on_cancel={JS.push("hide-view")}
       current_user={@current_user}
     />
@@ -175,6 +198,20 @@ defmodule RefoodWeb.FamiliesLive do
       </:col>
       <:col
         :let={family}
+        id="alerts"
+        sort={@sort[:alerts]}
+        on_sort={&on_sort(:alerts, &1)}
+        label="Alertas"
+      >
+        <div
+          :for={alert <- family.active_alerts}
+          class="px-2 py-1 border rounded-3xl border-red-500 text-red-500 text-center text-sm"
+        >
+          {Alert.type_to_name(alert.type)}
+        </div>
+      </:col>
+      <:col
+        :let={family}
         id="phone-number"
         sort={@sort[:phone_number]}
         on_sort={&on_sort(:phone_number, &1)}
@@ -237,6 +274,9 @@ defmodule RefoodWeb.FamiliesLive do
           </:link>
           <:link patch={"/families/#{family.id}?move-to-queue"}>
             Mover para lista de espera
+          </:link>
+          <:link patch={"/families/#{family.id}?register-contact"}>
+            Registar contacto
           </:link>
         </.dropdown>
       </:action>
@@ -354,6 +394,10 @@ defmodule RefoodWeb.FamiliesLive do
   end
 
   defp sort_families(families, _key, nil), do: families
+
+  defp sort_families(families, :alerts, order),
+    do: Enum.sort_by(families, &length(&1.active_alerts), order)
+
   defp sort_families(families, key, order), do: Enum.sort_by(families, &Map.get(&1, key), order)
 
   @impl true
