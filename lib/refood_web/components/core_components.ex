@@ -487,6 +487,7 @@ defmodule RefoodWeb.CoreComponents do
         @edit && "mt-2"
       ]}>
         <div class="p-2 grid grid-cols-1 gap-2 text-sm items-baseline">
+          <input type="hidden" name={@name} value="" />
           <div :for={{label, value} <- @options} class="">
             <label for={"#{@name}-#{value}"} class="">
               <input
