@@ -28,7 +28,7 @@ defmodule Refood.Families.Family do
     field :status, Ecto.Enum, values: [:queued, :active, :paused, :finished], default: :finished
     field :queue_position, :integer
 
-    field :weekdays, {:array, Ecto.Enum}, values: @weekdays
+    field :weekdays, {:array, Ecto.Enum}, values: @weekdays, default: []
     has_many :absences, Absence
     has_many :swaps, Swap
 
@@ -117,7 +117,7 @@ defmodule Refood.Families.Family do
   end
 
   def changeset(schema \\ %__MODULE__{}, attrs) do
-    sanitized_attrs = sanitize_array(attrs, "weekdays") |> dbg()
+    sanitized_attrs = sanitize_array(attrs, "weekdays")
 
     schema
     |> cast(sanitized_attrs, [
