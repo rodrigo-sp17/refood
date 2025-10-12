@@ -117,6 +117,7 @@ defmodule Refood.Families do
     |> Repo.preload([
       :address,
       :absences,
+      :swaps,
       :active_alerts,
       :loaned_items,
       :unreturned_loaned_items
@@ -242,6 +243,14 @@ defmodule Refood.Families do
   end
 
   def swap_changeset(attrs \\ %{}), do: Swap.changeset(attrs)
+
+  @doc """
+  Deletes a swap.
+  """
+  def delete_swap(swap_id) do
+    Repo.get(Swap, swap_id)
+    |> Repo.delete()
+  end
 
   @doc """
   Raises an alert for a Family.
