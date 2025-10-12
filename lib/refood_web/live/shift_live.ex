@@ -119,8 +119,11 @@ defmodule RefoodWeb.ShiftLive do
       >
         <.icon name="hero-chevron-left" class="bg-black group-hover:bg-white" />
       </button>
-      <div class="basis-7/12 text-3xl text-center font-bold">
-        {if @date == Date.utc_today(), do: "(Hoje)"} {"#{weekday_name(Date.day_of_week(@date))}, #{@date.day} de #{month_name(@date.month)} de #{@date.year}"}
+      <div class="flex flex-col items-center gap-4">
+        <div class="basis-7/12 text-3xl text-center font-bold">
+          {if @date == Date.utc_today(), do: "(Hoje)"} {"#{weekday_name(Date.day_of_week(@date))}, #{@date.day} de #{month_name(@date.month)} de #{@date.year}"}
+        </div>
+        <div class="text-xl">Total: {length(@families)}</div>
       </div>
       <button
         phx-click="next-date"
@@ -287,7 +290,7 @@ defmodule RefoodWeb.ShiftLive do
   end
 
   @impl true
-  def handle_info({:loaned_item_added, family_id}, socket) do
+  def handle_info({:loaned_item_added, _family_id}, socket) do
     %{date: date} = socket.assigns
 
     assigns = [
