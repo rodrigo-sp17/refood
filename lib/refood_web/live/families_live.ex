@@ -409,4 +409,15 @@ defmodule RefoodWeb.FamiliesLive do
 
     {:noreply, assign(socket, assigns)}
   end
+
+  @impl true
+  def handle_info({:loaned_item_added, family_id}, socket) do
+    updated_family = Families.get_family!(family_id)
+
+    assigns = [
+      selected_family: updated_family
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
 end

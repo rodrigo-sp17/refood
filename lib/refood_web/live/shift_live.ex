@@ -6,6 +6,7 @@ defmodule RefoodWeb.ShiftLive do
 
   alias Refood.Families
   alias RefoodWeb.HelpQueueLive.NewHelpRequest
+  alias RefoodWeb.ShiftLive.LoanedItems
 
   @impl true
   def mount(_params, _session, socket) do
@@ -38,6 +39,16 @@ defmodule RefoodWeb.ShiftLive do
       selected_family: family_id,
       view_to_show: :new_swap,
       form: to_form(Families.swap_changeset())
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_params(%{"loaned-items" => _, "family_id" => family_id}, _, socket) do
+    assigns = [
+      selected_family: family_id,
+      view_to_show: :loaned_items
     ]
 
     {:noreply, assign(socket, assigns)}
@@ -93,6 +104,14 @@ defmodule RefoodWeb.ShiftLive do
       </div>
     </.modal>
 
+    <.live_component
+      :if={@view_to_show == :loaned_items}
+      module={LoanedItems}
+      id="loaned-items"
+      family_id={@selected_family}
+      on_cancel={JS.push("cancel-modal")}
+    />
+
     <div class="mt-11 flex justify-center items-center gap-8 mb-8">
       <button
         phx-click="prev-date"
@@ -126,7 +145,7 @@ defmodule RefoodWeb.ShiftLive do
         <div class="text-lg pl-2 w-28 flex items-center gap-3">
           <.icon name="hero-users-solid" />{family.adults} + {family.children}
         </div>
-        <div class="px-2 w-100 flex items-center justify-between gap-1">
+        <div class="px-2 w-100 flex items-center justify-start gap-2">
           <%= if family.restrictions do %>
             <div class="flex items-center gap-1">
               <.icon name="hero-exclamation-triangle-solid text-red-700" />
@@ -155,14 +174,23 @@ defmodule RefoodWeb.ShiftLive do
               Faltou
             </div>
           </div>
+          <div
+            :if={!Enum.empty?(family.unreturned_loaned_items)}
+            class=" px-6 py-1 border rounded-3xl border-blue-600 text-blue-600 text-center font-bold"
+          >
+            Empréstimo
+          </div>
         </div>
         <div class="relative absolute right-0">
-          <.dropdown :if={show_dropdown?(family, @date)} id={"shift-dropdown-#{family.id}"}>
+          <.dropdown id={"shift-dropdown-#{family.id}"}>
             <:link :if={show_add_swap?(family, @date)} patch={"/shift/#{family.id}?new-swap"}>
               Trocar dia
             </:link>
             <:link :if={show_add_absence?(family)} patch={"/shift/#{family.id}?new-absence"}>
               Marcar falta
+            </:link>
+            <:link patch={"/shift/#{family.id}?loaned-items"}>
+              Gerir empréstimos
             </:link>
           </.dropdown>
         </div>
@@ -170,8 +198,6 @@ defmodule RefoodWeb.ShiftLive do
     </div>
     """
   end
-
-  defp show_dropdown?(family, date), do: show_add_absence?(family) or show_add_swap?(family, date)
 
   defp show_add_absence?(family) do
     family.absences == []
@@ -258,6 +284,34 @@ defmodule RefoodWeb.ShiftLive do
   def handle_info({:help_request_created, _}, socket) do
     assigns = [selected_family: nil, view_to_show: nil]
     {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_info({:loaned_item_added, family_id}, socket) do
+    %{date: date} = socket.assigns
+
+    assigns = [
+      families: Families.list_families_by_date(date),
+      selected_family: nil,
+      view_to_show: nil
+    ]
+
+    {:noreply,
+     socket
+     |> assign(assigns)
+     |> push_patch(to: "/shift")}
+  end
+
+  @impl true
+  def handle_info({:loaned_item_updated, family_id}, socket) do
+    %{date: date} = socket.assigns
+
+    assigns = [
+      families: Families.list_families_by_date(date),
+      selected_family: family_id
+    ]
+
+    {:noreply, socket |> assign(assigns)}
   end
 
   defp weekday_name(1), do: "Segunda-feira"

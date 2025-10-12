@@ -9,6 +9,7 @@ defmodule Refood.Families do
   alias Refood.Families.Family
   alias Refood.Families.Swap
   alias Refood.Families.Alert
+  alias Refood.Families.LoanedItem
   alias Refood.Repo
 
   def change_reactivate_family(family, attrs) do
@@ -87,7 +88,11 @@ defmodule Refood.Families do
           exists(from(s in Swap, where: s.family_id == parent_as(:family).id and s.to == ^date)) and
           exists(from(s in Swap, where: s.family_id == parent_as(:family).id and s.from == ^date)),
       order_by: f.number,
-      preload: [absences: ^from(a in Absence, where: a.date == ^date), swaps: swap]
+      preload: [
+        absences: ^from(a in Absence, where: a.date == ^date),
+        swaps: swap,
+        unreturned_loaned_items: []
+      ]
     )
     |> Repo.all()
   end
@@ -109,7 +114,13 @@ defmodule Refood.Families do
   def get_family!(family_id) do
     Family
     |> Repo.get(family_id)
-    |> Repo.preload([:address, :absences, :active_alerts])
+    |> Repo.preload([
+      :address,
+      :absences,
+      :active_alerts,
+      :loaned_items,
+      :unreturned_loaned_items
+    ])
   end
 
   def change_update_family_details(family, attrs) do
@@ -292,5 +303,38 @@ defmodule Refood.Families do
          {:ok, _} <- dismiss_alerts(family.id, alerts_to_dismiss) do
       {:ok, updated_family}
     end
+  end
+
+  @doc """
+  Returns a changeset for adding a loaned item.
+  """
+  def change_add_loaned_item(attrs \\ %{}) do
+    LoanedItem.changeset(attrs)
+  end
+
+  @doc """
+  Adds a loaned item to a Family.
+  """
+  def add_loaned_item(attrs) do
+    attrs
+    |> change_add_loaned_item()
+    |> Repo.insert()
+  end
+
+  @doc """
+  Marks a loaned item as returned.
+  """
+  def mark_loaned_item_as_returned(loaned_item_id, returned_at \\ DateTime.utc_now()) do
+    Repo.get(LoanedItem, loaned_item_id)
+    |> LoanedItem.update_changeset(%{returned_at: returned_at})
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a loaned item.
+  """
+  def delete_loaned_item(loaned_item_id) do
+    Repo.get(LoanedItem, loaned_item_id)
+    |> Repo.delete()
   end
 end

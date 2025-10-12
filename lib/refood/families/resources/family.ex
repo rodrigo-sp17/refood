@@ -5,6 +5,7 @@ defmodule Refood.Families.Family do
   alias Refood.Families.Absence
   alias Refood.Families.Swap
   alias Refood.Families.Alert
+  alias Refood.Families.LoanedItem
 
   @weekdays [:monday, :tuesday, :wednesday, :thursday, :friday, :saturday, :sunday]
 
@@ -31,8 +32,10 @@ defmodule Refood.Families.Family do
     field :weekdays, {:array, Ecto.Enum}, values: @weekdays, default: []
     has_many :absences, Absence
     has_many :swaps, Swap
+    has_many :loaned_items, LoanedItem
 
     has_many :active_alerts, Alert, where: [dismissed_at: nil]
+    has_many :unreturned_loaned_items, LoanedItem, where: [returned_at: nil]
 
     field :help_requested_at, :utc_datetime
     field :last_contacted_at, :utc_datetime

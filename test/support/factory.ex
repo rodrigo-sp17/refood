@@ -80,4 +80,16 @@ defmodule Refood.Factory do
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
   end
+
+  def loaned_item_factory(attrs) do
+    %Refood.Families.LoanedItem{
+      name: sequence(:loaned_item_name, &"Tupperware #{&1}"),
+      quantity: Enum.random(1..3),
+      loaned_at: DateTime.utc_now(),
+      returned_at: nil,
+      family: build(:family)
+    }
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
+  end
 end

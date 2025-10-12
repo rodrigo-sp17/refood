@@ -5,6 +5,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
   use RefoodWeb, :live_component
 
   alias Refood.Families
+  alias RefoodWeb.FamiliesLive.AddLoanedItem
 
   @impl true
   def update(%{family: family} = assigns, socket) do
@@ -44,6 +45,27 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
         deny_text="Cancelar"
         on_deny={JS.push("show-view", target: @myself)}
         on_cancel={JS.push("show-view", target: @myself)}
+      />
+
+      <.confirmation_modal
+        :if={@view_to_show == :confirm_delete_loaned_item}
+        id="confirm-delete-loaned-item"
+        type={:delete}
+        question={"Tem certeza de que deseja remover o item #{@loaned_item.name}?"}
+        confirm_text="Remover"
+        on_confirm={JS.push("delete-loaned-item", value: %{id: @loaned_item.id}, target: @myself)}
+        deny_text="Cancelar"
+        on_deny={JS.push("show-view", target: @myself)}
+        on_cancel={JS.push("show-view", target: @myself)}
+      />
+
+      <.live_component
+        :if={@view_to_show == :add_loaned_item}
+        module={AddLoanedItem}
+        id="add-loaned-item"
+        family={@family}
+        on_cancel={JS.push("show-view", target: @myself)}
+        on_added={fn _item -> send(self(), {:loaned_item_added, @family.id}) end}
       />
 
       <.modal
@@ -169,6 +191,54 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
           <.input edit={@edit} field={@form[:restrictions]} type="textarea" label="Restrições" />
           <.input edit={@edit} field={@form[:notes]} type="textarea" label="Notas" />
           <div>
+            <div class="flex items-center justify-between">
+              <.label for="loaned-items-list">Empréstimos</.label>
+              <.link
+                :if={@current_user.role in [:admin, :manager]}
+                phx-click="show-add-loaned-item"
+                phx-target={@myself}
+                class="text-sm text-black font-medium"
+              >
+                + Adicionar item
+              </.link>
+            </div>
+            <div id="loaned-items-list" class="mt-2 border rounded-lg">
+              <div :if={@family.loaned_items == []} class="p-2 text-sm text-center">
+                Nenhum item emprestado
+              </div>
+              <div
+                :for={item <- Enum.sort_by(@family.loaned_items, & &1.loaned_at, {:desc, DateTime})}
+                class={"p-2 flex justify-between rounded-lg items-center relative text-sm border-b last:border-b-0 #{if item.returned_at, do: "bg-gray-50 text-gray-500", else: ""}"}
+              >
+                <div class="flex gap-4">
+                  <div>{Calendar.strftime(item.loaned_at, "%Y-%m-%d")}</div>
+                  <div>{item.quantity}x {item.name}</div>
+                  <div :if={item.returned_at}>
+                    Devolvido: {Calendar.strftime(item.returned_at, "%Y-%m-%d")}
+                  </div>
+                </div>
+                <.dropdown
+                  :if={@current_user.role in [:admin, :manager]}
+                  id={"loaned-item-dropdown-#{item.id}"}
+                >
+                  <:link
+                    :if={!item.returned_at}
+                    on_click={
+                      JS.push("mark-loaned-item-returned", value: %{id: item.id}, target: @myself)
+                    }
+                  >
+                    Marcar como devolvido
+                  </:link>
+                  <:link on_click={
+                    JS.push("confirm-delete-loaned-item", value: %{id: item.id}, target: @myself)
+                  }>
+                    <p class="text-red-500">Remover item</p>
+                  </:link>
+                </.dropdown>
+              </div>
+            </div>
+          </div>
+          <div>
             <.label for="absence-list">Faltas</.label>
             <div id="absence-list" class="mt-2 border rounded-lg">
               <div :if={@family.absences == []} class="p-2 text-sm text-center">
@@ -176,7 +246,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
               </div>
               <div
                 :for={absence <- Enum.sort_by(@family.absences, & &1.date)}
-                class="p-2 flex justify-between rounded-lg  items-center relative text-sm"
+                class="p-2 flex justify-between rounded-lg items-center relative text-sm border-b last:border-b-0"
               >
                 <div class="flex gap-5">
                   <div>{absence.date}</div>
@@ -323,6 +393,60 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
         {:error, _} ->
           {socket
            |> put_flash(:error, "Falha em remover falta!")}
+      end
+    end
+  end
+
+  @impl true
+  def handle_event("show-add-loaned-item", _params, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      {:noreply, assign(socket, view_to_show: :add_loaned_item)}
+    end
+  end
+
+  @impl true
+  def handle_event("mark-loaned-item-returned", %{"id" => loaned_item_id}, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      case Families.mark_loaned_item_as_returned(loaned_item_id) do
+        {:ok, _loaned_item} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Item marcado como devolvido!")
+           |> assign(family: Families.get_family!(socket.assigns.family.id))}
+
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Falha em marcar item como devolvido")}
+      end
+    end
+  end
+
+  @impl true
+  def handle_event("confirm-delete-loaned-item", %{"id" => loaned_item_id}, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      loaned_item = Enum.find(socket.assigns.family.loaned_items, &(&1.id == loaned_item_id))
+
+      assigns = [
+        view_to_show: :confirm_delete_loaned_item,
+        loaned_item: loaned_item
+      ]
+
+      {:noreply, assign(socket, assigns)}
+    end
+  end
+
+  @impl true
+  def handle_event("delete-loaned-item", %{"id" => loaned_item_id}, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      case Families.delete_loaned_item(loaned_item_id) do
+        {:ok, _loaned_item} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Item removido!")
+           |> assign(view_to_show: nil)
+           |> assign(family: Families.get_family!(socket.assigns.family.id))}
+
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Falha em remover item")}
       end
     end
   end
