@@ -134,57 +134,63 @@ defmodule RefoodWeb.ShiftLive do
     </div>
     <div
       id="shift-table"
-      class="sm:h-full sm:overflow-y-hidden overflow-y-auto flex flex-col sm:flex-wrap items-center gap-2"
+      class="xl:h-full xl:overflow-y-hidden overflow-y-auto flex flex-col xl:flex-wrap items-center gap-2"
     >
       <div :if={@families == []} class="h-16 flex justify-center items-center">
         Nenhuma família para o dia.
       </div>
       <div
         :for={family <- @families}
-        class="max-w-5/11 min-h-[60px] px-6 py-4 bg-white flex rounded-lg justify-start items-center relative"
+        class="xl:max-w-5/11 w-full px-6 py-4 bg-white flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-1"
       >
-        <div class="text-xl font-bold w-11">F-{family.number}</div>
-        <div class="text-lg pl-2 w-52">{family.name}</div>
-        <div class="text-lg pl-2 w-28 flex items-center gap-3">
+        <div class="flex items-center gap-2 md:gap-0 flex-shrink-0">
+          <div class="text-xl font-bold md:w-11">F-{family.number}</div>
+          <div class="text-lg md:pl-2 md:w-52 break-words">{family.name}</div>
+        </div>
+        <div class="text-lg md:pl-2 md:w-28 flex items-center gap-3 flex-shrink-0">
           <.icon name="hero-users-solid" />{family.adults} + {family.children}
         </div>
-        <div class="px-2 w-100 flex items-center justify-start gap-2">
-          <%= if family.restrictions do %>
-            <div class="flex items-center gap-1">
-              <.icon name="hero-exclamation-triangle-solid text-red-700" />
-              <p class="text-red-700">{family.restrictions}</p>
-            </div>
-          <% else %>
-            -
-          <% end %>
-          <div
-            :if={!Enum.empty?(family.swaps)}
-            class="w-25 px-6 py-1 border rounded-3xl border-green-600 text-green-600 text-center font-bold"
-          >
-            Troca
+        <div class="md:px-2 flex-1 min-w-0 flex flex-col md:flex-row gap-2">
+          <div class="flex items-start flex-1 min-w-0">
+            <%= if family.restrictions do %>
+              <div class="flex items-center gap-1">
+                <.icon name="hero-exclamation-triangle-solid text-red-700" />
+                <p class="text-red-700 break-words">{family.restrictions}</p>
+              </div>
+            <% else %>
+              <span class="hidden md:inline">-</span>
+            <% end %>
           </div>
-          <div :for={absence <- family.absences}>
+          <div class="flex items-start flex-wrap flex-1 grow min-w-0 gap-2">
             <div
-              :if={absence.warned}
-              class="w-25 px-6 py-1 border rounded-3xl border-yellow-600 text-yellow-600 text-center font-bold"
+              :if={!Enum.empty?(family.swaps)}
+              class="px-6 py-1 border rounded-3xl border-green-600 text-green-600 text-center font-bold whitespace-nowrap"
             >
-              Avisou
+              Troca
+            </div>
+            <div :for={absence <- family.absences}>
+              <div
+                :if={absence.warned}
+                class="px-6 py-1 border rounded-3xl border-yellow-600 text-yellow-600 text-center font-bold whitespace-nowrap"
+              >
+                Avisou
+              </div>
+              <div
+                :if={!absence.warned}
+                class="px-6 py-1 border rounded-3xl border-red-500 text-red-500 text-center font-bold whitespace-nowrap"
+              >
+                Faltou
+              </div>
             </div>
             <div
-              :if={!absence.warned}
-              class="w-25 px-6 py-1 border rounded-3xl border-red-500 text-red-500 text-center font-bold"
+              :if={!Enum.empty?(family.unreturned_loaned_items)}
+              class="px-6 py-1 border rounded-3xl border-blue-600 text-blue-600 text-center font-bold whitespace-nowrap"
             >
-              Faltou
+              Empréstimo
             </div>
-          </div>
-          <div
-            :if={!Enum.empty?(family.unreturned_loaned_items)}
-            class=" px-6 py-1 border rounded-3xl border-blue-600 text-blue-600 text-center font-bold"
-          >
-            Empréstimo
           </div>
         </div>
-        <div class="relative absolute right-0">
+        <div class="flex-shrink-0 self-end md:self-start ml-auto relative">
           <.dropdown id={"shift-dropdown-#{family.id}"}>
             <:link :if={show_add_swap?(family, @date)} patch={"/shift/#{family.id}?new-swap"}>
               Trocar dia
