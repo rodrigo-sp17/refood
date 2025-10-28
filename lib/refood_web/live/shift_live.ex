@@ -141,27 +141,27 @@ defmodule RefoodWeb.ShiftLive do
       </div>
       <div
         :for={family <- @families}
-        class="xl:max-w-5/11 w-full px-6 py-4 bg-white flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-1"
+        class="xl:max-w-5/11 w-full px-6 py-4 bg-white flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-2"
       >
-        <div class="flex items-center gap-2 md:gap-0 flex-shrink-0">
-          <div class="text-xl font-bold md:w-11">F-{family.number}</div>
-          <div class="text-lg md:pl-2 md:w-52 break-words">{family.name}</div>
+        <div class="flex items-center gap-2 md:gap-0 shrink">
+          <div class="text-xl font-bold w-11">F-{family.number}</div>
+          <div class="text-lg md:pl-2 break-words w-52">{family.name}</div>
         </div>
-        <div class="text-lg md:pl-2 md:w-28 flex items-center gap-3 flex-shrink-0">
+        <div class="text-lg md:pl-2 w:28 flex items-center gap-3 flex-shrink-0">
           <.icon name="hero-users-solid" />{family.adults} + {family.children}
         </div>
-        <div class="md:px-2 flex-1 min-w-0 flex flex-col md:flex-row gap-2">
-          <div class="flex items-start flex-1 min-w-0">
+        <div class="md:px-2 flex-1 flex flex-col md:flex-row gap-2">
+          <div class="flex items-start min-w-5">
             <%= if family.restrictions do %>
               <div class="flex items-center gap-1">
                 <.icon name="hero-exclamation-triangle-solid text-red-700" />
                 <p class="text-red-700 break-words">{family.restrictions}</p>
               </div>
             <% else %>
-              <span class="hidden md:inline">-</span>
+              -
             <% end %>
           </div>
-          <div class="flex items-start flex-wrap flex-1 grow min-w-0 gap-2">
+          <div class="flex items-start flex-wrap flex-1 grow gap-2">
             <div
               :if={!Enum.empty?(family.swaps)}
               class="px-6 py-1 border rounded-3xl border-green-600 text-green-600 text-center font-bold whitespace-nowrap"
@@ -189,19 +189,19 @@ defmodule RefoodWeb.ShiftLive do
               Empréstimo
             </div>
           </div>
-        </div>
-        <div class="flex-shrink-0 self-end md:self-start ml-auto relative">
-          <.dropdown id={"shift-dropdown-#{family.id}"}>
-            <:link :if={show_add_swap?(family, @date)} patch={"/shift/#{family.id}?new-swap"}>
-              Trocar dia
-            </:link>
-            <:link :if={show_add_absence?(family)} patch={"/shift/#{family.id}?new-absence"}>
-              Marcar falta
-            </:link>
-            <:link patch={"/shift/#{family.id}?loaned-items"}>
-              Gerir empréstimos
-            </:link>
-          </.dropdown>
+          <div class="shrink-0 ml-auto relative">
+            <.dropdown id={"shift-dropdown-#{family.id}"}>
+              <:link :if={show_add_swap?(family, @date)} patch={"/shift/#{family.id}?new-swap"}>
+                Trocar dia
+              </:link>
+              <:link :if={show_add_absence?(family)} patch={"/shift/#{family.id}?new-absence"}>
+                Marcar falta
+              </:link>
+              <:link patch={"/shift/#{family.id}?loaned-items"}>
+                Gerir empréstimos
+              </:link>
+            </.dropdown>
+          </div>
         </div>
       </div>
     </div>
