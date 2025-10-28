@@ -233,10 +233,10 @@ defmodule Refood.Families do
       end
     end)
     |> validate_change(:to, fn _, to ->
-      if Date.before?(ref_date, to) do
-        []
-      else
+      if Date.after?(ref_date, to) do
         [to: "não é possível trocar para o passado"]
+      else
+        []
       end
     end)
     |> Repo.insert()
