@@ -7,7 +7,6 @@ defmodule RefoodWeb.HelpQueueLive do
   alias Refood.Families
   alias Refood.Families.HelpQueue
   alias RefoodWeb.HelpQueueLive.NewHelpRequest
-  alias RefoodWeb.HelpQueueLive.ChangeQueuePosition
   alias RefoodWeb.HelpQueueLive.HelpRequestDetails
   alias RefoodWeb.FamiliesLive.MoveToActive
 
@@ -17,7 +16,7 @@ defmodule RefoodWeb.HelpQueueLive do
       queue: HelpQueue.list_queue(),
       selected_family: nil,
       view_to_show: nil,
-      sort: %{},
+      sort: %{help_requested_at: :asc},
       filter: ""
     ]
 
@@ -27,18 +26,6 @@ defmodule RefoodWeb.HelpQueueLive do
   @impl true
   def handle_params(%{"new-request" => _}, _uri, socket) do
     {:noreply, assign(socket, view_to_show: :new_request)}
-  end
-
-  @impl true
-  def handle_params(%{"change-order" => _, "family_id" => family_id}, _uri, socket) do
-    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
-      assigns = [
-        view_to_show: :change_order,
-        selected_family: Families.get_family!(family_id)
-      ]
-
-      {:noreply, assign(socket, assigns)}
-    end
   end
 
   @impl true
@@ -91,15 +78,6 @@ defmodule RefoodWeb.HelpQueueLive do
     />
 
     <.live_component
-      :if={@view_to_show == :change_order}
-      module={ChangeQueuePosition}
-      id="change-queue-order"
-      family={@selected_family}
-      on_created={fn family -> send(self(), {:updated_family, family}) end}
-      on_cancel={JS.push("hide-view")}
-    />
-
-    <.live_component
       :if={@view_to_show == :show_request_details}
       module={HelpRequestDetails}
       id="help-request-details"
@@ -148,18 +126,12 @@ defmodule RefoodWeb.HelpQueueLive do
       </:top_controls>
       <:col
         :let={family}
-        id="position"
-        sort={@sort[:queue_position]}
-        on_sort={&on_sort(:queue_position, &1)}
-        label="Posição"
+        id="help_requested_at"
+        sort={@sort[:help_requested_at]}
+        on_sort={&on_sort(:help_requested_at, &1)}
+        label="Pedido em"
       >
-        <div class="flex flex-row gap-5 justify-center items-center">
-          <.link patch={"/help-queue/#{family.id}?change-order"}>
-            <.icon name="hero-arrows-up-down" class="h-5 w-5 hover:bg-blue-500" />
-          </.link>
-
-          {"#{family.queue_position}"}
-        </div>
+        {family.help_requested_at && Calendar.strftime(family.help_requested_at, "%d/%m/%Y %H:%M")}
       </:col>
       <:col :let={family} id="family-id" sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
         {String.slice(family.id, 0, 6)}
@@ -205,15 +177,6 @@ defmodule RefoodWeb.HelpQueueLive do
         label="Região"
       >
         {family.address.region} / {family.address.city}
-      </:col>
-      <:col
-        :let={family}
-        id="help_requested_at"
-        sort={@sort[:help_requested_at]}
-        on_sort={&on_sort(:help_requested_at, &1)}
-        label="Pedido em"
-      >
-        {family.help_requested_at && DateTime.to_date(family.help_requested_at)}
       </:col>
       <:action :let={family}>
         <.dropdown :if={@current_user.role in [:admin, :manager]} id={"dropdown-" <> family.id}>

@@ -9,7 +9,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
   @impl true
   def mount(socket) do
     assigns = [
-      form: to_form(HelpQueue.change_request_help(%{}))
+      form: to_form(HelpQueue.change_request_help(%{help_requested_at: DateTime.utc_now()}))
     ]
 
     {:ok, assign(socket, assigns)}
@@ -67,12 +67,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
           <.input field={@form[:speaks_portuguese]} type="checkbox" label="Fala Português?" />
           <div class="flex gap-4 justify-stretch items-center">
             <div>
-              <.input
-                field={@form[:help_requested_at]}
-                type="datetime-local"
-                label="Ajuda pedida em"
-                value={DateTime.utc_now()}
-              />
+              <.input field={@form[:help_requested_at]} type="datetime-local" label="Ajuda pedida em" />
             </div>
           </div>
           <div class="flex gap-4 justify-stretch">

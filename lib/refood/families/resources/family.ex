@@ -27,7 +27,6 @@ defmodule Refood.Families.Family do
     field :niss, :string
 
     field :status, Ecto.Enum, values: [:queued, :active, :paused, :finished], default: :finished
-    field :queue_position, :integer
 
     field :weekdays, {:array, Ecto.Enum}, values: @weekdays, default: []
     has_many :absences, Absence
@@ -100,14 +99,12 @@ defmodule Refood.Families.Family do
     |> validate_required([:number, :weekdays])
     |> validate_length(:weekdays, min: 1, message: "dias da semana requeridos")
     |> unique_constraint([:number], message: "número já assimilado")
-    |> put_change(:queue_position, nil)
     |> put_change(:status, :active)
   end
 
   def deactivate_family(family) do
     family
     |> change(%{})
-    |> put_change(:queue_position, nil)
     |> put_change(:status, :finished)
     |> put_change(:number, nil)
   end
