@@ -164,6 +164,7 @@ defmodule Refood.Families do
   def add_absence(attrs) do
     with {:ok, absence} <- do_add_absence(attrs) do
       maybe_raise_excessive_absences_alert(absence.family_id)
+      broadcast_shift_update(:absence_added, absence)
       {:ok, absence}
     end
   end
@@ -206,23 +207,40 @@ defmodule Refood.Families do
   Updates an existing absence.
   """
   def update_absence(absence_id, attrs) do
-    Repo.get(Absence, absence_id)
-    |> Absence.changeset(attrs)
-    |> Repo.update()
+    with {:ok, absence} <-
+           Repo.get(Absence, absence_id)
+           |> Absence.changeset(attrs)
+           |> Repo.update() do
+      broadcast_shift_update(:absence_updated, absence)
+      {:ok, absence}
+    end
   end
 
   @doc """
   Deletes an existing absence.
   """
   def delete_absence(absence_id) do
-    Repo.get(Absence, absence_id)
-    |> Repo.delete()
+    with {:ok, absence} <-
+           Repo.get(Absence, absence_id)
+           |> Repo.delete() do
+      broadcast_shift_update(:absence_deleted, absence)
+      {:ok, absence}
+    end
   end
 
   def add_swap(attrs, ref_date \\ Date.utc_today()) do
     family_id = attrs["family_id"] || attrs[:family_id]
     family = Repo.get!(Family, family_id)
 
+    with {:ok, swap} <-
+           build_swap_changeset(attrs, family, ref_date)
+           |> Repo.insert() do
+      broadcast_shift_update(:swap_added, swap)
+      {:ok, swap}
+    end
+  end
+
+  defp build_swap_changeset(attrs, family, ref_date) do
     attrs
     |> Swap.changeset()
     |> validate_change(:from, fn _, from ->
@@ -239,7 +257,6 @@ defmodule Refood.Families do
         []
       end
     end)
-    |> Repo.insert()
   end
 
   def swap_changeset(attrs \\ %{}), do: Swap.changeset(attrs)
@@ -248,8 +265,12 @@ defmodule Refood.Families do
   Deletes a swap.
   """
   def delete_swap(swap_id) do
-    Repo.get(Swap, swap_id)
-    |> Repo.delete()
+    with {:ok, swap} <-
+           Repo.get(Swap, swap_id)
+           |> Repo.delete() do
+      broadcast_shift_update(:swap_deleted, swap)
+      {:ok, swap}
+    end
   end
 
   @doc """
@@ -325,25 +346,41 @@ defmodule Refood.Families do
   Adds a loaned item to a Family.
   """
   def add_loaned_item(attrs) do
-    attrs
-    |> change_add_loaned_item()
-    |> Repo.insert()
+    with {:ok, loaned_item} <-
+           attrs
+           |> change_add_loaned_item()
+           |> Repo.insert() do
+      broadcast_shift_update(:loaned_item_added, loaned_item)
+      {:ok, loaned_item}
+    end
   end
 
   @doc """
   Marks a loaned item as returned.
   """
   def mark_loaned_item_as_returned(loaned_item_id, returned_at \\ DateTime.utc_now()) do
-    Repo.get(LoanedItem, loaned_item_id)
-    |> LoanedItem.update_changeset(%{returned_at: returned_at})
-    |> Repo.update()
+    with {:ok, loaned_item} <-
+           Repo.get(LoanedItem, loaned_item_id)
+           |> LoanedItem.update_changeset(%{returned_at: returned_at})
+           |> Repo.update() do
+      broadcast_shift_update(:loaned_item_returned, loaned_item)
+      {:ok, loaned_item}
+    end
   end
 
   @doc """
   Deletes a loaned item.
   """
   def delete_loaned_item(loaned_item_id) do
-    Repo.get(LoanedItem, loaned_item_id)
-    |> Repo.delete()
+    with {:ok, loaned_item} <-
+           Repo.get(LoanedItem, loaned_item_id)
+           |> Repo.delete() do
+      broadcast_shift_update(:loaned_item_deleted, loaned_item)
+      {:ok, loaned_item}
+    end
+  end
+
+  defp broadcast_shift_update(event, _data) do
+    Phoenix.PubSub.broadcast(Refood.PubSub, "shift_updates", {:shift_updated, event})
   end
 end

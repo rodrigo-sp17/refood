@@ -10,6 +10,10 @@ defmodule RefoodWeb.ShiftLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(Refood.PubSub, "shift_updates")
+    end
+
     date = Date.utc_today()
 
     assigns = [
@@ -321,6 +325,17 @@ defmodule RefoodWeb.ShiftLive do
     ]
 
     {:noreply, socket |> assign(assigns)}
+  end
+
+  @impl true
+  def handle_info({:shift_updated, _event}, socket) do
+    %{date: date} = socket.assigns
+
+    assigns = [
+      families: Families.list_families_by_date(date)
+    ]
+
+    {:noreply, assign(socket, assigns)}
   end
 
   defp weekday_name(1), do: "Segunda-feira"
