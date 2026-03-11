@@ -47,6 +47,12 @@ defmodule RefoodWeb.Router do
       live "/", FamiliesLive
       live "/:family_id", FamiliesLive
     end
+
+    scope "/fridges", RefoodWeb do
+      pipe_through :browser
+
+      live "/", FridgesLive
+    end
   end
 
   scope "/export", RefoodWeb do

@@ -92,4 +92,21 @@ defmodule Refood.Factory do
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
   end
+
+  def fridge_factory do
+    %Refood.Fridges.Fridge{
+      id: Ecto.UUID.generate(),
+      name: sequence(:fridge_name, &"FRIDGE #{&1}")
+    }
+  end
+
+  def temperature_record_factory(attrs) do
+    %Refood.Fridges.TemperatureRecord{
+      temperature: Decimal.new("4.0"),
+      recorded_at: DateTime.utc_now() |> DateTime.truncate(:second),
+      fridge: build(:fridge)
+    }
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
+  end
 end
