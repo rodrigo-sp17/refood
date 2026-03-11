@@ -116,6 +116,40 @@ defmodule RefoodWeb.ShiftLive do
       on_cancel={JS.push("cancel-modal")}
     />
 
+    <.modal
+      :if={@view_to_show == :family_actions}
+      id="family-actions"
+      show
+      on_cancel={JS.push("cancel-modal")}
+    >
+      <% family = Enum.find(@families, &(&1.id == @selected_family)) %>
+      <div :if={family} class="flex flex-col gap-6">
+        <h2 class="text-xl font-bold text-center">F-{family.number} – {family.name}</h2>
+        <div class="flex flex-col gap-3">
+          <.link
+            :if={show_add_swap?(family, @date)}
+            patch={"/shift/#{family.id}?new-swap"}
+            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Trocar dia
+          </.link>
+          <.link
+            :if={show_add_absence?(family)}
+            patch={"/shift/#{family.id}?new-absence"}
+            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Marcar falta
+          </.link>
+          <.link
+            patch={"/shift/#{family.id}?loaned-items"}
+            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Gerir empréstimos
+          </.link>
+        </div>
+      </div>
+    </.modal>
+
     <div class="mt-11 flex justify-center items-center gap-8 mb-8">
       <button
         phx-click="prev-date"
@@ -145,8 +179,13 @@ defmodule RefoodWeb.ShiftLive do
       </div>
       <div
         :for={family <- @families}
-        class="xl:max-w-5/11 w-full px-6 py-4 bg-white flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-2"
+        class="relative xl:max-w-5/11 w-full px-6 py-4 bg-white flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-2"
       >
+        <button
+          class="absolute inset-0 rounded-lg xl:hidden"
+          phx-click="show-family-actions"
+          phx-value-family_id={family.id}
+        />
         <div class="flex items-center gap-2 md:gap-0 shrink">
           <div class="text-xl font-bold w-11">F-{family.number}</div>
           <div class="text-lg md:pl-2 break-words w-52">{family.name}</div>
@@ -193,7 +232,7 @@ defmodule RefoodWeb.ShiftLive do
               Empréstimo
             </div>
           </div>
-          <div class="shrink-0 ml-auto relative">
+          <div class="hidden xl:flex shrink-0 ml-auto relative">
             <.dropdown id={"shift-dropdown-#{family.id}"}>
               <:link :if={show_add_swap?(family, @date)} patch={"/shift/#{family.id}?new-swap"}>
                 Trocar dia
@@ -285,6 +324,11 @@ defmodule RefoodWeb.ShiftLive do
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
     end
+  end
+
+  @impl true
+  def handle_event("show-family-actions", %{"family_id" => family_id}, socket) do
+    {:noreply, assign(socket, selected_family: family_id, view_to_show: :family_actions)}
   end
 
   @impl true
