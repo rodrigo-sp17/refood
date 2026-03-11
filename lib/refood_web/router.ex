@@ -49,6 +49,12 @@ defmodule RefoodWeb.Router do
     end
   end
 
+  scope "/export", RefoodWeb do
+    pipe_through [:browser, :require_authenticated_user]
+    get "/help-queue", ExportController, :download_help_queue_csv
+    get "/families", ExportController, :download_families_csv
+  end
+
   live_session :authenticated_admin,
     on_mount: [
       {RefoodWeb.UserAuth, :ensure_authenticated},

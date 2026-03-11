@@ -105,6 +105,16 @@ defmodule RefoodWeb.HelpQueueLive do
       on_cancel={JS.push("hide-view")}
     />
 
+    <.confirmation_modal
+      :if={@view_to_show == :confirm_export}
+      id="confirm-export"
+      question="Deseja exportar a lista de espera para Excel?"
+      confirm_text="Exportar"
+      deny_text="Cancelar"
+      on_confirm={JS.push("export-csv")}
+      on_cancel={JS.push("hide-view")}
+    />
+
     <.header>
       Lista de Espera
       <:actions>
@@ -122,6 +132,11 @@ defmodule RefoodWeb.HelpQueueLive do
       <:top_controls>
         <div class="flex items-center justify-between p-4">
           <.table_search_input value={@filter} on_change="on-filter" on_reset="on-reset-filter" />
+          <.dropdown :if={@current_user.role in [:admin, :manager]} id="export-dropdown">
+            <:link on_click={JS.push("show-export-confirmation")}>
+              Exportar para Excel
+            </:link>
+          </.dropdown>
         </div>
       </:top_controls>
       <:col
@@ -233,6 +248,20 @@ defmodule RefoodWeb.HelpQueueLive do
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply, assign(socket, :changeset, changeset)}
       end
+    end
+  end
+
+  @impl true
+  def handle_event("show-export-confirmation", _params, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      {:noreply, assign(socket, view_to_show: :confirm_export)}
+    end
+  end
+
+  @impl true
+  def handle_event("export-csv", _params, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      {:noreply, redirect(socket, to: "/export/help-queue")}
     end
   end
 
