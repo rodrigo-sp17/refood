@@ -100,7 +100,7 @@ defmodule RefoodWeb.ShiftLive do
       <div class="flex flex-col gap-10">
         <h2 class="text-2xl text-center">Para qual dia deseja trocar?</h2>
         <.simple_form id="add-swap-form" for={@form} phx-submit="add-swap">
-          <.input type="date" field={@form[:to]} />
+          <.input type="date" field={@form[:to]} min={Date.utc_today()} />
           <:actions>
             <.button class="w-full">Trocar</.button>
           </:actions>
@@ -255,9 +255,8 @@ defmodule RefoodWeb.ShiftLive do
     family.absences == []
   end
 
-  defp show_add_swap?(family, date) do
-    family.absences == [] && Enum.empty?(family.swaps) &&
-      Date.compare(date, Date.utc_today()) in [:gt, :eq]
+  defp show_add_swap?(family, _date) do
+    family.absences == [] && Enum.empty?(family.swaps)
   end
 
   @impl true
