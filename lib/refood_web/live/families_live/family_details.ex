@@ -6,6 +6,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
 
   alias Refood.Families
   alias RefoodWeb.FamiliesLive.AddLoanedItem
+  alias RefoodWeb.FamiliesLive.SwapForm
 
   @impl true
   def update(%{family: family} = assigns, socket) do
@@ -78,6 +79,15 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
         family={@family}
         on_cancel={JS.push("show-view", target: @myself)}
         on_added={fn _item -> send(self(), {:loaned_item_added, @family.id}) end}
+      />
+
+      <.live_component
+        :if={@view_to_show in [:add_swap, :edit_swap]}
+        module={SwapForm}
+        id="swap-form"
+        family={@family}
+        swap={if @view_to_show == :edit_swap, do: @swap, else: nil}
+        on_cancel={JS.push("show-view", target: @myself)}
       />
 
       <.modal
@@ -296,7 +306,17 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
             </div>
           </div>
           <div>
-            <.label for="swaps-list">Trocas</.label>
+            <div class="flex items-center justify-between">
+              <.label for="swaps-list">Trocas</.label>
+              <.link
+                :if={@current_user.role in [:admin, :manager]}
+                phx-click="show-add-swap"
+                phx-target={@myself}
+                class="text-sm text-black font-medium"
+              >
+                + Adicionar troca
+              </.link>
+            </div>
             <div id="swaps-list" class="mt-2 border rounded-lg">
               <div :if={@family.swaps == []} class="p-2 text-sm text-center">
                 Nenhuma troca registada
@@ -308,7 +328,13 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
                 <div class="flex gap-5">
                   <div>De {swap.from} para {swap.to}</div>
                 </div>
-                <.dropdown id={"swap-dropdown-#{swap.id}"}>
+                <.dropdown
+                  :if={@current_user.role in [:admin, :manager]}
+                  id={"swap-dropdown-#{swap.id}"}
+                >
+                  <:link on_click={JS.push("show-edit-swap", value: %{id: swap.id}, target: @myself)}>
+                    Editar troca
+                  </:link>
                   <:link on_click={
                     JS.push("confirm-delete-swap", value: %{id: swap.id}, target: @myself)
                   }>
@@ -429,6 +455,21 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
           {socket
            |> put_flash(:error, "Falha em remover falta!")}
       end
+    end
+  end
+
+  @impl true
+  def handle_event("show-add-swap", _params, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      {:noreply, assign(socket, view_to_show: :add_swap)}
+    end
+  end
+
+  @impl true
+  def handle_event("show-edit-swap", %{"id" => swap_id}, socket) do
+    with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      swap = Enum.find(socket.assigns.family.swaps, &(&1.id == swap_id))
+      {:noreply, assign(socket, view_to_show: :edit_swap, swap: swap)}
     end
   end
 

@@ -413,6 +413,63 @@ defmodule Refood.FamiliesTest do
     end
   end
 
+  describe "update_swap/2" do
+    test "updates swap if valid attrs" do
+      family = insert(:family, weekdays: [:wednesday])
+      swap = insert(:swap, family: family, from: ~D[2024-05-15], to: ~D[2024-05-17])
+
+      assert {:ok, updated_swap} =
+               Families.update_swap(swap.id, %{to: ~D[2024-05-24]}, ~D[2024-05-01])
+
+      assert updated_swap.to == ~D[2024-05-24]
+      assert updated_swap.from == ~D[2024-05-15]
+    end
+
+    test "errors if updating to collide with another swap for the same family" do
+      ref_date = ~D[2024-05-01]
+      family = insert(:family, weekdays: [:wednesday])
+
+      insert(:swap, family: family, from: ~D[2024-05-15], to: ~D[2024-05-17])
+      swap = insert(:swap, family: family, from: ~D[2024-05-22], to: ~D[2024-05-24])
+
+      assert {:error, changeset} =
+               Families.update_swap(swap.id, %{from: ~D[2024-05-15]}, ref_date)
+
+      assert errors_on(changeset) == %{
+               from: ["troca já efetuada para este dia"]
+             }
+    end
+
+    test "error if updating out of a not-scheduled day" do
+      family = insert(:family, weekdays: [:wednesday])
+      swap = insert(:swap, family: family, from: ~D[2024-06-26], to: ~D[2024-06-28])
+
+      assert {:error, changeset} = Families.update_swap(swap.id, %{from: ~D[2024-06-27]})
+
+      assert %{
+               from: ["dia fora de escala"]
+             } = errors_on(changeset)
+    end
+
+    test "error if updating to the past" do
+      today = Date.utc_today()
+      yesterday = Date.add(today, -1)
+
+      family =
+        insert(:family,
+          weekdays: [:monday, :tuesday, :wednesday, :thursday, :friday, :saturday, :sunday]
+        )
+
+      swap = insert(:swap, family: family, from: today, to: Date.add(today, 1))
+
+      assert {:error, changeset} = Families.update_swap(swap.id, %{to: yesterday})
+
+      assert %{
+               to: ["não é possível trocar para o passado"]
+             } = errors_on(changeset)
+    end
+  end
+
   describe "raise_alert/2" do
     test "raises an alert for a family if never issued before" do
       %{id: family_id} = family = insert(:family)

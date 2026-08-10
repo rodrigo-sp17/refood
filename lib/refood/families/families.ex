@@ -233,16 +233,31 @@ defmodule Refood.Families do
     family = Repo.get!(Family, family_id)
 
     with {:ok, swap} <-
-           build_swap_changeset(attrs, family, ref_date)
+           build_swap_changeset(%Swap{}, attrs, family, ref_date)
            |> Repo.insert() do
       broadcast_shift_update(:swap_added, swap)
       {:ok, swap}
     end
   end
 
-  defp build_swap_changeset(attrs, family, ref_date) do
-    attrs
-    |> Swap.changeset()
+  @doc """
+  Updates an existing swap.
+  """
+  def update_swap(swap_id, attrs, ref_date \\ Date.utc_today()) do
+    swap = Repo.get!(Swap, swap_id)
+    family = Repo.get!(Family, swap.family_id)
+
+    with {:ok, updated_swap} <-
+           build_swap_changeset(swap, attrs, family, ref_date)
+           |> Repo.update() do
+      broadcast_shift_update(:swap_updated, updated_swap)
+      {:ok, updated_swap}
+    end
+  end
+
+  defp build_swap_changeset(swap, attrs, family, ref_date) do
+    swap
+    |> Swap.changeset(attrs)
     |> validate_change(:from, fn _, from ->
       if Family.scheduled_to_day?(family, from) do
         []
@@ -260,6 +275,8 @@ defmodule Refood.Families do
   end
 
   def swap_changeset(attrs \\ %{}), do: Swap.changeset(attrs)
+
+  def edit_swap_changeset(swap, attrs \\ %{}), do: Swap.changeset(swap, attrs)
 
   @doc """
   Deletes a swap.
