@@ -59,7 +59,10 @@ defmodule Refood.Families.Family do
       :notes,
       :speaks_portuguese,
       :help_requested_at,
-      :last_contacted_at
+      :last_contacted_at,
+      :cc,
+      :nif,
+      :niss
     ])
     |> cast_assoc(:address,
       with: &Address.changeset/2,

@@ -70,15 +70,31 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
               <.input field={@form[:help_requested_at]} type="datetime-local" label="Ajuda pedida em" />
             </div>
           </div>
-          <div class="flex gap-4 justify-stretch">
-            <.inputs_for :let={fa} field={@form[:address]}>
+          <.inputs_for :let={fa} field={@form[:address]}>
+            <.input field={fa[:line_1]} type="text" label="Endereço" />
+            <.input field={fa[:line_2]} type="text" label="Complemento" />
+            <div class="flex gap-4 justify-stretch">
               <div class="w-full">
                 <.input field={fa[:region]} type="text" label="Região" />
               </div>
               <div class="w-full">
                 <.input field={fa[:city]} type="text" label="Cidade" value="Porto" />
               </div>
-            </.inputs_for>
+              <div class="w-full">
+                <.input field={fa[:zipcode]} type="text" label="Código Postal" />
+              </div>
+            </div>
+          </.inputs_for>
+          <div class="flex gap-4 justify-stretch">
+            <div class="w-full">
+              <.input field={@form[:cc]} type="text" label="Cartão de Cidadão" />
+            </div>
+            <div class="w-full">
+              <.input field={@form[:nif]} type="text" label="Nº de Contribuinte" />
+            </div>
+            <div class="w-full">
+              <.input field={@form[:niss]} type="text" label="Segurança Social" />
+            </div>
           </div>
           <.input field={@form[:notes]} type="textarea" label="Notas" />
           <:actions>

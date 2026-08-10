@@ -121,8 +121,23 @@ defmodule RefoodWeb.HelpQueueLive.HelpRequestDetails do
               <div class="w-full">
                 <.input edit={@edit} field={fa[:city]} type="text" label="Cidade" value="Porto" />
               </div>
+              <div class="w-full">
+                <.input edit={@edit} field={fa[:zipcode]} type="text" label="Código Postal" />
+              </div>
             </div>
           </.inputs_for>
+          <.form_section class="pt-10">Documentos</.form_section>
+          <div class="flex gap-4 justify-stretch">
+            <div class="w-full">
+              <.input edit={@edit} field={@form[:cc]} type="text" label="Cartão de Cidadão" />
+            </div>
+            <div class="w-full">
+              <.input edit={@edit} field={@form[:nif]} type="text" label="Nº de Contribuinte" />
+            </div>
+            <div class="w-full">
+              <.input edit={@edit} field={@form[:niss]} type="text" label="Segurança Social" />
+            </div>
+          </div>
           <.form_section class="pt-10">Distribuição</.form_section>
           <.input edit={@edit} field={@form[:restrictions]} type="textarea" label="Restrições" />
           <.input edit={@edit} field={@form[:notes]} type="textarea" label="Notas" />
