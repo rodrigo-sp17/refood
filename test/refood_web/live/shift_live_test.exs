@@ -24,7 +24,12 @@ defmodule RefoodWeb.ShiftLiveTest do
 
       {:ok, lv, _html} = live(conn, ~p"/shift")
 
-      html = go_to_yesterday(lv)
+      go_to_yesterday(lv)
+
+      html =
+        lv
+        |> element("#shift-table-mobile button[phx-value-family_id=\"#{family.id}\"]")
+        |> render_click()
 
       assert html =~ "Trocar dia"
       assert html =~ "/shift/#{family.id}?new-swap"

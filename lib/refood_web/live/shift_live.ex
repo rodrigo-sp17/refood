@@ -8,20 +8,25 @@ defmodule RefoodWeb.ShiftLive do
   alias RefoodWeb.HelpQueueLive.NewHelpRequest
   alias RefoodWeb.ShiftLive.LoanedItems
 
+  @tv_columns 2
+  # Rows fit on screen is reported by the "TvGridSize" JS hook once connected; this is
+  # only the pre-connect/no-JS floor, matching the minimum the hook itself enforces.
+  @tv_min_rows 10
+  @tv_rotate_interval_ms 10_000
+
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(Refood.PubSub, "shift_updates")
+      schedule_next_tv_page()
     end
 
     date = Date.utc_today()
+    families = Families.list_families_by_date(date)
 
-    assigns = [
-      date: date,
-      families: Families.list_families_by_date(date),
-      selected_family: nil,
-      view_to_show: nil
-    ]
+    assigns =
+      [date: date, tv_rows: @tv_min_rows, tv_trim: 0, selected_family: nil, view_to_show: nil] ++
+        families_page_assigns(families, @tv_min_rows)
 
     {:ok, assign(socket, assigns)}
   end
@@ -170,85 +175,139 @@ defmodule RefoodWeb.ShiftLive do
         <.icon name="hero-chevron-right" class="bg-black group-hover:bg-white" />
       </button>
     </div>
-    <div
-      id="shift-table"
-      class="xl:h-full xl:overflow-y-hidden overflow-y-auto flex flex-col xl:flex-wrap items-center gap-2"
-    >
+    <div id="shift-table-mobile" class="2xl:hidden overflow-y-auto flex flex-col items-center gap-2">
+      <div :if={@families == []} class="h-16 flex justify-center items-center">
+        Nenhuma família para o dia.
+      </div>
+      <.family_card :for={family <- @families} family={family} date={@date} />
+    </div>
+    <div id="shift-table-tv" class="hidden 2xl:flex 2xl:flex-col 2xl:h-full 2xl:min-h-0 2xl:gap-2">
       <div :if={@families == []} class="h-16 flex justify-center items-center">
         Nenhuma família para o dia.
       </div>
       <div
-        :for={family <- @families}
-        class="relative xl:max-w-5/11 w-full px-6 py-4 bg-white flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-2"
+        id="shift-table-tv-grid"
+        phx-hook="TvGridSize"
+        class="2xl:grid 2xl:grid-cols-2 2xl:gap-3 2xl:flex-1 2xl:min-h-0 2xl:pb-4"
+        style={"grid-template-rows: repeat(#{@tv_rows}, minmax(min-content, 1fr));"}
       >
-        <button
-          class="absolute inset-0 rounded-lg xl:hidden"
-          phx-click="show-family-actions"
-          phx-value-family_id={family.id}
+        <.family_card
+          :for={family <- tv_page_families(@families, @page, @tv_rows, @tv_trim)}
+          family={family}
+          date={@date}
         />
-        <div class="flex items-center gap-2 md:gap-0 shrink">
-          <div class="text-xl font-bold w-11">F-{family.number}</div>
-          <div class="text-lg md:pl-2 break-words w-52">{family.name}</div>
+      </div>
+      <div :if={@total_pages > 1} class="flex justify-center gap-2 pb-2">
+        <div
+          :for={i <- 0..(@total_pages - 1)}
+          class={[
+            "w-2.5 h-2.5 rounded-full",
+            if(i == @page, do: "bg-black", else: "bg-gray-300")
+          ]}
+        />
+      </div>
+    </div>
+    """
+  end
+
+  attr :family, :map, required: true
+  attr :date, Date, required: true
+
+  defp family_card(assigns) do
+    ~H"""
+    <div
+      class="relative w-full px-4 py-3 bg-white flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-2 2xl:h-full 2xl:items-center 2xl:flex-nowrap"
+      data-family-id={@family.id}
+    >
+      <button
+        class="absolute inset-0 rounded-lg"
+        phx-click="show-family-actions"
+        phx-value-family_id={@family.id}
+      />
+      <div class="flex items-center gap-2 md:gap-0 shrink">
+        <div class="text-xl font-bold w-11">F-{@family.number}</div>
+        <div class="text-lg md:pl-2 break-words w-44" title={@family.name}>
+          {short_name(@family.name)}
         </div>
-        <div class="text-lg md:pl-2 w:28 flex items-center gap-3 flex-shrink-0">
-          <.icon name="hero-users-solid" />{family.adults} + {family.children}
+      </div>
+      <div class="text-lg md:pl-2 flex items-center gap-3 flex-shrink-0">
+        <.icon name="hero-users-solid" />{@family.adults} + {@family.children}
+      </div>
+      <div class="md:px-2 flex-1 flex flex-col md:flex-row gap-2 flex-1 min-w-0 2xl:items-center">
+        <div class="flex items-center min-w-5">
+          <%= if @family.restrictions do %>
+            <div class="flex items-center gap-1">
+              <.icon name="hero-exclamation-triangle-solid text-red-700 shrink-0" />
+              <p class="text-red-700 break-words 2xl:max-w-40">
+                {@family.restrictions}
+              </p>
+            </div>
+          <% else %>
+            -
+          <% end %>
         </div>
-        <div class="md:px-2 flex-1 flex flex-col md:flex-row gap-2">
-          <div class="flex items-start min-w-5">
-            <%= if family.restrictions do %>
-              <div class="flex items-center gap-1">
-                <.icon name="hero-exclamation-triangle-solid text-red-700" />
-                <p class="text-red-700 break-words">{family.restrictions}</p>
-              </div>
-            <% else %>
-              -
-            <% end %>
+        <div class="flex items-center flex-wrap 2xl:flex-nowrap flex-1 grow gap-2">
+          <div
+            :if={!Enum.empty?(@family.swaps)}
+            class="px-3 py-0.5 border rounded-3xl border-green-600 text-green-600 text-center text-sm font-bold whitespace-nowrap shrink-0"
+          >
+            Troca
           </div>
-          <div class="flex items-start flex-wrap flex-1 grow gap-2">
+          <div :for={absence <- @family.absences}>
             <div
-              :if={!Enum.empty?(family.swaps)}
-              class="px-6 py-1 border rounded-3xl border-green-600 text-green-600 text-center font-bold whitespace-nowrap"
+              :if={absence.warned}
+              class="px-3 py-0.5 border rounded-3xl border-yellow-600 text-yellow-600 text-center text-sm font-bold whitespace-nowrap shrink-0"
             >
-              Troca
-            </div>
-            <div :for={absence <- family.absences}>
-              <div
-                :if={absence.warned}
-                class="px-6 py-1 border rounded-3xl border-yellow-600 text-yellow-600 text-center font-bold whitespace-nowrap"
-              >
-                Avisou
-              </div>
-              <div
-                :if={!absence.warned}
-                class="px-6 py-1 border rounded-3xl border-red-500 text-red-500 text-center font-bold whitespace-nowrap"
-              >
-                Faltou
-              </div>
+              Avisou
             </div>
             <div
-              :if={!Enum.empty?(family.unreturned_loaned_items)}
-              class="px-6 py-1 border rounded-3xl border-blue-600 text-blue-600 text-center font-bold whitespace-nowrap"
+              :if={!absence.warned}
+              class="px-3 py-0.5 border rounded-3xl border-red-500 text-red-500 text-center text-sm font-bold whitespace-nowrap shrink-0"
             >
-              Empréstimo
+              Faltou
             </div>
           </div>
-          <div class="hidden xl:flex shrink-0 ml-auto relative">
-            <.dropdown id={"shift-dropdown-#{family.id}"}>
-              <:link :if={show_add_swap?(family, @date)} patch={"/shift/#{family.id}?new-swap"}>
-                Trocar dia
-              </:link>
-              <:link :if={show_add_absence?(family)} patch={"/shift/#{family.id}?new-absence"}>
-                Marcar falta
-              </:link>
-              <:link patch={"/shift/#{family.id}?loaned-items"}>
-                Gerir empréstimos
-              </:link>
-            </.dropdown>
+          <div
+            :if={!Enum.empty?(@family.unreturned_loaned_items)}
+            class="px-3 py-0.5 border rounded-3xl border-blue-600 text-blue-600 text-center text-sm font-bold whitespace-nowrap shrink-0"
+          >
+            Empréstimo
           </div>
         </div>
       </div>
     </div>
     """
+  end
+
+  # The pagination window itself (offset and page count) is always based on the
+  # untrimmed page size, so trimming never shifts which families a given page
+  # starts from - only trim (below) shortens how many of them get rendered. If the
+  # window moved with the trim, trimming would shift the next family into view,
+  # which could resolve the overflow that caused the trim, undoing it, re-causing
+  # the overflow, etc. - an endless flicker between two states.
+  defp tv_base_page_size(tv_rows), do: tv_rows * @tv_columns
+
+  defp tv_page_families(families, page, tv_rows, tv_trim) do
+    base_size = tv_base_page_size(tv_rows)
+    page_size = max(@tv_columns, base_size - tv_trim)
+    Enum.slice(families, page * base_size, page_size)
+  end
+
+  defp tv_total_pages(families, tv_rows),
+    do: max(1, ceil(length(families) / tv_base_page_size(tv_rows)))
+
+  defp families_page_assigns(families, tv_rows) do
+    [families: families, page: 0, total_pages: tv_total_pages(families, tv_rows)]
+  end
+
+  defp schedule_next_tv_page,
+    do: Process.send_after(self(), :next_tv_page, @tv_rotate_interval_ms)
+
+  defp short_name(name) do
+    case String.split(name, " ", trim: true) do
+      [single] -> single
+      parts -> "#{List.first(parts)} #{List.last(parts)}"
+    end
   end
 
   defp show_add_absence?(family) do
@@ -262,11 +321,9 @@ defmodule RefoodWeb.ShiftLive do
   @impl true
   def handle_event("prev-date", _, socket) do
     prev_date = Timex.shift(socket.assigns.date, days: -1)
+    families = Families.list_families_by_date(prev_date)
 
-    assigns = [
-      date: prev_date,
-      families: Families.list_families_by_date(prev_date)
-    ]
+    assigns = [date: prev_date] ++ families_page_assigns(families, socket.assigns.tv_rows)
 
     {:noreply, assign(socket, assigns)}
   end
@@ -274,11 +331,9 @@ defmodule RefoodWeb.ShiftLive do
   @impl true
   def handle_event("next-date", _, socket) do
     next_date = Timex.shift(socket.assigns.date, days: 1)
+    families = Families.list_families_by_date(next_date)
 
-    assigns = [
-      date: next_date,
-      families: Families.list_families_by_date(next_date)
-    ]
+    assigns = [date: next_date] ++ families_page_assigns(families, socket.assigns.tv_rows)
 
     {:noreply, assign(socket, assigns)}
   end
@@ -295,7 +350,8 @@ defmodule RefoodWeb.ShiftLive do
     case Families.add_absence(%{family_id: family_id, warned: warned?, date: date}) do
       {:ok, _} ->
         assigns =
-          base_assigns ++ [families: Families.list_families_by_date(date)]
+          base_assigns ++
+            families_page_assigns(Families.list_families_by_date(date), socket.assigns.tv_rows)
 
         {:noreply, socket |> assign(assigns) |> put_flash(:info, "Falta registrada!")}
 
@@ -312,11 +368,9 @@ defmodule RefoodWeb.ShiftLive do
 
     case Families.add_swap(final_attrs) do
       {:ok, _swap} ->
-        assigns = [
-          view_to_show: nil,
-          selected_family: nil,
-          families: Families.list_families_by_date(date)
-        ]
+        assigns =
+          [view_to_show: nil, selected_family: nil] ++
+            families_page_assigns(Families.list_families_by_date(date), socket.assigns.tv_rows)
 
         {:noreply, socket |> assign(assigns) |> put_flash(:info, "Troca efetuada!")}
 
@@ -337,6 +391,24 @@ defmodule RefoodWeb.ShiftLive do
   end
 
   @impl true
+  def handle_event("tv-rows-changed", %{"rows" => rows, "trim" => trim}, socket) do
+    tv_rows = rows |> trunc() |> max(@tv_min_rows)
+    tv_trim = trim |> trunc() |> max(0)
+    %{families: families, page: page} = socket.assigns
+
+    total_pages = tv_total_pages(families, tv_rows)
+
+    assigns = [
+      tv_rows: tv_rows,
+      tv_trim: tv_trim,
+      total_pages: total_pages,
+      page: min(page, total_pages - 1)
+    ]
+
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
   def handle_info({:help_request_created, _}, socket) do
     assigns = [selected_family: nil, view_to_show: nil]
     {:noreply, assign(socket, assigns)}
@@ -344,13 +416,11 @@ defmodule RefoodWeb.ShiftLive do
 
   @impl true
   def handle_info({:loaned_item_added, _family_id}, socket) do
-    %{date: date} = socket.assigns
+    %{date: date, tv_rows: tv_rows} = socket.assigns
 
-    assigns = [
-      families: Families.list_families_by_date(date),
-      selected_family: nil,
-      view_to_show: nil
-    ]
+    assigns =
+      families_page_assigns(Families.list_families_by_date(date), tv_rows) ++
+        [selected_family: nil, view_to_show: nil]
 
     {:noreply,
      socket
@@ -360,25 +430,34 @@ defmodule RefoodWeb.ShiftLive do
 
   @impl true
   def handle_info({:loaned_item_updated, family_id}, socket) do
-    %{date: date} = socket.assigns
+    %{date: date, tv_rows: tv_rows} = socket.assigns
 
-    assigns = [
-      families: Families.list_families_by_date(date),
-      selected_family: family_id
-    ]
+    assigns =
+      families_page_assigns(Families.list_families_by_date(date), tv_rows) ++
+        [selected_family: family_id]
 
     {:noreply, socket |> assign(assigns)}
   end
 
   @impl true
   def handle_info({:shift_updated, _event}, socket) do
-    %{date: date} = socket.assigns
+    %{date: date, tv_rows: tv_rows} = socket.assigns
 
-    assigns = [
-      families: Families.list_families_by_date(date)
-    ]
+    assigns = families_page_assigns(Families.list_families_by_date(date), tv_rows)
 
     {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_info(:next_tv_page, socket) do
+    schedule_next_tv_page()
+
+    if socket.assigns.total_pages > 1 do
+      next_page = rem(socket.assigns.page + 1, socket.assigns.total_pages)
+      {:noreply, assign(socket, page: next_page)}
+    else
+      {:noreply, socket}
+    end
   end
 
   defp weekday_name(1), do: "Segunda-feira"
