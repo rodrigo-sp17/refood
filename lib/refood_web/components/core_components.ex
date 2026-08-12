@@ -617,6 +617,7 @@ defmodule RefoodWeb.CoreComponents do
 
   slot :inner_block, required: true
   slot :subtitle
+  slot :middle, doc: "rendered centered in the space between the title and the actions"
   slot :actions
 
   def header(assigns) do
@@ -630,6 +631,7 @@ defmodule RefoodWeb.CoreComponents do
           {render_slot(@subtitle)}
         </p>
       </div>
+      <div :if={@middle != []} class="flex-1 flex justify-center">{render_slot(@middle)}</div>
       <div class="flex-none">{render_slot(@actions)}</div>
     </header>
     """

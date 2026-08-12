@@ -61,6 +61,39 @@ Hooks.SearchBar = {
     },
 }
 
+// Renders a UTC timestamp as a wall-clock time in the viewer's own timezone.
+//
+// The server has no timezone configured and stores everything in UTC, so a
+// server-rendered time would read an hour off during Portuguese summer time. The
+// browser knows the real zone, so it does the formatting. An absolute time also
+// avoids the staleness of a "3h left" duration, which only updates when something
+// unrelated happens to re-render it.
+Hooks.LocalTime = {
+    mounted() {
+        this.render()
+    },
+
+    updated() {
+        this.render()
+    },
+
+    render() {
+        const utc = this.el.dataset.utc
+        if (!utc) return
+
+        const date = new Date(utc)
+        if (isNaN(date)) return
+
+        // hour12: false regardless of browser locale - the rest of the UI is
+        // Portuguese, where 24-hour time is what people expect.
+        this.el.textContent = date.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        })
+    },
+}
+
 Hooks.TvGridSize = {
     minRowHeight: 84,
     rowGap: 12,

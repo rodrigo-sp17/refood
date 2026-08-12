@@ -36,7 +36,11 @@ defmodule Refood.Factory do
 
   def family_factory(attrs) do
     %Refood.Families.Family{
-      number: sequence(:number, & &1),
+      # Offset clear of the low numbers some tests hardcode (see help_queue_test): the
+      # sequence is global to a test run, so without this it eventually collides with
+      # them and fails on families_number_index, depending on execution order. Stays
+      # within 3 digits, which is what the public claim page accepts.
+      number: sequence(:number, &(&1 + 100)),
       name: sequence("Family-"),
       adults: Enum.random(1..6),
       children: Enum.random(0..4),
@@ -105,6 +109,31 @@ defmodule Refood.Factory do
       temperature: Decimal.new("4.0"),
       recorded_at: DateTime.utc_now() |> DateTime.truncate(:second),
       fridge: build(:fridge)
+    }
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
+  end
+
+  def shift_code_factory(attrs) do
+    %Refood.Shifts.Code{
+      date: Date.utc_today(),
+      code:
+        sequence(
+          :shift_code,
+          &(&1 |> rem(10_000) |> Integer.to_string() |> String.pad_leading(4, "0"))
+        ),
+      expires_at: DateTime.utc_now() |> DateTime.add(4, :hour) |> DateTime.truncate(:second)
+    }
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
+  end
+
+  def shift_ticket_factory(attrs) do
+    %Refood.Shifts.Ticket{
+      position: sequence(:shift_ticket_position, &(&1 + 1)),
+      source: :family,
+      shift_code: build(:shift_code),
+      family: build(:family)
     }
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()

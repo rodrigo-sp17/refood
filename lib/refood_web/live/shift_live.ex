@@ -5,6 +5,7 @@ defmodule RefoodWeb.ShiftLive do
   use RefoodWeb, :live_view
 
   alias Refood.Families
+  alias Refood.Shifts
   alias RefoodWeb.HelpQueueLive.NewHelpRequest
   alias RefoodWeb.ShiftLive.LoanedItems
 
@@ -22,11 +23,10 @@ defmodule RefoodWeb.ShiftLive do
     end
 
     date = Date.utc_today()
-    families = Families.list_families_by_date(date)
 
     assigns =
       [date: date, tv_rows: @tv_min_rows, tv_trim: 0, selected_family: nil, view_to_show: nil] ++
-        families_page_assigns(families, @tv_min_rows)
+        shift_assigns(date, @tv_min_rows)
 
     {:ok, assign(socket, assigns)}
   end
@@ -73,6 +73,38 @@ defmodule RefoodWeb.ShiftLive do
     ~H"""
     <.header>
       Turno
+      <%!-- Shown on the TV too, so it scales up at 2xl to stay readable from across
+      the room. Note this puts the code in front of anyone who can see the display. --%>
+      <:middle>
+        <button
+          :if={@date == Date.utc_today()}
+          id="shift-code-chip"
+          phx-click="show-shift-code"
+          class="flex items-center gap-3 px-4 py-2 2xl:px-6 2xl:py-3 rounded-lg border border-gray-300 hover:bg-gray-50"
+        >
+          <span :if={@open_shift} class="text-xs 2xl:text-sm uppercase tracking-wide text-gray-500">
+            Cód. fila
+          </span>
+          <span :if={@open_shift} class="text-2xl 2xl:text-4xl font-mono font-bold tracking-[0.15em]">
+            {@open_shift.code}
+          </span>
+          <span :if={@open_shift} class="text-xs 2xl:text-sm text-gray-500">
+            até <.local_time id="shift-code-chip-expiry" at={@open_shift.expires_at} />
+          </span>
+          <span
+            :if={!@open_shift && @shift}
+            class="flex items-center gap-2 text-sm 2xl:text-lg text-amber-700"
+          >
+            <.icon name="hero-exclamation-triangle" class="w-4 h-4 bg-amber-600" /> Código expirado
+          </span>
+          <span
+            :if={!@open_shift && !@shift}
+            class="flex items-center gap-2 text-sm 2xl:text-lg text-gray-500"
+          >
+            <.icon name="hero-lock-closed" class="w-4 h-4 bg-gray-400" /> Fila fechada
+          </span>
+        </button>
+      </:middle>
       <:actions>
         <.link patch="/shift?new-request">
           <.button>
@@ -99,6 +131,106 @@ defmodule RefoodWeb.ShiftLive do
       deny_text="Avisou"
       on_deny={JS.push("add-absence", value: %{"warned" => true})}
       on_cancel={JS.push("cancel-modal")}
+    />
+
+    <.modal
+      :if={@view_to_show == :shift_code}
+      id="shift-code-modal"
+      show
+      on_cancel={JS.push("cancel-modal")}
+    >
+      <div :if={@open_shift} class="flex flex-col items-center gap-6">
+        <h2 class="text-2xl text-center">Código da fila</h2>
+        <div id="shift-code" class="text-6xl font-mono font-bold tracking-[0.15em]">
+          {@open_shift.code}
+        </div>
+        <p class="text-sm text-gray-500">
+          Válido até às <.local_time id="shift-code-modal-expiry" at={@open_shift.expires_at} />
+        </p>
+        <ol class="w-full flex flex-col gap-2 text-gray-600 list-decimal list-inside">
+          <li>Escreva este código no quadro.</li>
+          <li>As famílias leem o cartaz e inserem o código no telemóvel.</li>
+          <li>Cada família recebe a sua senha e aparece aqui por ordem de chegada.</li>
+        </ol>
+        <div class="w-full flex flex-col gap-3">
+          <button
+            phx-click="show-rotate-code"
+            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Gerar novo código
+          </button>
+          <button
+            phx-click="show-close-shift"
+            class="w-full px-4 py-3 text-center border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+          >
+            Fechar fila
+          </button>
+        </div>
+      </div>
+      <div :if={!@open_shift && @shift} class="flex flex-col items-center gap-6">
+        <h2 class="text-2xl text-center">O código expirou</h2>
+        <p class="text-center text-gray-600">
+          As senhas já dadas continuam visíveis e por ordem, mas nenhuma família
+          consegue tirar senha até abrir uma nova fila.
+        </p>
+        <div class="w-full flex flex-col gap-3">
+          <button
+            phx-click="show-reopen-shift"
+            class="w-full px-4 py-3 text-center border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+          >
+            Abrir nova fila
+          </button>
+          <button
+            phx-click="show-close-shift"
+            class="w-full px-4 py-3 text-center border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+          >
+            Fechar fila
+          </button>
+        </div>
+      </div>
+      <div :if={!@open_shift && !@shift} class="flex flex-col items-center gap-6">
+        <h2 class="text-2xl text-center">A fila está fechada</h2>
+        <p class="text-center text-gray-600">
+          Abra a fila para gerar um código do dia. Escreva-o no quadro para as famílias
+          poderem tirar senha.
+        </p>
+        <.button phx-click="open-shift" class="w-full">Abrir fila</.button>
+      </div>
+    </.modal>
+
+    <.confirmation_modal
+      :if={@view_to_show == :reopen_shift}
+      id="reopen-shift"
+      question="Abrir uma nova fila? As senhas de hoje são apagadas e a numeração recomeça do 1."
+      type={:delete}
+      confirm_text="Abrir nova"
+      on_confirm={JS.push("open-shift")}
+      deny_text="Cancelar"
+      on_deny={JS.push("show-shift-code")}
+      on_cancel={JS.push("show-shift-code")}
+    />
+
+    <.confirmation_modal
+      :if={@view_to_show == :rotate_code}
+      id="rotate-code"
+      question="Gerar um novo código? O código atual deixa de funcionar, mas as senhas já dadas são mantidas."
+      confirm_text="Gerar novo"
+      on_confirm={JS.push("rotate-code")}
+      deny_text="Cancelar"
+      on_deny={JS.push("show-shift-code")}
+      on_cancel={JS.push("show-shift-code")}
+    />
+
+    <.confirmation_modal
+      :if={@view_to_show == :close_shift}
+      id="close-shift"
+      question="Fechar a fila? Todas as senhas do dia são apagadas e a numeração recomeça do 1."
+      type={:delete}
+      confirm_text="Fechar fila"
+      on_confirm={JS.push("close-shift")}
+      deny_text="Cancelar"
+      on_deny={JS.push("show-shift-code")}
+      on_cancel={JS.push("show-shift-code")}
     />
 
     <.modal :if={@view_to_show == :new_swap} id="add-swap" show on_cancel={JS.push("cancel-modal")}>
@@ -129,8 +261,27 @@ defmodule RefoodWeb.ShiftLive do
     >
       <% family = Enum.find(@families, &(&1.id == @selected_family)) %>
       <div :if={family} class="flex flex-col gap-6">
-        <h2 class="text-xl font-bold text-center">F-{family.number} – {family.name}</h2>
+        <h2 class="text-xl font-bold text-center">
+          <span :if={@positions[family.id]}>Senha {@positions[family.id]} –</span>
+          F-{family.number} – {family.name}
+        </h2>
         <div class="flex flex-col gap-3">
+          <button
+            :if={@open_shift && !@positions[family.id]}
+            phx-click="give-ticket"
+            phx-value-family_id={family.id}
+            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Dar senha
+          </button>
+          <button
+            :if={@positions[family.id]}
+            phx-click="remove-ticket"
+            phx-value-family_id={family.id}
+            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Remover senha
+          </button>
           <.link
             :if={show_add_swap?(family, @date)}
             patch={"/shift/#{family.id}?new-swap"}
@@ -179,7 +330,27 @@ defmodule RefoodWeb.ShiftLive do
       <div :if={@families == []} class="h-16 flex justify-center items-center">
         Nenhuma família para o dia.
       </div>
-      <.family_card :for={family <- @families} family={family} date={@date} />
+      <%= if @queued_families == [] do %>
+        <.family_card :for={family <- @families} family={family} date={@date} />
+      <% else %>
+        <div id="shift-queued" class="w-full flex flex-col gap-2">
+          <h3 class="text-sm font-bold uppercase tracking-wide text-gray-500">
+            Na fila ({length(@queued_families)})
+          </h3>
+          <.family_card
+            :for={family <- @queued_families}
+            family={family}
+            date={@date}
+            position={@positions[family.id]}
+          />
+        </div>
+        <div :if={@waiting_families != []} id="shift-waiting" class="w-full flex flex-col gap-2">
+          <h3 class="text-sm font-bold uppercase tracking-wide text-gray-500 mt-4">
+            Por chegar ({length(@waiting_families)})
+          </h3>
+          <.family_card :for={family <- @waiting_families} family={family} date={@date} />
+        </div>
+      <% end %>
     </div>
     <div id="shift-table-tv" class="hidden 2xl:flex 2xl:flex-col 2xl:h-full 2xl:min-h-0 2xl:gap-2">
       <div :if={@families == []} class="h-16 flex justify-center items-center">
@@ -195,6 +366,7 @@ defmodule RefoodWeb.ShiftLive do
           :for={family <- tv_page_families(@families, @page, @tv_rows, @tv_trim)}
           family={family}
           date={@date}
+          position={@positions[family.id]}
         />
       </div>
       <div :if={@total_pages > 1} class="flex justify-center gap-2 pb-2">
@@ -212,11 +384,15 @@ defmodule RefoodWeb.ShiftLive do
 
   attr :family, :map, required: true
   attr :date, Date, required: true
+  attr :position, :integer, default: nil
 
   defp family_card(assigns) do
     ~H"""
     <div
-      class="relative w-full px-4 py-3 bg-white flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-2 2xl:h-full 2xl:items-center 2xl:flex-nowrap"
+      class={[
+        "relative w-full px-4 py-3 flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-2 2xl:h-full 2xl:items-center 2xl:flex-nowrap",
+        if(@position, do: "bg-amber-50", else: "bg-white")
+      ]}
       data-family-id={@family.id}
     >
       <button
@@ -224,6 +400,13 @@ defmodule RefoodWeb.ShiftLive do
         phx-click="show-family-actions"
         phx-value-family_id={@family.id}
       />
+      <div
+        :if={@position}
+        class="flex items-center justify-center shrink-0 w-9 h-9 rounded-full bg-gray-800 text-white text-lg font-bold"
+        data-queue-position={@position}
+      >
+        {@position}
+      </div>
       <div class="flex items-center gap-2 md:gap-0 shrink">
         <div class="text-xl font-bold w-11">F-{@family.number}</div>
         <div class="text-lg md:pl-2 break-words w-44" title={@family.name}>
@@ -296,8 +479,26 @@ defmodule RefoodWeb.ShiftLive do
   defp tv_total_pages(families, tv_rows),
     do: max(1, ceil(length(families) / tv_base_page_size(tv_rows)))
 
-  defp families_page_assigns(families, tv_rows) do
-    [families: families, page: 0, total_pages: tv_total_pages(families, tv_rows)]
+  # Families that have claimed a ticket come first, in the order they arrived; the
+  # rest keep the query's family-number order. With no open shift `positions` is
+  # empty, so past and future dates collapse to exactly the previous behaviour.
+  defp shift_assigns(date, tv_rows, page \\ 0) do
+    positions = Shifts.list_ticket_positions(date)
+    {queued, waiting} = Enum.split_with(Families.list_families_by_date(date), &positions[&1.id])
+    queued = Enum.sort_by(queued, &positions[&1.id])
+    families = queued ++ waiting
+    total_pages = tv_total_pages(families, tv_rows)
+
+    [
+      families: families,
+      queued_families: queued,
+      waiting_families: waiting,
+      positions: positions,
+      open_shift: Shifts.get_open_shift(date),
+      shift: Shifts.get_shift(date),
+      page: page |> min(total_pages - 1) |> max(0),
+      total_pages: total_pages
+    ]
   end
 
   defp schedule_next_tv_page,
@@ -310,6 +511,23 @@ defmodule RefoodWeb.ShiftLive do
     end
   end
 
+  attr :id, :string, required: true
+  attr :at, DateTime, required: true
+
+  # The browser formats this, in its own timezone - see the LocalTime hook. Renders
+  # empty until the hook runs, rather than showing a UTC time that would be wrong by
+  # an hour half the year.
+  defp local_time(assigns) do
+    ~H"""
+    <span id={@id} phx-hook="LocalTime" data-utc={DateTime.to_iso8601(@at)} />
+    """
+  end
+
+  defp ticket_error_message(:shift_closed), do: "A fila não está aberta."
+  defp ticket_error_message(:not_scheduled), do: "Família não escalada para o dia."
+  defp ticket_error_message(:absent), do: "Família marcada como falta."
+  defp ticket_error_message(_), do: "Falha ao atribuir senha."
+
   defp show_add_absence?(family) do
     family.absences == []
   end
@@ -321,9 +539,8 @@ defmodule RefoodWeb.ShiftLive do
   @impl true
   def handle_event("prev-date", _, socket) do
     prev_date = Timex.shift(socket.assigns.date, days: -1)
-    families = Families.list_families_by_date(prev_date)
 
-    assigns = [date: prev_date] ++ families_page_assigns(families, socket.assigns.tv_rows)
+    assigns = [date: prev_date] ++ shift_assigns(prev_date, socket.assigns.tv_rows)
 
     {:noreply, assign(socket, assigns)}
   end
@@ -331,9 +548,8 @@ defmodule RefoodWeb.ShiftLive do
   @impl true
   def handle_event("next-date", _, socket) do
     next_date = Timex.shift(socket.assigns.date, days: 1)
-    families = Families.list_families_by_date(next_date)
 
-    assigns = [date: next_date] ++ families_page_assigns(families, socket.assigns.tv_rows)
+    assigns = [date: next_date] ++ shift_assigns(next_date, socket.assigns.tv_rows)
 
     {:noreply, assign(socket, assigns)}
   end
@@ -351,7 +567,7 @@ defmodule RefoodWeb.ShiftLive do
       {:ok, _} ->
         assigns =
           base_assigns ++
-            families_page_assigns(Families.list_families_by_date(date), socket.assigns.tv_rows)
+            shift_assigns(date, socket.assigns.tv_rows)
 
         {:noreply, socket |> assign(assigns) |> put_flash(:info, "Falta registrada!")}
 
@@ -370,12 +586,118 @@ defmodule RefoodWeb.ShiftLive do
       {:ok, _swap} ->
         assigns =
           [view_to_show: nil, selected_family: nil] ++
-            families_page_assigns(Families.list_families_by_date(date), socket.assigns.tv_rows)
+            shift_assigns(date, socket.assigns.tv_rows)
 
         {:noreply, socket |> assign(assigns) |> put_flash(:info, "Troca efetuada!")}
 
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
+    end
+  end
+
+  @impl true
+  def handle_event("show-shift-code", _, socket) do
+    {:noreply, assign(socket, view_to_show: :shift_code)}
+  end
+
+  @impl true
+  def handle_event("show-reopen-shift", _, socket) do
+    {:noreply, assign(socket, view_to_show: :reopen_shift)}
+  end
+
+  @impl true
+  def handle_event("open-shift", _, socket) do
+    %{date: date, tv_rows: tv_rows, page: page} = socket.assigns
+
+    case Shifts.open_shift(date) do
+      {:ok, _code} ->
+        # Stay in the modal: it now shows the new code, which is what the volunteer
+        # opened the queue to get.
+        assigns = [view_to_show: :shift_code] ++ shift_assigns(date, tv_rows, page)
+
+        {:noreply, socket |> assign(assigns) |> put_flash(:info, "Fila aberta!")}
+
+      # Someone else opened it first - show them the code that is already live rather
+      # than reporting a failure.
+      {:error, :already_open} ->
+        assigns = [view_to_show: :shift_code] ++ shift_assigns(date, tv_rows, page)
+        {:noreply, socket |> assign(assigns) |> put_flash(:info, "A fila já estava aberta.")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Falha ao abrir a fila.")}
+    end
+  end
+
+  @impl true
+  def handle_event("show-rotate-code", _, socket) do
+    {:noreply, assign(socket, view_to_show: :rotate_code)}
+  end
+
+  @impl true
+  def handle_event("rotate-code", _, socket) do
+    %{date: date, tv_rows: tv_rows, page: page} = socket.assigns
+
+    case Shifts.rotate_code(date) do
+      {:ok, _code} ->
+        assigns = [view_to_show: :shift_code] ++ shift_assigns(date, tv_rows, page)
+
+        {:noreply,
+         socket |> assign(assigns) |> put_flash(:info, "Novo código gerado. Atualize o quadro!")}
+
+      {:error, _} ->
+        {:noreply,
+         socket |> assign(view_to_show: nil) |> put_flash(:error, "A fila não está aberta.")}
+    end
+  end
+
+  @impl true
+  def handle_event("show-close-shift", _, socket) do
+    {:noreply, assign(socket, view_to_show: :close_shift)}
+  end
+
+  @impl true
+  def handle_event("close-shift", _, socket) do
+    %{date: date, tv_rows: tv_rows, page: page} = socket.assigns
+    {:ok, _} = Shifts.close_shift(date)
+
+    assigns = [view_to_show: nil] ++ shift_assigns(date, tv_rows, page)
+
+    {:noreply, socket |> assign(assigns) |> put_flash(:info, "Fila fechada!")}
+  end
+
+  @impl true
+  def handle_event("give-ticket", %{"family_id" => family_id}, socket) do
+    %{date: date, tv_rows: tv_rows, page: page} = socket.assigns
+
+    case Shifts.claim_ticket(family_id, date, :volunteer) do
+      {:ok, ticket} ->
+        assigns =
+          [selected_family: nil, view_to_show: nil] ++ shift_assigns(date, tv_rows, page)
+
+        {:noreply,
+         socket |> assign(assigns) |> put_flash(:info, "Senha #{ticket.position} atribuída!")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> assign(selected_family: nil, view_to_show: nil)
+         |> put_flash(:error, ticket_error_message(reason))}
+    end
+  end
+
+  @impl true
+  def handle_event("remove-ticket", %{"family_id" => family_id}, socket) do
+    %{date: date, tv_rows: tv_rows, page: page} = socket.assigns
+
+    case Shifts.get_ticket(family_id, date) do
+      nil ->
+        {:noreply, assign(socket, selected_family: nil, view_to_show: nil)}
+
+      ticket ->
+        {:ok, _} = Shifts.delete_ticket(ticket.id)
+        assigns = [selected_family: nil, view_to_show: nil] ++ shift_assigns(date, tv_rows, page)
+
+        {:noreply, socket |> assign(assigns) |> put_flash(:info, "Senha removida!")}
     end
   end
 
@@ -419,7 +741,7 @@ defmodule RefoodWeb.ShiftLive do
     %{date: date, tv_rows: tv_rows} = socket.assigns
 
     assigns =
-      families_page_assigns(Families.list_families_by_date(date), tv_rows) ++
+      shift_assigns(date, tv_rows) ++
         [selected_family: nil, view_to_show: nil]
 
     {:noreply,
@@ -433,7 +755,7 @@ defmodule RefoodWeb.ShiftLive do
     %{date: date, tv_rows: tv_rows} = socket.assigns
 
     assigns =
-      families_page_assigns(Families.list_families_by_date(date), tv_rows) ++
+      shift_assigns(date, tv_rows) ++
         [selected_family: family_id]
 
     {:noreply, socket |> assign(assigns)}
@@ -441,9 +763,12 @@ defmodule RefoodWeb.ShiftLive do
 
   @impl true
   def handle_info({:shift_updated, _event}, socket) do
-    %{date: date, tv_rows: tv_rows} = socket.assigns
+    %{date: date, tv_rows: tv_rows, page: page} = socket.assigns
 
-    assigns = families_page_assigns(Families.list_families_by_date(date), tv_rows)
+    # Keep the page the TV is currently showing. Tickets are claimed continuously
+    # during a shift, and resetting to the first page on every claim would drag the
+    # display back mid-rotation.
+    assigns = shift_assigns(date, tv_rows, page)
 
     {:noreply, assign(socket, assigns)}
   end

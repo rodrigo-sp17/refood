@@ -23,6 +23,16 @@ defmodule RefoodWeb.Router do
     get "/", PageController, :home
   end
 
+  # Public and unauthenticated: families reach this by scanning a printed poster.
+  # The day's code, not the URL, is what gates it.
+  scope "/tickets", RefoodWeb do
+    pipe_through :browser
+
+    live_session :public_shift_ticket, layout: {RefoodWeb.Layouts, :public} do
+      live "/claim", ShiftTicketLive
+    end
+  end
+
   live_session :authenticated,
     on_mount: [
       {RefoodWeb.UserAuth, :ensure_authenticated}
