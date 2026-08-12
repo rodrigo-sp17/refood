@@ -16,10 +16,7 @@ defmodule RefoodWeb.ShiftTicketLive do
 
   alias Refood.Shifts
 
-  @max_attempts 5
   @max_family_number 999
-
-  defp max_attempts, do: @max_attempts
 
   @impl true
   def mount(_params, _session, socket) do
@@ -32,7 +29,6 @@ defmodule RefoodWeb.ShiftTicketLive do
       date: Date.utc_today(),
       step: initial_step(),
       shift_code_id: nil,
-      attempts: 0,
       selected_family: nil,
       ticket: nil,
       error: nil
@@ -49,14 +45,14 @@ defmodule RefoodWeb.ShiftTicketLive do
   def render(assigns) do
     ~H"""
     <div :if={@step == :closed} class="mt-16 flex flex-col items-center gap-4 text-center">
-      <.icon name="hero-clock" class="w-12 h-12 bg-gray-400" />
+      <.icon name="hero-clock" class="w-12 h-12 bg-zinc-400" />
       <h1 class="text-2xl font-bold">A fila ainda não está aberta.</h1>
-      <p class="text-gray-600">Aguarde a abertura pelos voluntários.</p>
+      <p class="text-zinc-600">Aguarde a abertura pelos voluntários.</p>
     </div>
 
     <div :if={@step == :code_entry} class="mt-12 flex flex-col items-center gap-6">
       <h1 class="text-2xl font-bold text-center">Insira o código do dia</h1>
-      <p class="text-gray-600 text-center">O código está no quadro.</p>
+      <p class="text-zinc-600 text-center">O código está no quadro.</p>
 
       <form phx-submit="submit-code" class="w-full flex flex-col items-center gap-4">
         <input
@@ -67,11 +63,10 @@ defmodule RefoodWeb.ShiftTicketLive do
           maxlength="4"
           autocomplete="off"
           autofocus
-          disabled={@attempts >= max_attempts()}
-          class="w-48 text-center text-5xl font-mono tracking-[0.3em] py-4 rounded-lg border-2 border-gray-300 focus:border-gray-800 disabled:bg-gray-100 disabled:text-gray-400"
+          class="w-48 text-center text-5xl font-mono tracking-[0.3em] py-4 rounded-lg border-2 border-zinc-300 focus:border-zinc-900"
         />
-        <p :if={@error} class="text-red-600 text-center">{@error}</p>
-        <.button :if={@attempts < max_attempts()} class="w-full py-4 text-lg">Continuar</.button>
+        <p :if={@error} class="text-rose-600 text-center">{@error}</p>
+        <.button class="w-full py-4 text-lg">Continuar</.button>
       </form>
     </div>
 
@@ -80,7 +75,7 @@ defmodule RefoodWeb.ShiftTicketLive do
 
       <form phx-submit="submit-number" class="w-full flex flex-col items-center gap-6">
         <div class="flex items-center gap-2">
-          <span class="text-5xl font-bold text-gray-700">F-</span>
+          <span class="text-5xl font-bold text-zinc-700">F-</span>
           <input
             type="text"
             name="number"
@@ -89,10 +84,10 @@ defmodule RefoodWeb.ShiftTicketLive do
             maxlength="3"
             autocomplete="off"
             autofocus
-            class="w-36 text-center text-5xl font-mono py-4 rounded-lg border-2 border-gray-300 focus:border-gray-800"
+            class="w-36 text-center text-5xl font-mono py-4 rounded-lg border-2 border-zinc-300 focus:border-zinc-900"
           />
         </div>
-        <p :if={@error} class="text-red-600 text-center">{@error}</p>
+        <p :if={@error} class="text-rose-600 text-center">{@error}</p>
         <.button class="w-full py-4 text-lg">Continuar</.button>
       </form>
     </div>
@@ -105,7 +100,7 @@ defmodule RefoodWeb.ShiftTicketLive do
         <.button phx-click="confirm-family" class="w-full py-4 text-lg">Sim, é a minha</.button>
         <button
           phx-click="back-to-number"
-          class="w-full py-4 text-lg rounded-lg border border-gray-300"
+          class="w-full py-4 text-lg rounded-lg border border-zinc-300"
         >
           Não, corrigir
         </button>
@@ -113,37 +108,26 @@ defmodule RefoodWeb.ShiftTicketLive do
     </div>
 
     <div :if={@step == :done} class="mt-16 flex flex-col items-center gap-6 text-center">
-      <p class="text-xl text-gray-600">A sua senha</p>
+      <p class="text-xl text-zinc-600">A sua senha</p>
       <div class="text-8xl font-bold">{@ticket.position}</div>
       <p class="text-xl">Família F-{@selected_family.number}</p>
-      <p class="text-gray-600">Aguarde ser chamado por este número.</p>
+      <p class="text-zinc-600">Aguarde ser chamado por este número.</p>
     </div>
     """
   end
 
   @impl true
+  # No attempt limit here. A per-socket counter stopped nobody - a script just
+  # reconnects - while stranding a family who mistyped, with no way back. Limiting
+  # this for real means per-IP tracking across connections.
   def handle_event("submit-code", %{"code" => code}, socket) do
-    cond do
-      socket.assigns.attempts >= @max_attempts ->
-        {:noreply, socket}
-
-      Shifts.valid_code?(code, socket.assigns.date) ->
-        # Remember which shift this code belonged to, so a later reopen (a new row,
-        # new numbering) can be told apart from a mere code rotation (same row).
-        shift = Shifts.get_open_shift(socket.assigns.date)
-        {:noreply, assign(socket, step: :number_entry, shift_code_id: shift.id, error: nil)}
-
-      true ->
-        attempts = socket.assigns.attempts + 1
-
-        error =
-          if attempts >= @max_attempts do
-            "Demasiadas tentativas. Peça ajuda a um voluntário."
-          else
-            "Código inválido. O código está no quadro."
-          end
-
-        {:noreply, assign(socket, attempts: attempts, error: error)}
+    if Shifts.valid_code?(code, socket.assigns.date) do
+      # Remember which shift this code belonged to, so a later reopen (a new row,
+      # new numbering) can be told apart from a mere code rotation (same row).
+      shift = Shifts.get_open_shift(socket.assigns.date)
+      {:noreply, assign(socket, step: :number_entry, shift_code_id: shift.id, error: nil)}
+    else
+      {:noreply, assign(socket, error: "Código inválido. O código está no quadro.")}
     end
   end
 

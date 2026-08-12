@@ -80,28 +80,28 @@ defmodule RefoodWeb.ShiftLive do
           :if={@date == Date.utc_today()}
           id="shift-code-chip"
           phx-click="show-shift-code"
-          class="flex items-center gap-3 px-4 py-2 2xl:px-6 2xl:py-3 rounded-lg border border-gray-300 hover:bg-gray-50"
+          class="flex items-center gap-3 px-4 py-2 2xl:px-6 2xl:py-3 rounded-lg border border-zinc-300 hover:bg-zinc-50"
         >
-          <span :if={@open_shift} class="text-xs 2xl:text-sm uppercase tracking-wide text-gray-500">
+          <span :if={@open_shift} class="text-xs 2xl:text-sm uppercase tracking-wide text-zinc-500">
             Cód. fila
           </span>
           <span :if={@open_shift} class="text-2xl 2xl:text-4xl font-mono font-bold tracking-[0.15em]">
             {@open_shift.code}
           </span>
-          <span :if={@open_shift} class="text-xs 2xl:text-sm text-gray-500">
+          <span :if={@open_shift} class="text-xs 2xl:text-sm text-zinc-500">
             até <.local_time id="shift-code-chip-expiry" at={@open_shift.expires_at} />
           </span>
           <span
             :if={!@open_shift && @shift}
-            class="flex items-center gap-2 text-sm 2xl:text-lg text-amber-700"
+            class="flex items-center gap-2 text-sm 2xl:text-lg text-rose-600"
           >
-            <.icon name="hero-exclamation-triangle" class="w-4 h-4 bg-amber-600" /> Código expirado
+            <.icon name="hero-exclamation-triangle" class="w-4 h-4 bg-rose-600" /> Código expirado
           </span>
           <span
             :if={!@open_shift && !@shift}
-            class="flex items-center gap-2 text-sm 2xl:text-lg text-gray-500"
+            class="flex items-center gap-2 text-sm 2xl:text-lg text-zinc-500"
           >
-            <.icon name="hero-lock-closed" class="w-4 h-4 bg-gray-400" /> Fila fechada
+            <.icon name="hero-lock-closed" class="w-4 h-4 bg-zinc-400" /> Fila fechada
           </span>
         </button>
       </:middle>
@@ -144,53 +144,39 @@ defmodule RefoodWeb.ShiftLive do
         <div id="shift-code" class="text-6xl font-mono font-bold tracking-[0.15em]">
           {@open_shift.code}
         </div>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-zinc-500">
           Válido até às <.local_time id="shift-code-modal-expiry" at={@open_shift.expires_at} />
         </p>
-        <ol class="w-full flex flex-col gap-2 text-gray-600 list-decimal list-inside">
+        <ol class="w-full flex flex-col gap-2 text-zinc-600 list-decimal list-inside">
           <li>Escreva este código no quadro.</li>
           <li>As famílias leem o cartaz e inserem o código no telemóvel.</li>
           <li>Cada família recebe a sua senha e aparece aqui por ordem de chegada.</li>
         </ol>
         <div class="w-full flex flex-col gap-3">
-          <button
-            phx-click="show-rotate-code"
-            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            Gerar novo código
-          </button>
-          <button
-            phx-click="show-close-shift"
-            class="w-full px-4 py-3 text-center border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
-          >
+          <.secondary_button phx-click="show-rotate-code">Gerar novo código</.secondary_button>
+          <.secondary_button variant={:danger} phx-click="show-close-shift">
             Fechar fila
-          </button>
+          </.secondary_button>
         </div>
       </div>
       <div :if={!@open_shift && @shift} class="flex flex-col items-center gap-6">
         <h2 class="text-2xl text-center">O código expirou</h2>
-        <p class="text-center text-gray-600">
+        <p class="text-center text-zinc-600">
           As senhas já dadas continuam visíveis e por ordem, mas nenhuma família
           consegue tirar senha até abrir uma nova fila.
         </p>
         <div class="w-full flex flex-col gap-3">
-          <button
-            phx-click="show-reopen-shift"
-            class="w-full px-4 py-3 text-center border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
-          >
+          <.secondary_button variant={:danger} phx-click="show-reopen-shift">
             Abrir nova fila
-          </button>
-          <button
-            phx-click="show-close-shift"
-            class="w-full px-4 py-3 text-center border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
-          >
+          </.secondary_button>
+          <.secondary_button variant={:danger} phx-click="show-close-shift">
             Fechar fila
-          </button>
+          </.secondary_button>
         </div>
       </div>
       <div :if={!@open_shift && !@shift} class="flex flex-col items-center gap-6">
         <h2 class="text-2xl text-center">A fila está fechada</h2>
-        <p class="text-center text-gray-600">
+        <p class="text-center text-zinc-600">
           Abra a fila para gerar um código do dia. Escreva-o no quadro para as famílias
           poderem tirar senha.
         </p>
@@ -266,42 +252,32 @@ defmodule RefoodWeb.ShiftLive do
           F-{family.number} – {family.name}
         </h2>
         <div class="flex flex-col gap-3">
-          <button
+          <.secondary_button
             :if={@open_shift && !@positions[family.id]}
             phx-click="give-ticket"
             phx-value-family_id={family.id}
-            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Dar senha
-          </button>
-          <button
+          </.secondary_button>
+          <.secondary_button
             :if={@positions[family.id]}
             phx-click="remove-ticket"
             phx-value-family_id={family.id}
-            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Remover senha
-          </button>
-          <.link
+          </.secondary_button>
+          <.secondary_button
             :if={show_add_swap?(family, @date)}
             patch={"/shift/#{family.id}?new-swap"}
-            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Trocar dia
-          </.link>
-          <.link
-            :if={show_add_absence?(family)}
-            patch={"/shift/#{family.id}?new-absence"}
-            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
+          </.secondary_button>
+          <.secondary_button :if={show_add_absence?(family)} patch={"/shift/#{family.id}?new-absence"}>
             Marcar falta
-          </.link>
-          <.link
-            patch={"/shift/#{family.id}?loaned-items"}
-            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
+          </.secondary_button>
+          <.secondary_button patch={"/shift/#{family.id}?loaned-items"}>
             Gerir empréstimos
-          </.link>
+          </.secondary_button>
         </div>
       </div>
     </.modal>
@@ -342,13 +318,19 @@ defmodule RefoodWeb.ShiftLive do
             family={family}
             date={@date}
             position={@positions[family.id]}
+            reserve_position
           />
         </div>
         <div :if={@waiting_families != []} id="shift-waiting" class="w-full flex flex-col gap-2">
           <h3 class="text-sm font-bold uppercase tracking-wide text-gray-500 mt-4">
             Por chegar ({length(@waiting_families)})
           </h3>
-          <.family_card :for={family <- @waiting_families} family={family} date={@date} />
+          <.family_card
+            :for={family <- @waiting_families}
+            family={family}
+            date={@date}
+            reserve_position
+          />
         </div>
       <% end %>
     </div>
@@ -367,6 +349,7 @@ defmodule RefoodWeb.ShiftLive do
           family={family}
           date={@date}
           position={@positions[family.id]}
+          reserve_position={@queued_families != []}
         />
       </div>
       <div :if={@total_pages > 1} class="flex justify-center gap-2 pb-2">
@@ -385,14 +368,20 @@ defmodule RefoodWeb.ShiftLive do
   attr :family, :map, required: true
   attr :date, Date, required: true
   attr :position, :integer, default: nil
+  attr :reserve_position, :boolean, default: false
 
   defp family_card(assigns) do
     ~H"""
     <div
-      class={[
-        "relative w-full px-4 py-3 flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-2 2xl:h-full 2xl:items-center 2xl:flex-nowrap",
-        if(@position, do: "bg-amber-50", else: "bg-white")
-      ]}
+      class={
+        [
+          "relative w-full px-4 py-3 bg-white flex flex-col md:flex-row md:flex-wrap rounded-lg justify-start md:items-start gap-2 2xl:h-full 2xl:items-center 2xl:flex-nowrap",
+          # An inset ring rather than a background tint: it survives being read from
+          # across the room on the TV, and adds no hue that would collide with the
+          # Troca / Avisou / Faltou / Emprestimo badges inside the card.
+          @position && "ring-2 ring-inset ring-zinc-900"
+        ]
+      }
       data-family-id={@family.id}
     >
       <button
@@ -400,14 +389,21 @@ defmodule RefoodWeb.ShiftLive do
         phx-click="show-family-actions"
         phx-value-family_id={@family.id}
       />
-      <div
-        :if={@position}
-        class="flex items-center justify-center shrink-0 w-9 h-9 rounded-full bg-gray-800 text-white text-lg font-bold"
-        data-queue-position={@position}
-      >
-        {@position}
-      </div>
       <div class="flex items-center gap-2 md:gap-0 shrink">
+        <%!-- Reserved on every card while anyone is queued, so the family numbers
+        stay in one column instead of stepping right for queued rows. --%>
+        <div
+          :if={@reserve_position}
+          class="shrink-0 flex items-center justify-center mr-2 w-9 h-9 2xl:w-14 2xl:h-14"
+        >
+          <div
+            :if={@position}
+            class="w-full h-full rounded-full bg-zinc-900 text-white flex items-center justify-center text-lg 2xl:text-3xl font-bold"
+            data-queue-position={@position}
+          >
+            {@position}
+          </div>
+        </div>
         <div class="text-xl font-bold w-11">F-{@family.number}</div>
         <div class="text-lg md:pl-2 break-words w-44" title={@family.name}>
           {short_name(@family.name)}

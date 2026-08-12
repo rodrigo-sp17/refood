@@ -67,21 +67,21 @@ defmodule RefoodWeb.ShiftTicketLiveTest do
       refute html =~ "Qual é o número da sua família?"
     end
 
-    test "the input is disabled after 5 wrong attempts", %{conn: conn, code: code} do
+    test "repeated wrong codes keep the form usable", %{conn: conn, code: code} do
       {:ok, lv, _html} = live(conn, ~p"/tickets/claim")
       wrong = if code.code == "0000", do: "1111", else: "0000"
 
-      for _ <- 1..4, do: enter_code(lv, wrong)
-      html = enter_code(lv, wrong)
+      for _ <- 1..6, do: enter_code(lv, wrong)
+      html = render(lv)
 
-      assert html =~ "Demasiadas tentativas"
-      assert html =~ "disabled"
-      refute html =~ "Continuar"
+      # A family that mistypes must never be locked out of the page: the old
+      # per-socket limit stopped no scripted client (it just reconnects) and only
+      # stranded honest users.
+      assert html =~ "Código inválido"
+      assert html =~ "Continuar"
+      refute html =~ "disabled"
 
-      # The server must refuse too, not just the disabled input: a scripted client
-      # would ignore the DOM entirely. Pushing the event directly bypasses it.
-      html = render_submit(lv, "submit-code", %{"code" => code.code})
-      refute html =~ "Qual é o número da sua família?"
+      assert enter_code(lv, code.code) =~ "Qual é o número da sua família?"
     end
 
     test "the correct code asks for the family number", %{conn: conn, code: code} do

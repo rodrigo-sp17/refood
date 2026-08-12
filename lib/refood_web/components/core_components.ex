@@ -331,6 +331,58 @@ defmodule RefoodWeb.CoreComponents do
     """
   end
 
+  @doc ~S"""
+  Renders a secondary action, as a button or - when given a navigation attribute -
+  as a link. Use for actions that sit beside or beneath a primary `button/1`,
+  typically stacked full-width inside a modal.
+
+  ## Examples
+
+      <.secondary_button phx-click="rotate">Gerar novo código</.secondary_button>
+      <.secondary_button variant={:danger} phx-click="close">Fechar fila</.secondary_button>
+      <.secondary_button patch={~p"/shift/#{id}?new-swap"}>Trocar dia</.secondary_button>
+  """
+  attr :variant, :atom, values: [:normal, :danger], default: :normal
+  attr :class, :string, default: nil
+  attr :navigate, :any, default: nil
+  attr :patch, :any, default: nil
+  attr :href, :any, default: nil
+  attr :rest, :global, include: ~w(disabled form name value)
+
+  slot :inner_block, required: true
+
+  def secondary_button(%{navigate: nil, patch: nil, href: nil} = assigns) do
+    ~H"""
+    <button class={[secondary_button_class(@variant), @class]} {@rest}>
+      {render_slot(@inner_block)}
+    </button>
+    """
+  end
+
+  def secondary_button(assigns) do
+    ~H"""
+    <.link
+      navigate={@navigate}
+      patch={@patch}
+      href={@href}
+      class={[secondary_button_class(@variant), "block", @class]}
+      {@rest}
+    >
+      {render_slot(@inner_block)}
+    </.link>
+    """
+  end
+
+  defp secondary_button_class(variant) do
+    [
+      "w-full rounded-lg border bg-white px-4 py-3 text-center text-sm font-semibold leading-6",
+      case variant do
+        :normal -> "border-zinc-300 text-zinc-900 hover:bg-zinc-50"
+        :danger -> "border-rose-300 text-rose-600 hover:bg-rose-50"
+      end
+    ]
+  end
+
   # TODO -> extract icon button
 
   @doc """

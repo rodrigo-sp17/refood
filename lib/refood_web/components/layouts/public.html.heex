@@ -1,5 +1,9 @@
-<div class="min-h-screen w-full flex flex-col items-center bg-white">
-  <header class="w-full flex justify-center py-6">
+<%!-- The LiveView container is `h-screen ... overflow-hidden` (see RefoodWeb),
+so the scroll has to live here. Without it a short viewport - a phone in
+landscape, or any phone with the keypad open - clips the form and its button
+with no way to reach them. --%>
+<div class="h-full w-full overflow-y-auto flex flex-col items-center bg-white">
+  <header class="w-full flex justify-center py-6 shrink-0">
     <img src={~p"/images/refood-cropped-192.png"} width="56" alt="Refood" />
   </header>
   <main class="w-full max-w-md flex-1 px-6 pb-10">

@@ -260,6 +260,21 @@ defmodule RefoodWeb.ShiftLiveTest do
       assert html =~ "F-#{waiting.number}"
     end
 
+    test "reserves the badge gutter on waiting cards too, so numbers stay aligned", %{conn: conn} do
+      queued = insert(:family, status: :active, weekdays: @all_weekdays)
+      insert(:family, status: :active, weekdays: @all_weekdays)
+      {:ok, _} = Shifts.open_shift()
+      {:ok, _} = Shifts.claim_ticket(queued.id)
+
+      {:ok, _lv, html} = live(conn, ~p"/shift")
+
+      # One badge, but a gutter on every card in each surface (mobile list + TV grid)
+      # - otherwise queued rows step right and break the column.
+      assert html |> String.split(~s(data-queue-position=)) |> length() == 3
+      gutters = html |> String.split(~s(2xl:w-14 2xl:h-14)) |> length()
+      assert gutters == 5
+    end
+
     test "no sections or badges when nothing is queued", %{conn: conn} do
       insert(:family, status: :active, weekdays: @all_weekdays)
       {:ok, _} = Shifts.open_shift()
