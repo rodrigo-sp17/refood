@@ -230,7 +230,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
               </div>
               <div
                 :for={item <- Enum.sort_by(@family.loaned_items, & &1.loaned_at, {:desc, DateTime})}
-                class={"p-2 flex justify-between rounded-lg items-center relative text-sm border-b last:border-b-0 #{if item.returned_at, do: "bg-gray-50 text-gray-500", else: ""}"}
+                class={"p-2 flex justify-between rounded-lg items-center relative text-sm border-b last:border-b-0 #{if item.returned_at, do: "bg-zinc-50 text-zinc-500", else: ""}"}
               >
                 <div class="flex gap-4">
                   <div>{Calendar.strftime(item.loaned_at, "%Y-%m-%d")}</div>

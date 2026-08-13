@@ -41,7 +41,7 @@ defmodule RefoodWeb.ShiftLive.LoanedItems do
             <div class="border rounded-lg">
               <div
                 :if={@family.unreturned_loaned_items == []}
-                class="p-4 text-sm text-center text-gray-500"
+                class="p-4 text-sm text-center text-zinc-500"
               >
                 Nenhum item emprestado
               </div>
