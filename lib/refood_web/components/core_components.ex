@@ -382,6 +382,10 @@ defmodule RefoodWeb.CoreComponents do
   Accepts the follow slots:
 
     * `:id` - The id to uniquely identify this dropdown
+    * `:trigger` - optional custom trigger content; defaults to a kebab-menu
+      icon link. When provided, the caller's element is responsible for its
+      own `phx-click` (targeting `show_dropdown/1` on the `"-dropdown"`
+      suffixed id) and `phx-hook="Menu"`.
 
   ## Examples
 
@@ -391,6 +395,13 @@ defmodule RefoodWeb.CoreComponents do
       </.dropdown>
   """
   attr :id, :string, required: true
+
+  attr :position, :atom,
+    default: :top_right,
+    values: [:top_right, :bottom_left_fixed, :below],
+    doc: "where the panel opens relative to its trigger"
+
+  slot :trigger
 
   slot :link do
     attr :navigate, :string
@@ -402,13 +413,23 @@ defmodule RefoodWeb.CoreComponents do
 
   def dropdown(assigns) do
     ~H"""
-    <.link id={@id} phx-click={show_dropdown("##{@id}-dropdown")} phx-hook="Menu" aria-haspopup="true">
+    <.link
+      :if={@trigger == []}
+      id={@id}
+      phx-click={show_dropdown("##{@id}-dropdown")}
+      phx-hook="Menu"
+      aria-haspopup="true"
+    >
       <.icon name="hero-ellipsis-vertical" class="h-6 w-6" />
     </.link>
+    {render_slot(@trigger)}
     <div
       id={"#{@id}-dropdown"}
       phx-click-away={hide_dropdown("##{@id}-dropdown")}
-      class="hidden mx-3 origin-top-right right-0 absolute z-10 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black/5 divide-y divide-gray-200"
+      class={[
+        "hidden mx-3 z-10 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black/5 divide-y divide-gray-200",
+        dropdown_position_class(@position)
+      ]}
       role="menu"
       aria-labelledby={@id}
     >
@@ -430,6 +451,13 @@ defmodule RefoodWeb.CoreComponents do
     </div>
     """
   end
+
+  defp dropdown_position_class(:top_right), do: "absolute right-0 origin-top-right"
+
+  defp dropdown_position_class(:bottom_left_fixed),
+    do: "fixed bottom-4 left-15 origin-bottom-left z-50"
+
+  defp dropdown_position_class(:below), do: ""
 
   @doc """
   Renders an input with label and error messages.

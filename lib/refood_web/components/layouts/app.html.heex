@@ -51,37 +51,23 @@
       <div class="mt-auto"></div>
       
 <!-- Logged in user drawer -->
-      <.link
-        title="Minha conta"
-        id="minimal-logged-in-user"
-        class="relative flex justify-center items-center h-16 p-4 my-1 bg-zinc-700 rounded text-white"
-        phx-click={show_dropdown("#minimal-dropdown-logged-in-user")}
-        phx-hook="Menu"
-      >
-        <.icon name="hero-user-circle" class="w-8 h-8" />
-      </.link>
+      <.dropdown id="minimal-dropdown-logged-in-user" position={:bottom_left_fixed}>
+        <:trigger>
+          <.link
+            title="Minha conta"
+            id="minimal-logged-in-user"
+            class="relative flex justify-center items-center h-16 p-4 my-1 bg-zinc-700 rounded text-white"
+            phx-click={show_dropdown("#minimal-dropdown-logged-in-user-dropdown")}
+            phx-hook="Menu"
+          >
+            <.icon name="hero-user-circle" class="w-8 h-8" />
+          </.link>
+        </:trigger>
+        <:link href="/users/settings">Configurações</:link>
+        <:link href={~p"/users/log_out"} method="delete">Log out</:link>
+      </.dropdown>
     </div>
   </div>
-</div>
-<div
-  id="minimal-dropdown-logged-in-user"
-  class="hidden fixed origin-bottom-left bottom-4 left-15 mx-3 z-50 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black/5 divide-y divide-zinc-200"
-  role="menu"
-  phx-click-away={hide_dropdown("#minimal-dropdown-logged-in-user")}
->
-  <.link
-    class="block truncate px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-100"
-    href="/users/settings"
-  >
-    Configurações
-  </.link>
-  <.link
-    class="block truncate px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-100"
-    href={~p"/users/log_out"}
-    method="delete"
-  >
-    Log out
-  </.link>
 </div>
 
 <div :if={@current_user} id="navbar" class="hidden relative shrink-0">
@@ -136,38 +122,24 @@
       <div class="mt-auto"></div>
       
 <!-- Logged in user drawer -->
-      <.link
-        id="logged-in-user"
-        class="flex items-center gap-3 h-16 w-full p-4 mt-2 bg-zinc-700 rounded text-white"
-        phx-click={show_dropdown("#dropdown-logged-in-user")}
-        phx-hook="Menu"
-      >
-        <.icon name="hero-user-circle" class="w-8 h-8" />
-        <div class="flex flex-col">
-          <span class="font-semibold">{@current_user.name}</span>
-          <span class="text-sm text-zinc-300">{@current_user.email}</span>
-        </div>
-      </.link>
-      <div
-        id="dropdown-logged-in-user"
-        class="hidden mx-3 z-10 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black/5 divide-y divide-zinc-200"
-        role="menu"
-        phx-click-away={hide_dropdown("#dropdown-logged-in-user")}
-      >
-        <.link
-          class="block truncate px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-100"
-          href="/users/settings"
-        >
-          Configurações
-        </.link>
-        <.link
-          class="block truncate px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-100"
-          href={~p"/users/log_out"}
-          method="delete"
-        >
-          Log out
-        </.link>
-      </div>
+      <.dropdown id="dropdown-logged-in-user" position={:below}>
+        <:trigger>
+          <.link
+            id="logged-in-user"
+            class="flex items-center gap-3 h-16 w-full p-4 mt-2 bg-zinc-700 rounded text-white"
+            phx-click={show_dropdown("#dropdown-logged-in-user-dropdown")}
+            phx-hook="Menu"
+          >
+            <.icon name="hero-user-circle" class="w-8 h-8" />
+            <div class="flex flex-col">
+              <span class="font-semibold">{@current_user.name}</span>
+              <span class="text-sm text-zinc-300">{@current_user.email}</span>
+            </div>
+          </.link>
+        </:trigger>
+        <:link href="/users/settings">Configurações</:link>
+        <:link href={~p"/users/log_out"} method="delete">Log out</:link>
+      </.dropdown>
     </div>
   </div>
 </div>
