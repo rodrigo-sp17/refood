@@ -438,7 +438,7 @@ defmodule RefoodWeb.CoreComponents do
           <.link
             tabindex="-1"
             role="menuitem"
-            class="block truncate px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-100"
+            class="block truncate px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:ring-offset-zinc-100"
             phx-remove={hide_dropdown("##{@id}-dropdown")}
             phx-click={Map.get(link, :on_click, nil)}
             patch={Map.get(link, :patch, nil)}
@@ -536,7 +536,7 @@ defmodule RefoodWeb.CoreComponents do
           name={@name}
           value="true"
           checked={@checked}
-          class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-0 focus:ring-blue-500"
+          class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
           {@rest}
         />
         {@label}
@@ -551,7 +551,7 @@ defmodule RefoodWeb.CoreComponents do
     <div phx-feedback-for={@name} class="text-sm">
       <.label for={@id}>{@label}</.label>
       <div class={[
-        "block w-full rounded-lg border border-gray-200 text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6 phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
+        "block w-full rounded-lg border border-zinc-200 text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
         @errors == [] && "border-zinc-300 focus:border-zinc-400",
         @errors != [] && "border-rose-400 focus:border-rose-400",
         !@edit && "border-none px-0",
@@ -568,7 +568,7 @@ defmodule RefoodWeb.CoreComponents do
                 name={@name}
                 value={value}
                 checked={value in @value || Atom.to_string(value) in @value}
-                class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-0 focus:ring-blue-500"
+                class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
                 {@rest}
               />
               {label}
@@ -590,7 +590,7 @@ defmodule RefoodWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "mt-2 block w-full rounded-lg border border-gray-300 bg-white shadow-xs focus:border-zinc-400 focus:ring-0 focus:ring-blue-500 sm:text-sm",
+          "mt-2 block w-full rounded-lg border border-zinc-300 bg-white shadow-xs focus:border-zinc-400 focus:ring-0 sm:text-sm",
           !@edit && "border-none px-0"
         ]}
         multiple={@multiple}
@@ -613,7 +613,7 @@ defmodule RefoodWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "block w-full rounded-lg text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6",
+          "block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
           "min-h-[6rem] phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
           @errors != [] && "border-rose-400 focus:border-rose-400",
@@ -639,7 +639,7 @@ defmodule RefoodWeb.CoreComponents do
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
         class={[
-          "block w-full rounded-lg border border-gray-200 text-zinc-900 focus:ring-0 focus:ring-blue-500 sm:text-sm sm:leading-6",
+          "block w-full rounded-lg border border-zinc-200 text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
           "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
           @errors != [] && "border-rose-400 focus:border-rose-400",
@@ -810,7 +810,7 @@ defmodule RefoodWeb.CoreComponents do
 
   def table_search_input(assigns) do
     ~H"""
-    <div class="relative w-fit border-round border-zinc-300 focus:border-zinc-400 focus:ring-0 focus:ring-blue-500">
+    <div class="relative w-fit rounded-lg border border-zinc-300 focus-within:border-zinc-400">
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
         <.icon name="hero-magnifying-glass" class="h-5 w-5" />
       </div>
@@ -819,7 +819,7 @@ defmodule RefoodWeb.CoreComponents do
         value={@value}
         phx-keyup={@on_change}
         type="text"
-        class="h-10 pl-10 pr-3 rounded-lg text-gray-800 placeholder-gray-400 text-xl"
+        class="h-10 pl-10 pr-3 rounded-lg text-zinc-800 placeholder-zinc-400 text-xl focus:outline-none"
         placeholder="Filtrar"
         role="combobox"
         aria-expanded="false"
