@@ -155,22 +155,22 @@ defmodule RefoodWeb.ShiftLive do
       </div>
     </.modal>
 
-    <div class="mt-11 flex justify-center items-center gap-8 mb-8">
+    <div class="mt-11 mb-8 flex justify-center items-center gap-8">
       <button
         phx-click="prev-date"
-        class="flex items-center rounded-full bg-white hover:bg-brand border border-brand p-1"
+        class="flex items-center rounded-full bg-white hover:bg-brand border border-brand p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2"
       >
         <.icon name="hero-chevron-left" class="bg-zinc-900" />
       </button>
       <div class="flex flex-col items-center gap-4">
-        <div class="basis-7/12 text-3xl text-center font-bold">
+        <div class="w-[48ch] max-w-[80vw] text-3xl text-center font-bold">
           {if @date == Date.utc_today(), do: "(Hoje)"} {"#{weekday_name(Date.day_of_week(@date))}, #{@date.day} de #{month_name(@date.month)} de #{@date.year}"}
         </div>
         <div class="text-xl">Total: {length(@families)}</div>
       </div>
       <button
         phx-click="next-date"
-        class="flex items-center rounded-full bg-white hover:bg-brand border border-brand p-1"
+        class="flex items-center rounded-full bg-white hover:bg-brand border border-brand p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2"
       >
         <.icon name="hero-chevron-right" class="bg-zinc-900" />
       </button>
