@@ -508,7 +508,7 @@ defmodule RefoodWeb.CoreComponents do
           name={@name}
           value="true"
           checked={@checked}
-          class="rounded-sm border-zinc-300 text-zinc-900 focus:ring-0 focus:ring-blue-500"
+          class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-0 focus:ring-blue-500"
           {@rest}
         />
         {@label}
@@ -531,8 +531,8 @@ defmodule RefoodWeb.CoreComponents do
       ]}>
         <div class="p-2 grid grid-cols-1 gap-2 text-sm items-baseline">
           <input type="hidden" name={@name} value="" />
-          <div :for={{label, value} <- @options} class="">
-            <label for={"#{@name}-#{value}"} class="">
+          <div :for={{label, value} <- @options}>
+            <label class="flex items-center gap-2 text-sm text-zinc-600" for={"#{@name}-#{value}"}>
               <input
                 disabled={!@edit}
                 type="checkbox"
@@ -540,7 +540,7 @@ defmodule RefoodWeb.CoreComponents do
                 name={@name}
                 value={value}
                 checked={value in @value || Atom.to_string(value) in @value}
-                class="mr-2 h-4 w-4 rounded"
+                class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-0 focus:ring-blue-500"
                 {@rest}
               />
               {label}
