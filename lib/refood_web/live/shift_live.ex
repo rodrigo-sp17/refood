@@ -134,20 +134,20 @@ defmodule RefoodWeb.ShiftLive do
           <.link
             :if={show_add_swap?(family, @date)}
             patch={"/shift/#{family.id}?new-swap"}
-            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
+            class="w-full px-4 py-3 text-center border border-zinc-300 rounded-lg hover:bg-zinc-50"
           >
             Trocar dia
           </.link>
           <.link
             :if={show_add_absence?(family)}
             patch={"/shift/#{family.id}?new-absence"}
-            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
+            class="w-full px-4 py-3 text-center border border-zinc-300 rounded-lg hover:bg-zinc-50"
           >
             Marcar falta
           </.link>
           <.link
             patch={"/shift/#{family.id}?loaned-items"}
-            class="w-full px-4 py-3 text-center border border-gray-300 rounded-lg hover:bg-gray-50"
+            class="w-full px-4 py-3 text-center border border-zinc-300 rounded-lg hover:bg-zinc-50"
           >
             Gerir empréstimos
           </.link>
@@ -202,7 +202,7 @@ defmodule RefoodWeb.ShiftLive do
           :for={i <- 0..(@total_pages - 1)}
           class={[
             "w-2.5 h-2.5 rounded-full",
-            if(i == @page, do: "bg-black", else: "bg-gray-300")
+            if(i == @page, do: "bg-black", else: "bg-zinc-300")
           ]}
         />
       </div>
