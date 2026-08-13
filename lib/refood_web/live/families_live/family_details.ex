@@ -254,7 +254,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
                   <:link on_click={
                     JS.push("confirm-delete-loaned-item", value: %{id: item.id}, target: @myself)
                   }>
-                    <p class="text-red-500">Remover item</p>
+                    <p class="text-rose-600">Remover item</p>
                   </:link>
                 </.dropdown>
               </div>
@@ -299,7 +299,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
                   <:link on_click={
                     JS.push("confirm-delete-absence", value: %{id: absence.id}, target: @myself)
                   }>
-                    <p class="text-red-500">Remover falta</p>
+                    <p class="text-rose-600">Remover falta</p>
                   </:link>
                 </.dropdown>
               </div>
@@ -338,7 +338,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
                   <:link on_click={
                     JS.push("confirm-delete-swap", value: %{id: swap.id}, target: @myself)
                   }>
-                    <p class="text-red-500">Remover troca</p>
+                    <p class="text-rose-600">Remover troca</p>
                   </:link>
                 </.dropdown>
               </div>

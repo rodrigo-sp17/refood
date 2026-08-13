@@ -237,8 +237,8 @@ defmodule RefoodWeb.ShiftLive do
         <div class="flex items-center min-w-5">
           <%= if @family.restrictions do %>
             <div class="flex items-center gap-1">
-              <.icon name="hero-exclamation-triangle-solid text-red-700 shrink-0" />
-              <p class="text-red-700 break-words 2xl:max-w-40">
+              <.icon name="hero-exclamation-triangle-solid text-rose-600 shrink-0" />
+              <p class="text-rose-600 break-words 2xl:max-w-40">
                 {@family.restrictions}
               </p>
             </div>
