@@ -343,6 +343,37 @@ defmodule RefoodWeb.CoreComponents do
   defp button_variant_class(:ghost),
     do: "bg-transparent border border-zinc-900 text-zinc-900 hover:bg-zinc-900 hover:text-white"
 
+  @doc """
+  Renders a status pill.
+
+  ## Examples
+
+      <.badge color={:success}>Troca</.badge>
+      <.badge color={:danger}>Faltou</.badge>
+  """
+  attr :color, :atom, default: :neutral, values: [:success, :warning, :danger, :info, :neutral]
+  attr :class, :string, default: nil
+
+  slot :inner_block, required: true
+
+  def badge(assigns) do
+    ~H"""
+    <div class={[
+      "px-2.5 py-1 border rounded-3xl text-center text-sm font-bold whitespace-nowrap shrink-0",
+      badge_color_class(@color),
+      @class
+    ]}>
+      {render_slot(@inner_block)}
+    </div>
+    """
+  end
+
+  defp badge_color_class(:success), do: "border-emerald-600 text-emerald-600"
+  defp badge_color_class(:warning), do: "border-amber-500 text-amber-600"
+  defp badge_color_class(:danger), do: "border-rose-600 text-rose-600"
+  defp badge_color_class(:info), do: "border-blue-600 text-blue-600"
+  defp badge_color_class(:neutral), do: "border-zinc-400 text-zinc-600"
+
   # TODO -> extract icon button
 
   @doc """

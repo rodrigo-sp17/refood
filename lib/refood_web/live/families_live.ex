@@ -218,12 +218,9 @@ defmodule RefoodWeb.FamiliesLive do
         on_sort={&on_sort(:alerts, &1)}
         label="Alertas"
       >
-        <div
-          :for={alert <- family.active_alerts}
-          class="px-2 py-1 border rounded-3xl border-red-500 text-red-500 text-center text-sm"
-        >
+        <.badge :for={alert <- family.active_alerts} color={:danger}>
           {Alert.type_to_name(alert.type)}
-        </div>
+        </.badge>
       </:col>
       <:col
         :let={family}

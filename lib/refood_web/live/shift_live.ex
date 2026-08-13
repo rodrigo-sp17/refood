@@ -247,32 +247,20 @@ defmodule RefoodWeb.ShiftLive do
           <% end %>
         </div>
         <div class="flex items-center flex-wrap 2xl:flex-nowrap flex-1 grow gap-2">
-          <div
-            :if={!Enum.empty?(@family.swaps)}
-            class="px-3 py-0.5 border rounded-3xl border-green-600 text-green-600 text-center text-sm font-bold whitespace-nowrap shrink-0"
-          >
+          <.badge :if={!Enum.empty?(@family.swaps)} color={:success}>
             Troca
-          </div>
+          </.badge>
           <div :for={absence <- @family.absences}>
-            <div
-              :if={absence.warned}
-              class="px-3 py-0.5 border rounded-3xl border-yellow-600 text-yellow-600 text-center text-sm font-bold whitespace-nowrap shrink-0"
-            >
+            <.badge :if={absence.warned} color={:warning}>
               Avisou
-            </div>
-            <div
-              :if={!absence.warned}
-              class="px-3 py-0.5 border rounded-3xl border-red-500 text-red-500 text-center text-sm font-bold whitespace-nowrap shrink-0"
-            >
+            </.badge>
+            <.badge :if={!absence.warned} color={:danger}>
               Faltou
-            </div>
+            </.badge>
           </div>
-          <div
-            :if={!Enum.empty?(@family.unreturned_loaned_items)}
-            class="px-3 py-0.5 border rounded-3xl border-blue-600 text-blue-600 text-center text-sm font-bold whitespace-nowrap shrink-0"
-          >
+          <.badge :if={!Enum.empty?(@family.unreturned_loaned_items)} color={:info}>
             Empréstimo
-          </div>
+          </.badge>
         </div>
       </div>
     </div>
