@@ -323,6 +323,7 @@ defmodule RefoodWeb.CoreComponents do
       type={@type}
       class={[
         "phx-submit-loading:opacity-75 py-2 px-3 text-sm font-semibold leading-6",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2",
         if(@pill, do: "rounded-3xl", else: "rounded-lg"),
         button_variant_class(@variant),
         @class
