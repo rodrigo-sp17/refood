@@ -220,7 +220,7 @@ defmodule RefoodWeb.ShiftLive do
       data-family-id={@family.id}
     >
       <button
-        class="absolute inset-0 rounded-lg"
+        class="absolute inset-0 rounded-lg transition-colors hover:bg-zinc-900/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2"
         phx-click="show-family-actions"
         phx-value-family_id={@family.id}
       />
