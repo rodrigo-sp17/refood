@@ -158,9 +158,9 @@ defmodule RefoodWeb.ShiftLive do
     <div class="mt-11 flex justify-center items-center gap-8 mb-8">
       <button
         phx-click="prev-date"
-        class="flex items-center rounded-full bg-white group hover:bg-black border border-black p-1"
+        class="flex items-center rounded-full bg-white hover:bg-brand border border-brand p-1"
       >
-        <.icon name="hero-chevron-left" class="bg-black group-hover:bg-white" />
+        <.icon name="hero-chevron-left" class="bg-zinc-900" />
       </button>
       <div class="flex flex-col items-center gap-4">
         <div class="basis-7/12 text-3xl text-center font-bold">
@@ -170,9 +170,9 @@ defmodule RefoodWeb.ShiftLive do
       </div>
       <button
         phx-click="next-date"
-        class="flex items-center rounded-full bg-white group hover:bg-black border border-black p-1"
+        class="flex items-center rounded-full bg-white hover:bg-brand border border-brand p-1"
       >
-        <.icon name="hero-chevron-right" class="bg-black group-hover:bg-white" />
+        <.icon name="hero-chevron-right" class="bg-zinc-900" />
       </button>
     </div>
     <div id="shift-table-mobile" class="2xl:hidden overflow-y-auto flex flex-col items-center gap-2">
@@ -202,7 +202,7 @@ defmodule RefoodWeb.ShiftLive do
           :for={i <- 0..(@total_pages - 1)}
           class={[
             "w-2.5 h-2.5 rounded-full",
-            if(i == @page, do: "bg-black", else: "bg-zinc-300")
+            if(i == @page, do: "bg-brand", else: "bg-zinc-300")
           ]}
         />
       </div>
