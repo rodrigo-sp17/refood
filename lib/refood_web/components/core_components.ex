@@ -151,24 +151,24 @@ defmodule RefoodWeb.CoreComponents do
           {@question}
         </h2>
         <div class="flex justify-center gap-8 h-12">
-          <button
+          <.button
+            variant={:ghost}
+            pill
             phx-remove={hide_modal(@id)}
             phx-click={JS.exec(@on_deny || @on_cancel, "phx-remove")}
-            class="basis-1/3 rounded-3xl bg-transparent text-black hover:bg-black hover:text-white border border-black px-6"
+            class="basis-1/3 px-6"
           >
             {@deny_text}
-          </button>
-          <button
+          </.button>
+          <.button
+            variant={if @type == :delete, do: :danger, else: :primary}
+            pill
             phx-remove={hide_modal(@id)}
             phx-click={JS.exec(@on_confirm, "phx-remove")}
-            class={[
-              "basis-1/3 border rounded-3xl text-white hover:bg-transparent px-6 ",
-              @type == :normal && "bg-black text-white hover:text-black hover:bg-black",
-              @type == :delete && "bg-red-500 hover:text-red-500 border-red-500"
-            ]}
+            class="basis-1/3 px-6"
           >
             {@confirm_text}
-          </button>
+          </.button>
         </div>
       </div>
     </.modal>
@@ -310,6 +310,8 @@ defmodule RefoodWeb.CoreComponents do
       <.button phx-click="go" class="ml-2">Send!</.button>
   """
   attr :type, :string, default: nil
+  attr :variant, :atom, default: :primary, values: [:primary, :danger, :ghost]
+  attr :pill, :boolean, default: false, doc: "renders with a fully rounded (pill) shape"
   attr :class, :string, default: nil
   attr :rest, :global, include: ~w(disabled form name value)
 
@@ -320,8 +322,9 @@ defmodule RefoodWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3",
-        "text-sm font-semibold leading-6 text-white active:text-white/80",
+        "phx-submit-loading:opacity-75 py-2 px-3 text-sm font-semibold leading-6",
+        if(@pill, do: "rounded-3xl", else: "rounded-lg"),
+        button_variant_class(@variant),
         @class
       ]}
       {@rest}
@@ -330,6 +333,15 @@ defmodule RefoodWeb.CoreComponents do
     </button>
     """
   end
+
+  defp button_variant_class(:primary),
+    do: "bg-zinc-900 hover:bg-zinc-700 text-white active:text-white/80"
+
+  defp button_variant_class(:danger),
+    do: "bg-rose-600 hover:bg-rose-700 text-white active:text-white/80"
+
+  defp button_variant_class(:ghost),
+    do: "bg-transparent border border-zinc-900 text-zinc-900 hover:bg-zinc-900 hover:text-white"
 
   # TODO -> extract icon button
 
