@@ -4,7 +4,7 @@
     --font-sans: '"Helvetica Neue"', "Arial", 'sans-serif';
     --font-serif: '"Helvetica Neue"', "Arial", 'sans-serif';
     --font-mono: '"Helvetica Neue"', "Arial", 'sans-serif';
-    --color-brand: "#FD4F00"
+    --color-brand: #F8B718;
 }
 
 @plugin "@tailwindcss/forms";
