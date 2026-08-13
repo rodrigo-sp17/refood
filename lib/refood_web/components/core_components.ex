@@ -745,7 +745,7 @@ defmodule RefoodWeb.CoreComponents do
     <div class="overflow-y-auto mt-11 px-0 bg-white rounded-xl">
       {render_slot(@top_controls)}
       <table class="w-[40rem] sm:w-full bg-white">
-        <thead class="border-y border-zinc-200 text-base text-left text-black-500 leading-6">
+        <thead class="border-y border-zinc-200 text-base text-left text-zinc-500 leading-6">
           <tr>
             <th :for={col <- @col} class="py-4 pl-4 w-6 font-semibold hover:bg-zinc-50">
               <div
