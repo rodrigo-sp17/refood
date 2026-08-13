@@ -87,69 +87,38 @@ defmodule RefoodWeb.FridgesLive do
   def render(assigns) do
     ~H"""
     <div class="flex flex-col h-full">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold">Frigoríficos</h1>
-        <div class="flex gap-2">
-          <.link patch={~p"/fridges?new-record"}>
-            <.button>Registar Temperaturas</.button>
-          </.link>
-          <.link :if={@current_user.role in [:admin, :manager]} patch={~p"/fridges?new-fridge"}>
-            <.button>Gerir Frigoríficos</.button>
-          </.link>
-        </div>
-      </div>
+      <.header>
+        Frigoríficos
+        <:actions>
+          <div class="flex gap-2">
+            <.link patch={~p"/fridges?new-record"}>
+              <.button>Registar Temperaturas</.button>
+            </.link>
+            <.link :if={@current_user.role in [:admin, :manager]} patch={~p"/fridges?new-fridge"}>
+              <.button>Gerir Frigoríficos</.button>
+            </.link>
+          </div>
+        </:actions>
+      </.header>
 
-      <div class="overflow-y-auto mt-8 bg-white rounded-xl shadow-sm">
-        <table class="w-full">
-          <thead>
-            <tr class="border-b border-zinc-200">
-              <th class="py-4 pl-6 pr-4 text-left text-sm font-semibold text-zinc-900 whitespace-nowrap">
-                Data e Hora
-              </th>
-              <th
-                :for={fridge <- @fridges}
-                class="py-4 px-4 text-left text-sm font-semibold text-zinc-900 whitespace-nowrap"
-              >
-                {fridge.name}
-              </th>
-              <th
-                :if={@current_user.role in [:admin, :manager]}
-                class="relative py-4 pl-4 pr-6 text-right"
-              >
-                <span class="sr-only">Ações</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-zinc-100">
-            <tr :if={Enum.empty?(@records)} class="text-sm text-zinc-500">
-              <td class="py-6 pl-6" colspan={length(@fridges) + 2}>
-                Nenhum registo encontrado.
-              </td>
-            </tr>
-            <tr :for={{datetime, records_by_fridge} <- @records} class="hover:bg-zinc-50 group">
-              <td class="py-4 pl-6 pr-4 text-sm text-zinc-900 whitespace-nowrap">
-                {Calendar.strftime(datetime, "%d/%m/%Y %H:%M:%S")}
-              </td>
-              <td :for={fridge <- @fridges} class="py-4 px-4 text-sm text-zinc-700 whitespace-nowrap">
-                {case Map.get(records_by_fridge, fridge.id) do
-                  nil -> "—"
-                  r -> "#{Decimal.to_string(r.temperature)}°C"
-                end}
-              </td>
-              <td
-                :if={@current_user.role in [:admin, :manager]}
-                class="py-4 pl-4 pr-6 text-right text-sm whitespace-nowrap"
-              >
-                <.link
-                  patch={~p"/fridges/?edit-record&datetime=#{NaiveDateTime.to_iso8601(datetime)}"}
-                  class="text-zinc-600 hover:text-zinc-900 underline"
-                >
-                  Editar
-                </.link>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <.table :if={@records != []} id="fridges-table" rows={@records}>
+        <:col :let={{datetime, _records_by_fridge}} label="Data e Hora">
+          {Calendar.strftime(datetime, "%d/%m/%Y %H:%M:%S")}
+        </:col>
+        <:col :let={{_datetime, records_by_fridge}} :for={fridge <- @fridges} label={fridge.name}>
+          {case Map.get(records_by_fridge, fridge.id) do
+            nil -> "—"
+            r -> "#{Decimal.to_string(r.temperature)}°C"
+          end}
+        </:col>
+        <:action :let={{datetime, _records_by_fridge}} :if={@current_user.role in [:admin, :manager]}>
+          <.link patch={~p"/fridges/?edit-record&datetime=#{NaiveDateTime.to_iso8601(datetime)}"}>
+            Editar
+          </.link>
+        </:action>
+      </.table>
+      <div :if={@records == []} class="mt-11 py-6 text-center text-sm text-zinc-500">
+        Nenhum registo encontrado.
       </div>
 
       <.live_component
