@@ -1,6 +1,7 @@
 defmodule RefoodWeb.FridgesLive do
   use RefoodWeb, :live_view
 
+  alias Refood.Format
   alias Refood.Fridges
   alias RefoodWeb.FridgesLive.NewFridge
   alias RefoodWeb.FridgesLive.NewTemperatureRecord
@@ -103,7 +104,7 @@ defmodule RefoodWeb.FridgesLive do
 
       <.table :if={@records != []} id="fridges-table" rows={@records}>
         <:col :let={{datetime, _records_by_fridge}} label="Data e Hora">
-          {Calendar.strftime(datetime, "%d/%m/%Y %H:%M:%S")}
+          {Format.datetime(datetime)}
         </:col>
         <:col :let={{_datetime, records_by_fridge}} :for={fridge <- @fridges} label={fridge.name}>
           {case Map.get(records_by_fridge, fridge.id) do

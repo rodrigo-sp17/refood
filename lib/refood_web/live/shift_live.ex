@@ -19,6 +19,7 @@ defmodule RefoodWeb.ShiftLive do
   use RefoodWeb, :live_view
 
   alias Refood.Families
+  alias Refood.Format
   alias RefoodWeb.ShiftLive.LoanedItems
 
   # Rows and columns that fit on screen are reported by the "TvGridSize" hook
@@ -398,15 +399,19 @@ defmodule RefoodWeb.ShiftLive do
       on_cancel={JS.push("cancel-modal")}
     />
 
-    <.modal :if={@view_to_show == :new_swap} id="add-swap" show on_cancel={JS.push("cancel-modal")}>
-      <div class="flex flex-col gap-10">
-        <h2 class="text-2xl text-center">Para qual dia deseja trocar?</h2>
-        <.simple_form id="add-swap-form" for={@form} phx-submit="add-swap">
+    <.modal
+      :if={@view_to_show == :new_swap}
+      id="add-swap"
+      show
+      size={:sm}
+      on_cancel={JS.push("cancel-modal")}
+    >
+      <div class="flex flex-col gap-8">
+        <h2 class="text-center text-2xl">Para qual dia deseja trocar?</h2>
+        <.form id="add-swap-form" for={@form} phx-submit="add-swap" class="flex flex-col gap-4">
           <.input type="date" field={@form[:to]} min={Date.utc_today()} />
-          <:actions>
-            <.button class="w-full">Trocar</.button>
-          </:actions>
-        </.simple_form>
+          <.button type="submit" full_width size={:lg}>Trocar</.button>
+        </.form>
       </div>
     </.modal>
 
@@ -583,8 +588,8 @@ defmodule RefoodWeb.ShiftLive do
          |> assign([selected_family: nil, view_to_show: nil] ++ reload(socket, date))
          |> put_flash(:info, "Falta registrada!")}
 
-      {:error, changeset} ->
-        {:noreply, put_flash(socket, :error, "Falha em registrar falta: #{changeset.errors}")}
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Não foi possível registar a falta.")}
     end
   end
 
@@ -720,42 +725,7 @@ defmodule RefoodWeb.ShiftLive do
 
   ## Dates
 
-  defp long_date(date) do
-    "#{weekday_name(Date.day_of_week(date))}, #{date.day} de #{month_name(date.month)} de #{date.year}"
-  end
+  defp long_date(date), do: Format.long_date(date)
 
-  defp short_date(date) do
-    "#{weekday_short(Date.day_of_week(date))}, #{date.day} #{month_short(date.month)}"
-  end
-
-  defp weekday_name(1), do: "Segunda-feira"
-  defp weekday_name(2), do: "Terça-feira"
-  defp weekday_name(3), do: "Quarta-feira"
-  defp weekday_name(4), do: "Quinta-feira"
-  defp weekday_name(5), do: "Sexta-feira"
-  defp weekday_name(6), do: "Sábado"
-  defp weekday_name(7), do: "Domingo"
-
-  defp weekday_short(1), do: "Seg"
-  defp weekday_short(2), do: "Ter"
-  defp weekday_short(3), do: "Qua"
-  defp weekday_short(4), do: "Qui"
-  defp weekday_short(5), do: "Sex"
-  defp weekday_short(6), do: "Sáb"
-  defp weekday_short(7), do: "Dom"
-
-  defp month_name(1), do: "Janeiro"
-  defp month_name(2), do: "Fevereiro"
-  defp month_name(3), do: "Março"
-  defp month_name(4), do: "Abril"
-  defp month_name(5), do: "Maio"
-  defp month_name(6), do: "Junho"
-  defp month_name(7), do: "Julho"
-  defp month_name(8), do: "Agosto"
-  defp month_name(9), do: "Setembro"
-  defp month_name(10), do: "Outubro"
-  defp month_name(11), do: "Novembro"
-  defp month_name(12), do: "Dezembro"
-
-  defp month_short(month), do: month |> month_name() |> String.slice(0, 3) |> String.upcase()
+  defp short_date(date), do: Format.short_date(date)
 end

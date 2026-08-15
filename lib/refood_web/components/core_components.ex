@@ -39,11 +39,18 @@ defmodule RefoodWeb.CoreComponents do
   attr :id, :string, required: true
   attr :show, :boolean, default: false
   attr :on_cancel, JS, default: %JS{}
-  attr :edit, :boolean, default: nil
+
+  attr :edit, :boolean,
+    default: nil,
+    doc: "nil hides the edit affordance entirely; false offers it; true means already editing"
+
   attr :target, :any, default: nil
-  attr :confirm_exit, :string, default: nil
+  attr :size, :atom, default: :lg, values: [:sm, :md, :lg]
 
   slot :header
+  slot :subtitle
+  slot :toolbar, doc: "sits under the header and above the scrolling body, e.g. tabs"
+  slot :footer, doc: "a bar pinned to the bottom of the dialog, e.g. save/cancel"
   slot :inner_block, required: true
 
   def modal(assigns) do
@@ -59,68 +66,79 @@ defmodule RefoodWeb.CoreComponents do
       <div
         class="fixed inset-0 overflow-y-auto"
         aria-labelledby={"#{@id}-title"}
-        aria-describedby={"#{@id}-description"}
         role="dialog"
         aria-modal="true"
         tabindex="0"
       >
         <div class="flex min-h-full items-center justify-center">
-          <div class="w-full max-w-3xl p-4 sm:p-6 lg:py-8">
+          <div class={["w-full p-4 sm:p-6 lg:py-8", modal_size_class(@size)]}>
             <.focus_wrap
               id={"#{@id}-container"}
               phx-window-keydown={JS.exec("data-cancel", to: "##{@id}")}
               phx-key="escape"
               phx-click-away={JS.exec("data-cancel", to: "##{@id}")}
               class={[
-                "shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-2xl bg-white shadow-lg ring-1 transition"
+                "shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-2xl bg-white shadow-lg ring-1 transition",
+                "flex max-h-[calc(100vh-4rem)] flex-col"
               ]}
             >
               <div
-                :if={@header !== []}
-                class="py-4 px-7 flex flex-row justify-between items-center border-b-1 border-gray-300"
+                :if={@header != []}
+                class="flex shrink-0 flex-row items-start justify-between gap-6 border-b border-zinc-200 px-8 py-5"
               >
-                <div class="text-xl font-medium">
-                  {render_slot(@header)}
+                <div class="min-w-0">
+                  <h2 id={"#{@id}-title"} class="truncate text-xl font-medium text-zinc-900">
+                    {render_slot(@header)}
+                  </h2>
+                  <p :if={@subtitle != []} class="mt-1 truncate text-sm text-zinc-500">
+                    {render_slot(@subtitle)}
+                  </p>
                 </div>
 
-                <div class="flex flex-row gap-6">
-                  <div
-                    :if={not is_nil(@edit) && !@edit}
-                    class="flex flex-row items-center gap-1 justify-center underline text-center"
+                <div class="flex shrink-0 flex-row items-center gap-2">
+                  <.badge :if={@edit == true} color={:brand}>A editar</.badge>
+                  <.link
+                    :if={@edit == false}
+                    phx-click="edit"
+                    phx-target={@target}
+                    class="flex flex-row items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
                   >
-                    <.icon name="hero-pencil" class="h-4 w-4" />
-                    <.link phx-click="edit" phx-target={@target}>
-                      Editar
-                    </.link>
-                  </div>
-                  <button
+                    <.icon name="hero-pencil-square" class="h-4 w-4" /> Editar
+                  </.link>
+                  <.icon_button
                     phx-click={JS.exec("data-cancel", to: "##{@id}")}
-                    type="button"
-                    class="-m-3 flex-none p-3 opacity-20 hover:opacity-40"
-                    aria-label={gettext("close")}
-                  >
-                    <.icon name="hero-x-mark-solid" class="h-5 w-5" />
-                  </button>
+                    icon="hero-x-mark"
+                    label={gettext("close")}
+                  />
                 </div>
               </div>
-              <div :if={@header == []} class="absolute top-6 right-5">
-                <button
+              <div :if={@header == []} class="absolute top-4 right-4 z-10">
+                <.icon_button
                   phx-click={JS.exec("data-cancel", to: "##{@id}")}
-                  type="button"
-                  class="-m-3 flex-none p-3 opacity-20 hover:opacity-40"
-                  aria-label={gettext("close")}
-                >
-                  <.icon name="hero-x-mark-solid" class="h-5 w-5" />
-                </button>
+                  icon="hero-x-mark"
+                  label={gettext("close")}
+                />
               </div>
+
+              <div :if={@toolbar != []} class="shrink-0 border-b border-zinc-200 px-8">
+                {render_slot(@toolbar)}
+              </div>
+
               <div
                 id={"#{@id}-content"}
                 class={[
-                  "px-14 pb-14",
-                  @header == [] && "pt-14"
+                  "min-h-0 flex-1 overflow-y-auto overscroll-contain px-8 py-6",
+                  @header == [] && "pt-12"
                 ]}
               >
                 {render_slot(@inner_block)}
+              </div>
+
+              <div
+                :if={@footer != []}
+                class="shrink-0 border-t border-zinc-200 bg-white px-8 py-4 rounded-b-2xl"
+              >
+                {render_slot(@footer)}
               </div>
             </.focus_wrap>
           </div>
@@ -129,6 +147,10 @@ defmodule RefoodWeb.CoreComponents do
     </div>
     """
   end
+
+  defp modal_size_class(:sm), do: "max-w-md"
+  defp modal_size_class(:md), do: "max-w-xl"
+  defp modal_size_class(:lg), do: "max-w-3xl"
 
   @doc """
   Renders a confirmation (confirm/deny) modal.
@@ -145,7 +167,7 @@ defmodule RefoodWeb.CoreComponents do
 
   def confirmation_modal(assigns) do
     ~H"""
-    <.modal id={@id} show={@show} on_cancel={@on_cancel}>
+    <.modal id={@id} show={@show} on_cancel={@on_cancel} size={:md}>
       <div class="flex flex-col gap-10">
         <h2 class="text-2xl text-center">
           {@question}
@@ -187,6 +209,11 @@ defmodule RefoodWeb.CoreComponents do
   attr :flash, :map, default: %{}, doc: "the map of flash messages to display"
   attr :title, :string, default: nil
   attr :kind, :atom, values: [:info, :error], doc: "used for styling and flash lookup"
+
+  attr :autoclose, :boolean,
+    default: false,
+    doc: "dismisses itself after a few seconds; only for messages that need no action"
+
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the flash container"
 
   slot :inner_block, doc: "the optional inner block that renders the flash message"
@@ -197,6 +224,8 @@ defmodule RefoodWeb.CoreComponents do
       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
       id={@id}
       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
+      phx-hook={@autoclose && "AutoDismiss"}
+      data-flash-key={@kind}
       role="alert"
       class={[
         "fixed top-2 right-2 w-80 sm:w-96 z-50 rounded-lg p-3 ring-1",
@@ -229,75 +258,30 @@ defmodule RefoodWeb.CoreComponents do
 
   def flash_group(assigns) do
     ~H"""
-    <.flash id="sucess-flash" kind={:info} title="Sucesso!" flash={@flash} />
+    <.flash id="success-flash" kind={:info} title="Sucesso!" flash={@flash} autoclose />
     <.flash id="error-flash" kind={:error} title="Erro!" flash={@flash} />
     <.flash
       id="client-error"
       kind={:error}
-      title="We can't find the internet"
+      title="Sem ligação à internet"
       phx-disconnected={show(".phx-client-error #client-error")}
       phx-connected={hide("#client-error")}
       hidden
     >
-      Attempting to reconnect <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 animate-spin" />
+      A tentar ligar de novo <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 animate-spin" />
     </.flash>
 
     <.flash
       id="server-error"
       kind={:error}
-      title="Something went wrong!"
+      title="Algo correu mal"
       phx-disconnected={show(".phx-server-error #server-error")}
       phx-connected={hide("#server-error")}
       hidden
     >
-      Hang in there while we get back on track
+      Aguarde enquanto repomos o serviço
       <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 animate-spin" />
     </.flash>
-    """
-  end
-
-  @doc """
-  Renders a simple form.
-
-  ## Examples
-
-      <.simple_form for={@form} phx-change="validate" phx-submit="save">
-        <.input field={@form[:email]} label="Email"/>
-        <.input field={@form[:username]} label="Username" />
-        <:actions>
-          <.button>Save</.button>
-        </:actions>
-      </.simple_form>
-  """
-  attr :for, :any, required: true, doc: "the datastructure for the form"
-  attr :as, :any, default: nil, doc: "the server side parameter to collect all input under"
-
-  attr :rest, :global,
-    include: ~w(autocomplete name rel action enctype method novalidate target multipart),
-    doc: "the arbitrary HTML attributes to apply to the form tag"
-
-  slot :inner_block, required: true
-  slot :actions, doc: "the slot for form actions, such as a submit button"
-
-  def simple_form(assigns) do
-    ~H"""
-    <.form :let={f} for={@for} as={@as} {@rest}>
-      <div class="mt-8 flex flex-col gap-8 bg-white">
-        {render_slot(@inner_block, f)}
-        <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
-          {render_slot(action, f)}
-        </div>
-      </div>
-    </.form>
-    """
-  end
-
-  attr :class, :any, default: nil
-  slot :inner_block, required: true
-
-  def form_section(assigns) do
-    ~H"""
-    <div class={["text-lg font-semibold", @class]}>{render_slot(@inner_block)}</div>
     """
   end
 
@@ -310,8 +294,10 @@ defmodule RefoodWeb.CoreComponents do
       <.button phx-click="go" class="ml-2">Send!</.button>
   """
   attr :type, :string, default: nil
-  attr :variant, :atom, default: :primary, values: [:primary, :danger, :ghost]
+  attr :variant, :atom, default: :primary, values: [:primary, :secondary, :danger, :ghost]
+  attr :size, :atom, default: :md, values: [:sm, :md, :lg]
   attr :pill, :boolean, default: false, doc: "renders with a fully rounded (pill) shape"
+  attr :full_width, :boolean, default: false
   attr :class, :string, default: nil
   attr :rest, :global, include: ~w(disabled form name value)
 
@@ -322,9 +308,12 @@ defmodule RefoodWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 py-2 px-3 text-sm font-semibold leading-6",
+        "phx-submit-loading:opacity-75 font-semibold leading-6",
+        "disabled:cursor-not-allowed disabled:opacity-50",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2",
         if(@pill, do: "rounded-3xl", else: "rounded-lg"),
+        if(@full_width, do: "block w-full", else: "inline-block"),
+        button_size_class(@size),
         button_variant_class(@variant),
         @class
       ]}
@@ -335,8 +324,15 @@ defmodule RefoodWeb.CoreComponents do
     """
   end
 
+  defp button_size_class(:sm), do: "py-1 px-2.5 text-sm"
+  defp button_size_class(:md), do: "py-2 px-3 text-sm"
+  defp button_size_class(:lg), do: "py-2.5 px-5 text-base"
+
   defp button_variant_class(:primary),
     do: "bg-zinc-900 hover:bg-zinc-700 text-white active:text-white/80"
+
+  defp button_variant_class(:secondary),
+    do: "bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-300"
 
   defp button_variant_class(:danger),
     do: "bg-rose-600 hover:bg-rose-700 text-white active:text-white/80"
@@ -398,7 +394,10 @@ defmodule RefoodWeb.CoreComponents do
       <.badge color={:success}>Troca</.badge>
       <.badge color={:danger}>Faltou</.badge>
   """
-  attr :color, :atom, default: :neutral, values: [:success, :warning, :danger, :info, :neutral]
+  attr :color, :atom,
+    default: :neutral,
+    values: [:success, :warning, :danger, :info, :neutral, :brand]
+
   attr :class, :string, default: nil
 
   slot :inner_block, required: true
@@ -421,7 +420,38 @@ defmodule RefoodWeb.CoreComponents do
   defp badge_color_class(:info), do: "border-blue-600 text-blue-600"
   defp badge_color_class(:neutral), do: "border-zinc-400 text-zinc-600"
 
-  # TODO -> extract icon button
+  # Filled rather than outlined: this one marks a live state, not a category.
+  defp badge_color_class(:brand), do: "border-brand bg-brand text-zinc-900"
+
+  @doc """
+  An icon-only button. The label is required — it is the only name the control has.
+
+  ## Examples
+
+      <.icon_button icon="hero-x-mark" label="Fechar" phx-click={hide_modal("x")} />
+  """
+  attr :icon, :string, required: true
+  attr :label, :string, required: true
+  attr :class, :string, default: nil
+  attr :rest, :global, include: ~w(disabled form name value type)
+
+  def icon_button(assigns) do
+    ~H"""
+    <button
+      type="button"
+      aria-label={@label}
+      title={@label}
+      class={[
+        "rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900",
+        @class
+      ]}
+      {@rest}
+    >
+      <.icon name={@icon} class="h-5 w-5" />
+    </button>
+    """
+  end
 
   @doc """
   Returns a button triggered dropdown with aria keyboard and focus supporrt.
@@ -504,228 +534,6 @@ defmodule RefoodWeb.CoreComponents do
     do: "fixed bottom-4 left-15 origin-bottom-left z-50"
 
   defp dropdown_position_class(:below), do: ""
-
-  @doc """
-  Renders an input with label and error messages.
-
-  A `Phoenix.HTML.FormField` may be passed as argument,
-  which is used to retrieve the input name, id, and values.
-  Otherwise all attributes may be passed explicitly.
-
-  ## Types
-
-  This function accepts all HTML input types, considering that:
-
-    * You may also set `type="select"` to render a `<select>` tag
-
-    * `type="checkbox"` is used exclusively to render boolean values
-
-    * For live file uploads, see `Phoenix.Component.live_file_input/1`
-
-  See https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input
-  for more information.
-
-  ## Examples
-
-      <.input field={@form[:email]} type="email" />
-      <.input name="my-input" errors={["oh no!"]} />
-  """
-  attr :id, :any, default: nil
-  attr :name, :any
-  attr :label, :string, default: nil
-  attr :value, :any
-
-  attr :type, :string,
-    default: "text",
-    values: ~w(checkbox color date datetime-local email file hidden month number password
-               range radio search select tel text textarea time url week checkgroup)
-
-  attr :field, Phoenix.HTML.FormField,
-    doc: "a form field struct retrieved from the form, for example: @form[:email]"
-
-  attr :errors, :list, default: []
-  attr :checked, :boolean, doc: "the checked flag for checkbox inputs"
-  attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
-  attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
-  attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
-  attr :edit, :boolean, default: true
-
-  attr :rest, :global,
-    include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
-                multiple pattern placeholder readonly required rows size step)
-
-  slot :inner_block
-
-  def input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
-    errors = if Phoenix.Component.used_input?(field), do: field.errors, else: []
-
-    assigns
-    |> assign(field: nil, id: assigns.id || field.id)
-    |> assign(:errors, Enum.map(errors, &translate_error(&1)))
-    |> assign_new(:name, fn -> if assigns.multiple, do: field.name <> "[]", else: field.name end)
-    |> assign_new(:value, fn -> field.value end)
-    |> input()
-  end
-
-  def input(%{type: "checkbox", value: value} = assigns) do
-    assigns =
-      assign_new(assigns, :checked, fn -> Phoenix.HTML.Form.normalize_value("checkbox", value) end)
-
-    ~H"""
-    <div phx-feedback-for={@name}>
-      <label class="flex items-center gap-4 text-sm leading-6 text-zinc-600">
-        <input type="hidden" name={@name} value="false" />
-        <input
-          disabled={!@edit}
-          type="checkbox"
-          id={@id}
-          name={@name}
-          value="true"
-          checked={@checked}
-          class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
-          {@rest}
-        />
-        {@label}
-      </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
-    </div>
-    """
-  end
-
-  def input(%{type: "checkgroup"} = assigns) do
-    ~H"""
-    <div phx-feedback-for={@name} class="text-sm">
-      <.label for={@id}>{@label}</.label>
-      <div class={[
-        "block w-full rounded-lg border border-zinc-200 text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
-        @errors == [] && "border-zinc-300 focus:border-zinc-400",
-        @errors != [] && "border-rose-400 focus:border-rose-400",
-        !@edit && "border-none px-0",
-        @edit && "mt-2"
-      ]}>
-        <div class="p-2 grid grid-cols-1 gap-2 text-sm items-baseline">
-          <input type="hidden" name={@name} value="" />
-          <div :for={{label, value} <- @options}>
-            <label class="flex items-center gap-2 text-sm text-zinc-600" for={"#{@name}-#{value}"}>
-              <input
-                disabled={!@edit}
-                type="checkbox"
-                id={"#{@name}-#{value}"}
-                name={@name}
-                value={value}
-                checked={value in @value || Atom.to_string(value) in @value}
-                class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
-                {@rest}
-              />
-              {label}
-            </label>
-          </div>
-        </div>
-      </div>
-      <.error :for={msg <- @errors}>{msg}</.error>
-    </div>
-    """
-  end
-
-  def input(%{type: "select"} = assigns) do
-    ~H"""
-    <div phx-feedback-for={@name}>
-      <.label for={@id}>{@label}</.label>
-      <select
-        disabled={!@edit}
-        id={@id}
-        name={@name}
-        class={[
-          "mt-2 block w-full rounded-lg border border-zinc-300 bg-white shadow-xs focus:border-zinc-400 focus:ring-0 sm:text-sm",
-          !@edit && "border-none px-0"
-        ]}
-        multiple={@multiple}
-        {@rest}
-      >
-        <option :if={@prompt} value="">{@prompt}</option>
-        {Phoenix.HTML.Form.options_for_select(@options, @value)}
-      </select>
-      <.error :for={msg <- @errors}>{msg}</.error>
-    </div>
-    """
-  end
-
-  def input(%{type: "textarea"} = assigns) do
-    ~H"""
-    <div phx-feedback-for={@name}>
-      <.label for={@id}>{@label}</.label>
-      <textarea
-        disabled={!@edit}
-        id={@id}
-        name={@name}
-        class={[
-          "block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
-          "min-h-[6rem] phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
-          @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400",
-          !@edit && "border-none px-0",
-          @edit && "mt-2"
-        ]}
-        {@rest}
-      ><%= Phoenix.HTML.Form.normalize_value("textarea", @value) %></textarea>
-      <.error :for={msg <- @errors}>{msg}</.error>
-    </div>
-    """
-  end
-
-  # All other inputs text, datetime-local, url, password, etc. are handled here...
-  def input(assigns) do
-    ~H"""
-    <div phx-feedback-for={@name}>
-      <.label for={@id}>{@label}</.label>
-      <input
-        disabled={!@edit}
-        type={@type}
-        name={@name}
-        id={@id}
-        value={Phoenix.HTML.Form.normalize_value(@type, @value)}
-        class={[
-          "block w-full rounded-lg border border-zinc-200 text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
-          "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
-          @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400",
-          !@edit && "border-none px-0",
-          @edit && "mt-2"
-        ]}
-        {@rest}
-      />
-      <.error :for={msg <- @errors}>{msg}</.error>
-    </div>
-    """
-  end
-
-  @doc """
-  Renders a label.
-  """
-  attr :for, :string, default: nil
-  slot :inner_block, required: true
-
-  def label(assigns) do
-    ~H"""
-    <label for={@for} class="block text-sm font-semibold leading-6 text-zinc-800">
-      {render_slot(@inner_block)}
-    </label>
-    """
-  end
-
-  @doc """
-  Generates a generic error message.
-  """
-  slot :inner_block, required: true
-
-  def error(assigns) do
-    ~H"""
-    <p class="mt-3 flex gap-3 text-sm leading-6 text-rose-600 phx-no-feedback:hidden">
-      <.icon name="hero-exclamation-circle-mini" class="mt-0.5 h-5 w-5 flex-none" />
-      {render_slot(@inner_block)}
-    </p>
-    """
-  end
 
   @doc """
   Renders a header with title.
@@ -1010,7 +818,16 @@ defmodule RefoodWeb.CoreComponents do
       to: "##{id}-bg",
       transition: {"transition-all transform ease-out duration-300", "opacity-0", "opacity-100"}
     )
-    |> show("##{id}-container")
+    # Must be shown as flex, not the JS.show default of block: the dialog is a
+    # flex column so that only its body scrolls and the footer stays pinned.
+    |> JS.show(
+      to: "##{id}-container",
+      display: "flex",
+      transition:
+        {"transition-all transform ease-out duration-300",
+         "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95",
+         "opacity-100 translate-y-0 sm:scale-100"}
+    )
     |> JS.add_class("overflow-hidden", to: "body")
     |> JS.focus_first(to: "##{id}-content")
   end

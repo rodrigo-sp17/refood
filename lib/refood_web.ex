@@ -94,6 +94,7 @@ defmodule RefoodWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import RefoodWeb.CoreComponents
+      import RefoodWeb.FormComponents
       use Gettext, backend: RefoodWeb.Gettext
 
       # Shortcut for generating JS commands

@@ -36,7 +36,10 @@ defmodule Refood.Factory do
 
   def family_factory(attrs) do
     %Refood.Families.Family{
-      number: sequence(:number, & &1),
+      # Offset well clear of the small numbers tests pick by hand: the sequence
+      # is global to the run, so without this, adding a test elsewhere can make
+      # an unrelated one collide on the unique family number.
+      number: sequence(:number, &(&1 + 1000)),
       name: sequence("Family-"),
       adults: Enum.random(1..6),
       children: Enum.random(0..4),

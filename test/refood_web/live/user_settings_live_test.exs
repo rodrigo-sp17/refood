@@ -133,7 +133,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
         })
 
       assert result =~ "Trocar palavra-passe"
-      assert result =~ "should be at least 12 character(s)"
+      assert result =~ "tem de ter pelo menos 12 caracteres"
       assert result =~ "does not match password"
     end
 
@@ -152,7 +152,7 @@ defmodule RefoodWeb.UserSettingsLiveTest do
         |> render_submit()
 
       assert result =~ "Trocar palavra-passe"
-      assert result =~ "should be at least 12 character(s)"
+      assert result =~ "tem de ter pelo menos 12 caracteres"
       assert result =~ "does not match password"
       assert result =~ "is not valid"
     end

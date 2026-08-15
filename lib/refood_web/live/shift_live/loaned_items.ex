@@ -5,6 +5,7 @@ defmodule RefoodWeb.ShiftLive.LoanedItems do
   use RefoodWeb, :live_component
 
   alias Refood.Families
+  alias Refood.Format
   alias RefoodWeb.FamiliesLive.AddLoanedItem
 
   @impl true
@@ -32,47 +33,38 @@ defmodule RefoodWeb.ShiftLive.LoanedItems do
         on_cancel={JS.push("hide-add-form", target: @myself)}
       />
 
-      <.modal :if={!@show_add_form} show id={@id} on_cancel={@on_cancel}>
-        <:header>
-          Empréstimos - F-{@family.number} {@family.name}
-        </:header>
-        <div class="py-4">
-          <div>
-            <div class="border rounded-lg">
-              <div
-                :if={@family.unreturned_loaned_items == []}
-                class="p-4 text-sm text-center text-zinc-500"
-              >
-                Nenhum item emprestado
-              </div>
-              <div
-                :for={item <- Enum.sort_by(@family.unreturned_loaned_items, & &1.loaned_at, :desc)}
-                class="p-3 flex justify-between items-center border-b last:border-b-0"
-              >
-                <div class="flex items-center gap-4">
-                  <div>{Calendar.strftime(item.loaned_at, "%Y-%m-%d")}</div>
-                  <div>{item.quantity}x {item.name}</div>
-                  <div :if={item.returned_at}>
-                    Devolvido: {Calendar.strftime(item.returned_at, "%Y-%m-%d")}
-                  </div>
-                </div>
-                <div class="flex flex-row items-center gap-1 justify-center underline text-center">
-                  <.icon name="hero-arrow-down-on-square" class="h-4 w-4" />
-                  <.link phx-click="mark-as-returned" phx-target={@myself} phx-value-id={item.id}>
-                    Marcar devolução
-                  </.link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <.button
-          class="w-full mt-2 text-sm font-medium"
-          phx-click="show-add-form"
-          phx-target={@myself}
+      <.modal :if={!@show_add_form} show id={@id} on_cancel={@on_cancel} size={:md}>
+        <:header>Empréstimos</:header>
+        <:subtitle>F-{@family.number} · {@family.name}</:subtitle>
+        <:footer>
+          <.button type="button" full_width phx-click="show-add-form" phx-target={@myself}>
+            Emprestar item
+          </.button>
+        </:footer>
+
+        <.record_list
+          id="shift-loaned-items"
+          title="Por devolver"
+          items={Enum.sort_by(@family.unreturned_loaned_items, & &1.loaned_at, {:desc, DateTime})}
+          empty_message="Nenhum item por devolver"
         >
-          + Emprestar item
-        </.button>
+          <:item :let={item}>
+            <div class="flex flex-wrap items-baseline gap-x-4">
+              <span class="tabular-nums text-zinc-500">{Format.date(item.loaned_at)}</span>
+              <span class="font-medium">{item.quantity}x {item.name}</span>
+            </div>
+            <.button
+              type="button"
+              variant={:secondary}
+              size={:sm}
+              phx-click="mark-as-returned"
+              phx-target={@myself}
+              phx-value-id={item.id}
+            >
+              Marcar devolução
+            </.button>
+          </:item>
+        </.record_list>
       </.modal>
     </div>
     """

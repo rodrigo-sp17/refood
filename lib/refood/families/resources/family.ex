@@ -99,6 +99,7 @@ defmodule Refood.Families.Family do
 
     family
     |> cast(sanitized_attrs, [:number, :weekdays])
+    |> normalize_weekdays()
     |> validate_required([:number, :weekdays])
     |> validate_length(:weekdays, min: 1, message: "dias da semana requeridos")
     |> unique_constraint([:number], message: "número já assimilado")
@@ -141,9 +142,35 @@ defmodule Refood.Families.Family do
       :help_requested_at,
       :last_contacted_at
     ])
+    |> normalize_weekdays()
     |> validate_required([:name, :status, :adults, :children, :speaks_portuguese])
     |> unique_constraint([:number], message: "número já assimilado")
     |> cast_assoc(:address, with: &Address.changeset/2)
+  end
+
+  # Distribution days are a set - the order they arrive in carries no meaning.
+  # Without this, a form that submits them in a different order than they were
+  # stored registers as an unsaved change and rewrites the column on save.
+  defp normalize_weekdays(changeset) do
+    case fetch_change(changeset, :weekdays) do
+      {:ok, weekdays} ->
+        current = changeset.data.weekdays
+
+        # nil is not the same as [] here: clearing an unset column is a real
+        # change, and dropping it loses the "dias da semana requeridos" error.
+        if is_list(current) and Enum.sort(weekdays) == Enum.sort(current) do
+          delete_change(changeset, :weekdays)
+        else
+          put_change(changeset, :weekdays, sort_weekdays(weekdays))
+        end
+
+      :error ->
+        changeset
+    end
+  end
+
+  defp sort_weekdays(weekdays) do
+    Enum.sort_by(weekdays, fn day -> Enum.find_index(@weekdays, &(&1 == day)) end)
   end
 
   def weekday_from_date(%Date{} = date) do

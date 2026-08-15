@@ -5,20 +5,21 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
   use RefoodWeb, :live_component
 
   alias Refood.Families
+  alias Refood.Format
   alias RefoodWeb.FamiliesLive.AddLoanedItem
   alias RefoodWeb.FamiliesLive.SwapForm
 
   @impl true
   def update(%{family: family} = assigns, socket) do
-    updated_assigns =
-      Map.merge(assigns, %{
-        view_to_show: nil,
-        form:
-          to_form(Families.change_update_family_details(family, %{weekdays: family.weekdays})),
-        edit: false
-      })
+    socket =
+      socket
+      |> assign(assigns)
+      |> assign(:view_to_show, nil)
+      |> assign(:mode, :read)
+      |> assign(:form, to_form(Families.change_update_family_details(family, %{})))
+      |> assign_new(:tab, fn -> :ficha end)
 
-    {:ok, assign(socket, updated_assigns)}
+    {:ok, socket}
   end
 
   @impl true
@@ -28,10 +29,10 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
       <.confirmation_modal
         show={false}
         id="confirm-exit"
-        question="Tem certeza de que deseja sair? Todas as alterações não salvas serão perdidas."
-        confirm_text="Sair"
+        question="Tem alterações por guardar. Sair sem as guardar?"
+        confirm_text="Sair sem guardar"
         on_confirm={@on_cancel}
-        deny_text="Voltar"
+        deny_text="Continuar a editar"
         on_deny={show_modal(@id)}
         on_cancel={show_modal(@id)}
       />
@@ -40,7 +41,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
         :if={@view_to_show == :confirm_delete_absence}
         id="confirm-delete-absence"
         type={:delete}
-        question={"Tem certeza de que deseja remover a falta de #{@absence.date}?"}
+        question={"Tem certeza de que deseja remover a falta de #{Format.date(@absence.date)}?"}
         confirm_text="Remover"
         on_confirm={JS.push("delete-absence", value: %{id: @absence.id}, target: @myself)}
         deny_text="Cancelar"
@@ -52,7 +53,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
         :if={@view_to_show == :confirm_delete_swap}
         id="confirm-delete-swap"
         type={:delete}
-        question={"Tem certeza de que deseja remover a troca de #{@swap.from} para #{@swap.to}?"}
+        question={"Tem certeza de que deseja remover a troca de #{Format.date(@swap.from)} para #{Format.date(@swap.to)}?"}
         confirm_text="Remover"
         on_confirm={JS.push("delete-swap", value: %{id: @swap.id}, target: @myself)}
         deny_text="Cancelar"
@@ -94,271 +95,303 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
         :if={@view_to_show == nil}
         show
         id={@id}
-        edit={authorize_edit(assigns, @edit)}
+        edit={edit_affordance(assigns)}
         target={@myself}
-        on_cancel={if @edit, do: show_modal("confirm-exit"), else: @on_cancel}
+        on_cancel={if dirty?(@form), do: show_modal("confirm-exit"), else: @on_cancel}
       >
         <:header>
-          Família {if @family.status == :active, do: "F-#{@family.number} - ", else: "de"} {@family.name}
+          {family_title(@family)}
         </:header>
-        <.simple_form
+        <:subtitle>{family_summary(@family)}</:subtitle>
+
+        <:toolbar>
+          <nav class="-mb-px flex gap-6" aria-label="Secções da ficha">
+            <button
+              type="button"
+              phx-click="show-tab"
+              phx-value-tab="ficha"
+              phx-target={@myself}
+              aria-current={@tab == :ficha && "page"}
+              class={tab_class(@tab == :ficha)}
+            >
+              Ficha
+            </button>
+            <button
+              type="button"
+              phx-click="show-tab"
+              phx-value-tab="historico"
+              phx-target={@myself}
+              disabled={@mode == :edit}
+              title={@mode == :edit && "Guarde ou cancele as alterações para ver o histórico"}
+              aria-current={@tab == :historico && "page"}
+              class={[
+                tab_class(@tab == :historico),
+                "disabled:cursor-not-allowed disabled:opacity-40"
+              ]}
+            >
+              Histórico
+              <span class="ml-1 rounded-3xl bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600">
+                {history_count(@family)}
+              </span>
+            </button>
+          </nav>
+        </:toolbar>
+
+        <:footer :if={@mode == :edit}>
+          <.form_actions form={@form} submit_form="family-details-form" target={@myself} />
+        </:footer>
+
+        <.record_form
+          :let={rf}
+          :if={@tab == :ficha}
           id="family-details-form"
           for={@form}
+          mode={@mode}
           phx-change="validate"
           phx-target={@myself}
           phx-submit="update-family"
         >
-          <.form_section>Informações gerais</.form_section>
-          <div class="flex gap-4 justify-stretch">
-            <div class="flex-3/5">
-              <.input edit={@edit} field={@form[:name]} type="text" label="Nome" />
-            </div>
-            <div class="flex-1/5">
-              <.input
-                edit={@edit}
-                field={@form[:adults]}
-                type="number"
-                min="0"
-                step="1"
-                pattern="[0-9]*"
-                label="Adultos"
-              />
-            </div>
-            <div class="flex-1/5">
-              <.input
-                edit={@edit}
-                field={@form[:children]}
-                type="number"
-                min="0"
-                step="1"
-                pattern="[0-9]*"
-                label="Crianças"
-              />
-            </div>
-          </div>
-          <div class="flex gap-4 justify-stretch">
-            <div class="flex-3/5">
-              <.input edit={@edit} field={@form[:email]} type="email" label="Email" />
-            </div>
-            <div class="flex-2/5">
-              <.input edit={@edit} field={@form[:phone_number]} type="tel" label="Telefone" />
-            </div>
-          </div>
-          <.input
-            edit={@edit}
-            field={@form[:speaks_portuguese]}
-            type="checkbox"
-            label="Fala Português?"
-          />
-          <div class="flex gap-4 justify-stretch">
-            <div class="flex-1/2">
-              <.input
-                edit={@edit}
-                field={@form[:help_requested_at]}
-                type="datetime-local"
-                label="Ajuda pedida em"
-              />
-            </div>
-            <div class="flex-1/2">
-              <.input
-                edit={@edit}
-                field={@form[:last_contacted_at]}
-                type="datetime-local"
-                label="Último contacto em"
-              />
-            </div>
-          </div>
-          <div class="flex gap-4 justify-stretch">
-            <div class="flex-1/3">
-              <.input edit={@edit} field={@form[:cc]} type="text" label="CC" />
-            </div>
-            <div class="flex-1/3">
-              <.input edit={@edit} field={@form[:nif]} type="text" label="NIF" />
-            </div>
-            <div class="flex-1/3">
-              <.input edit={@edit} field={@form[:niss]} type="text" label="NISS" />
-            </div>
-          </div>
-          <.form_section class="pt-10">Morada</.form_section>
-          <.inputs_for :let={fa} field={@form[:address]}>
-            <.input edit={@edit} field={fa[:line_1]} type="text" label="Endereço" />
-            <.input edit={@edit} field={fa[:line_2]} type="text" label="Complemento" />
-            <div class="flex gap-4 justify-stretch">
-              <div class="w-full">
-                <.input edit={@edit} field={fa[:region]} type="text" label="Região" />
-              </div>
-              <div class="w-full">
-                <.input edit={@edit} field={fa[:city]} type="text" label="Cidade" />
-              </div>
-            </div>
-          </.inputs_for>
-          <.form_section class="pt-10">Distribuição</.form_section>
-          <.input
-            :if={@family.status == :active}
-            edit={@edit}
-            field={@form[:weekdays]}
-            type="checkgroup"
-            multiple={true}
-            label="Dia(s) da semana"
-            options={[
-              {"Dom", :sunday},
-              {"Seg", :monday},
-              {"Ter", :tuesday},
-              {"Qua", :wednesday},
-              {"Qui", :thursday},
-              {"Sex", :friday},
-              {"Sab", :saturday}
-            ]}
-          />
-          <.input edit={@edit} field={@form[:restrictions]} type="textarea" label="Restrições" />
-          <.input edit={@edit} field={@form[:notes]} type="textarea" label="Notas" />
-          <div>
-            <div class="flex items-center justify-between">
-              <.label for="loaned-items-list">Empréstimos</.label>
-              <.link
+          <.section title="Identificação">
+            <.field rf={rf} name={:name} label="Nome" />
+            <.field rf={rf} name={:adults} label="Adultos" type="number" width={:xs} min="1" step="1" />
+            <.field
+              rf={rf}
+              name={:children}
+              label="Crianças"
+              type="number"
+              width={:xs}
+              min="0"
+              step="1"
+            />
+            <.field rf={rf} name={:email} label="Email" type="email" width={:md} />
+            <.field rf={rf} name={:phone_number} label="Telefone" type="tel" width={:sm} />
+            <.field rf={rf} name={:speaks_portuguese} label="Fala português" type="checkbox" />
+            <.field rf={rf} name={:cc} label="CC" width={:sm} />
+            <.field rf={rf} name={:nif} label="NIF" width={:sm} />
+            <.field rf={rf} name={:niss} label="NISS" width={:sm} />
+          </.section>
+
+          <.section title="Morada">
+            <.inputs_for :let={fa} field={rf.form[:address]}>
+              <.field rf={rf} form={fa} name={:line_1} label="Endereço" />
+              <.field rf={rf} form={fa} name={:line_2} label="Complemento" />
+              <.field rf={rf} form={fa} name={:region} label="Região" width={:md} />
+              <.field rf={rf} form={fa} name={:city} label="Cidade" width={:md} />
+            </.inputs_for>
+          </.section>
+
+          <.section title="Distribuição">
+            <.field
+              :if={@family.status == :active}
+              rf={rf}
+              name={:weekdays}
+              label="Dias"
+              type="weekdays"
+              multiple
+            />
+            <.field
+              rf={rf}
+              name={:restrictions}
+              label="Restrições"
+              type="textarea"
+              hint="Alimentos que esta família não pode receber."
+            />
+            <.field rf={rf} name={:notes} label="Notas" type="textarea" />
+          </.section>
+
+          <.section title="Acompanhamento">
+            <.field
+              rf={rf}
+              name={:help_requested_at}
+              label="Ajuda pedida em"
+              type="datetime-local"
+              width={:sm}
+            />
+            <.field
+              rf={rf}
+              name={:last_contacted_at}
+              label="Último contacto"
+              type="datetime-local"
+              width={:sm}
+            />
+          </.section>
+        </.record_form>
+
+        <div :if={@tab == :historico} class="flex flex-col gap-8">
+          <.record_list
+            id="loaned-items-list"
+            title="Empréstimos"
+            items={Enum.sort_by(@family.loaned_items, & &1.loaned_at, {:desc, DateTime})}
+            empty_message="Nenhum item emprestado"
+          >
+            <:action>
+              <.button
                 :if={@current_user.role in [:admin, :manager]}
+                type="button"
+                variant={:secondary}
+                size={:sm}
                 phx-click="show-add-loaned-item"
                 phx-target={@myself}
-                class="text-sm text-black font-medium"
               >
-                + Adicionar item
-              </.link>
-            </div>
-            <div id="loaned-items-list" class="mt-2 border rounded-lg">
-              <div :if={@family.loaned_items == []} class="p-2 text-sm text-center">
-                Nenhum item emprestado
+                Emprestar item
+              </.button>
+            </:action>
+            <:item :let={item}>
+              <div class={[
+                "flex flex-wrap items-baseline gap-x-4",
+                item.returned_at && "text-zinc-500"
+              ]}>
+                <span class="tabular-nums text-zinc-500">{Format.date(item.loaned_at)}</span>
+                <span class="font-medium">{item.quantity}x {item.name}</span>
+                <span :if={item.returned_at} class="text-zinc-500">
+                  Devolvido em {Format.date(item.returned_at)}
+                </span>
               </div>
-              <div
-                :for={item <- Enum.sort_by(@family.loaned_items, & &1.loaned_at, {:desc, DateTime})}
-                class={"p-2 flex justify-between rounded-lg items-center relative text-sm border-b last:border-b-0 #{if item.returned_at, do: "bg-zinc-50 text-zinc-500", else: ""}"}
-              >
-                <div class="flex gap-4">
-                  <div>{Calendar.strftime(item.loaned_at, "%Y-%m-%d")}</div>
-                  <div>{item.quantity}x {item.name}</div>
-                  <div :if={item.returned_at}>
-                    Devolvido: {Calendar.strftime(item.returned_at, "%Y-%m-%d")}
-                  </div>
-                </div>
-                <.dropdown
-                  :if={@current_user.role in [:admin, :manager]}
-                  id={"loaned-item-dropdown-#{item.id}"}
-                >
-                  <:link
-                    :if={!item.returned_at}
-                    on_click={
-                      JS.push("mark-loaned-item-returned", value: %{id: item.id}, target: @myself)
-                    }
-                  >
-                    Marcar como devolvido
-                  </:link>
-                  <:link on_click={
-                    JS.push("confirm-delete-loaned-item", value: %{id: item.id}, target: @myself)
-                  }>
-                    <p class="text-rose-600">Remover item</p>
-                  </:link>
-                </.dropdown>
-              </div>
-            </div>
-          </div>
-          <div>
-            <.label for="absence-list">Faltas</.label>
-            <div id="absence-list" class="mt-2 border rounded-lg">
-              <div :if={@family.absences == []} class="p-2 text-sm text-center">
-                Nenhuma falta registada
-              </div>
-              <div
-                :for={absence <- Enum.sort_by(@family.absences, & &1.date)}
-                class="p-2 flex justify-between rounded-lg items-center relative text-sm border-b last:border-b-0"
-              >
-                <div class="flex gap-5">
-                  <div>{absence.date}</div>
-                  <div title={absence.date}>
-                    {if absence.warned, do: "Avisou", else: "Não avisou"}
-                  </div>
-                </div>
-                <.dropdown id={"absence-dropdown-#{absence.id}"}>
-                  <:link
-                    :if={!absence.warned}
-                    on_click={
-                      JS.push("edit-absence", value: %{id: absence.id, warned: true}, target: @myself)
-                    }
-                  >
-                    Marcar como justificada
-                  </:link>
-                  <:link
-                    :if={absence.warned}
-                    on_click={
-                      JS.push("edit-absence",
-                        value: %{id: absence.id, warned: false},
-                        target: @myself
-                      )
-                    }
-                  >
-                    Marcar como não-justificada
-                  </:link>
-                  <:link on_click={
-                    JS.push("confirm-delete-absence", value: %{id: absence.id}, target: @myself)
-                  }>
-                    <p class="text-rose-600">Remover falta</p>
-                  </:link>
-                </.dropdown>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div class="flex items-center justify-between">
-              <.label for="swaps-list">Trocas</.label>
-              <.link
+              <.dropdown
                 :if={@current_user.role in [:admin, :manager]}
+                id={"loaned-item-dropdown-#{item.id}"}
+              >
+                <:link
+                  :if={!item.returned_at}
+                  on_click={
+                    JS.push("mark-loaned-item-returned", value: %{id: item.id}, target: @myself)
+                  }
+                >
+                  Marcar como devolvido
+                </:link>
+                <:link on_click={
+                  JS.push("confirm-delete-loaned-item", value: %{id: item.id}, target: @myself)
+                }>
+                  <span class="text-rose-600">Remover item</span>
+                </:link>
+              </.dropdown>
+            </:item>
+          </.record_list>
+
+          <.record_list
+            id="absence-list"
+            title="Faltas"
+            items={Enum.sort_by(@family.absences, & &1.date, {:desc, Date})}
+            empty_message="Nenhuma falta registada"
+          >
+            <:item :let={absence}>
+              <div class="flex flex-wrap items-baseline gap-x-4">
+                <span class="tabular-nums text-zinc-500">{Format.date(absence.date)}</span>
+                <.badge color={if absence.warned, do: :neutral, else: :warning}>
+                  {if absence.warned, do: "Avisou", else: "Não avisou"}
+                </.badge>
+              </div>
+              <.dropdown id={"absence-dropdown-#{absence.id}"}>
+                <:link
+                  :if={!absence.warned}
+                  on_click={
+                    JS.push("edit-absence", value: %{id: absence.id, warned: true}, target: @myself)
+                  }
+                >
+                  Marcar como justificada
+                </:link>
+                <:link
+                  :if={absence.warned}
+                  on_click={
+                    JS.push("edit-absence", value: %{id: absence.id, warned: false}, target: @myself)
+                  }
+                >
+                  Marcar como não-justificada
+                </:link>
+                <:link on_click={
+                  JS.push("confirm-delete-absence", value: %{id: absence.id}, target: @myself)
+                }>
+                  <span class="text-rose-600">Remover falta</span>
+                </:link>
+              </.dropdown>
+            </:item>
+          </.record_list>
+
+          <.record_list
+            id="swaps-list"
+            title="Trocas"
+            items={Enum.sort_by(@family.swaps, & &1.to, {:desc, Date})}
+            empty_message="Nenhuma troca registada"
+          >
+            <:action>
+              <.button
+                :if={@current_user.role in [:admin, :manager]}
+                type="button"
+                variant={:secondary}
+                size={:sm}
                 phx-click="show-add-swap"
                 phx-target={@myself}
-                class="text-sm text-black font-medium"
               >
-                + Adicionar troca
-              </.link>
-            </div>
-            <div id="swaps-list" class="mt-2 border rounded-lg">
-              <div :if={@family.swaps == []} class="p-2 text-sm text-center">
-                Nenhuma troca registada
+                Adicionar troca
+              </.button>
+            </:action>
+            <:item :let={swap}>
+              <div class="flex flex-wrap items-baseline gap-x-2 tabular-nums">
+                <span class="text-zinc-500">{Format.date(swap.from)}</span>
+                <.icon name="hero-arrow-right-mini" class="h-4 w-4 text-zinc-400" />
+                <span class="font-medium">{Format.date(swap.to)}</span>
               </div>
-              <div
-                :for={swap <- Enum.sort_by(@family.swaps, & &1.to, :desc)}
-                class="p-2 flex justify-between rounded-lg items-center relative text-sm border-b last:border-b-0"
+              <.dropdown
+                :if={@current_user.role in [:admin, :manager]}
+                id={"swap-dropdown-#{swap.id}"}
               >
-                <div class="flex gap-5">
-                  <div>De {swap.from} para {swap.to}</div>
-                </div>
-                <.dropdown
-                  :if={@current_user.role in [:admin, :manager]}
-                  id={"swap-dropdown-#{swap.id}"}
-                >
-                  <:link on_click={JS.push("show-edit-swap", value: %{id: swap.id}, target: @myself)}>
-                    Editar troca
-                  </:link>
-                  <:link on_click={
-                    JS.push("confirm-delete-swap", value: %{id: swap.id}, target: @myself)
-                  }>
-                    <p class="text-rose-600">Remover troca</p>
-                  </:link>
-                </.dropdown>
-              </div>
-            </div>
-          </div>
-          <:actions>
-            <.button :if={@edit} class="w-full">Salvar</.button>
-          </:actions>
-        </.simple_form>
+                <:link on_click={JS.push("show-edit-swap", value: %{id: swap.id}, target: @myself)}>
+                  Editar troca
+                </:link>
+                <:link on_click={
+                  JS.push("confirm-delete-swap", value: %{id: swap.id}, target: @myself)
+                }>
+                  <span class="text-rose-600">Remover troca</span>
+                </:link>
+              </.dropdown>
+            </:item>
+          </.record_list>
+        </div>
       </.modal>
     </div>
     """
   end
 
-  defp authorize_edit(%{current_user: user}, edit?) do
-    if user.role in [:admin, :manager] do
-      edit?
-    else
-      nil
-    end
+  # nil hides the edit affordance for volunteers; false offers it; true means editing.
+  defp edit_affordance(%{current_user: user, mode: mode}) do
+    if user.role in [:admin, :manager], do: mode == :edit
+  end
+
+  defp family_title(%{status: :active} = family), do: "F-#{family.number} · #{family.name}"
+  defp family_title(family), do: family.name
+
+  defp family_summary(family) do
+    [
+      family_status(family.status),
+      pluralize(family.adults, "adulto", "adultos"),
+      pluralize(family.children, "criança", "crianças"),
+      Format.weekdays(family.weekdays)
+    ]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(" · ")
+  end
+
+  defp family_status(:active), do: "Ativa"
+  defp family_status(:queued), do: "Em lista de espera"
+  defp family_status(:paused), do: "Em pausa"
+  defp family_status(:finished), do: "Inativa"
+
+  defp pluralize(nil, _singular, _plural), do: nil
+  defp pluralize(1, singular, _plural), do: "1 #{singular}"
+  defp pluralize(count, _singular, plural), do: "#{count} #{plural}"
+
+  defp history_count(family) do
+    length(family.loaned_items) + length(family.absences) + length(family.swaps)
+  end
+
+  defp tab_class(active?) do
+    [
+      "border-b-2 py-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900",
+      if(active?,
+        do: "border-zinc-900 text-zinc-900",
+        else: "border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-900"
+      )
+    ]
   end
 
   @impl true
@@ -368,27 +401,31 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
   end
 
   @impl true
-  def handle_event("validate", %{"family" => attrs}, socket) do
-    assigns = [
-      edit: true,
-      form:
-        to_form(Families.change_update_family_details(socket.assigns.family, attrs),
-          action: :validate
-        )
-    ]
+  def handle_event("show-tab", %{"tab" => tab}, socket) do
+    {:noreply, assign(socket, tab: if(tab == "historico", do: :historico, else: :ficha))}
+  end
 
-    {:noreply, assign(socket, assigns)}
+  @impl true
+  def handle_event("validate", %{"family" => attrs}, socket) do
+    form =
+      socket.assigns.family
+      |> Families.change_update_family_details(attrs)
+      |> to_form(action: :validate)
+
+    {:noreply, assign(socket, form: form)}
   end
 
   @impl true
   def handle_event("edit", _, socket) do
     with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
-      assigns = [
-        edit: true
-      ]
-
-      {:noreply, assign(socket, assigns)}
+      {:noreply, assign(socket, mode: :edit, tab: :ficha)}
     end
+  end
+
+  @impl true
+  def handle_event("cancel-edit", _, socket) do
+    form = to_form(Families.change_update_family_details(socket.assigns.family, %{}))
+    {:noreply, assign(socket, mode: :read, form: form)}
   end
 
   @impl true
@@ -400,8 +437,8 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
 
           {:noreply,
            socket
-           |> put_flash(:info, "Sucesso!")
-           |> assign(edit: false)}
+           |> put_flash(:info, "Família guardada!")
+           |> assign(mode: :read)}
 
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply, assign(socket, form: to_form(changeset))}

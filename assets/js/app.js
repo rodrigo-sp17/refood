@@ -24,6 +24,19 @@ import topbar from "../vendor/topbar"
 
 let Hooks = {}
 
+// Confirmations do not need to be dismissed by hand. Errors are left alone -
+// they stay until the person has seen them.
+Hooks.AutoDismiss = {
+    mounted() {
+        this.timer = setTimeout(() => {
+            this.pushEvent("lv:clear-flash", { key: this.el.dataset.flashKey })
+        }, 6000)
+    },
+    destroyed() {
+        clearTimeout(this.timer)
+    }
+}
+
 Hooks.SearchBar = {
     mounted() {
         const searchBarContainer = (this).el

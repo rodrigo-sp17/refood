@@ -9,7 +9,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
   @impl true
   def mount(socket) do
     assigns = [
-      form: to_form(HelpQueue.change_request_help(%{help_requested_at: DateTime.utc_now()}))
+      form: to_form(HelpQueue.change_request_help(HelpQueue.new_request_attrs()))
     ]
 
     {:ok, assign(socket, assigns)}
@@ -20,87 +20,73 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
     ~H"""
     <div>
       <.modal show id={@id} on_cancel={@on_cancel}>
-        <:header>
-          Criar pedido de ajuda
-        </:header>
-
-        <.simple_form
+        <:header>Criar pedido de ajuda</:header>
+        <:subtitle>Uma família nova entra na lista de espera.</:subtitle>
+        <:footer>
+          <div class="flex justify-end gap-3">
+            <.button type="button" variant={:ghost} phx-click={@on_cancel}>Cancelar</.button>
+            <.button type="submit" form="new-help-request-form">Criar pedido</.button>
+          </div>
+        </:footer>
+        <.record_form
+          :let={rf}
           id="new-help-request-form"
           for={@form}
           phx-target={@myself}
           phx-change="validate"
           phx-submit="add-help-request"
         >
-          <div class="flex gap-4 justify-stretch">
-            <div class="flex-3/5">
-              <.input field={@form[:name]} type="text" label="Nome" />
-            </div>
-            <div class="flex-1/5">
-              <.input
-                field={@form[:adults]}
-                type="number"
-                min="0"
-                step="1"
-                pattern="[0-9]*"
-                label="Adultos"
-              />
-            </div>
-            <div class="flex-1/5">
-              <.input
-                field={@form[:children]}
-                type="number"
-                min="0"
-                step="1"
-                pattern="[0-9]*"
-                label="Crianças"
-              />
-            </div>
-          </div>
-          <div class="flex gap-4 justify-stretch">
-            <div class="flex-3/5">
-              <.input field={@form[:email]} type="email" label="Email" />
-            </div>
-            <div class="flex-2/5">
-              <.input field={@form[:phone_number]} type="tel" label="Telefone" />
-            </div>
-          </div>
-          <.input field={@form[:speaks_portuguese]} type="checkbox" label="Fala Português?" />
-          <div class="flex gap-4 justify-stretch items-center">
-            <div>
-              <.input field={@form[:help_requested_at]} type="datetime-local" label="Ajuda pedida em" />
-            </div>
-          </div>
-          <.inputs_for :let={fa} field={@form[:address]}>
-            <.input field={fa[:line_1]} type="text" label="Endereço" />
-            <.input field={fa[:line_2]} type="text" label="Complemento" />
-            <div class="flex gap-4 justify-stretch">
-              <div class="w-full">
-                <.input field={fa[:region]} type="text" label="Região" />
-              </div>
-              <div class="w-full">
-                <.input field={fa[:city]} type="text" label="Cidade" value="Porto" />
-              </div>
-              <div class="w-full">
-                <.input field={fa[:zipcode]} type="text" label="Código Postal" />
-              </div>
-            </div>
-          </.inputs_for>
-          <div class="flex gap-4 justify-stretch">
-            <div class="w-full">
-              <.input field={@form[:cc]} type="text" label="Cartão de Cidadão" />
-            </div>
-            <div class="w-full">
-              <.input field={@form[:nif]} type="text" label="Nº de Contribuinte" />
-            </div>
-            <div class="w-full">
-              <.input field={@form[:niss]} type="text" label="Segurança Social" />
-            </div>
-          </div>
-          <.input field={@form[:notes]} type="textarea" label="Notas" />
-          <:actions>
-            <.button class="w-full">Salvar</.button>
-          </:actions>
-        </.simple_form>
+          <.section title="Identificação">
+            <.field rf={rf} name={:name} label="Nome" required />
+            <.field rf={rf} name={:adults} label="Adultos" type="number" width={:xs} min="1" step="1" />
+            <.field
+              rf={rf}
+              name={:children}
+              label="Crianças"
+              type="number"
+              width={:xs}
+              min="0"
+              step="1"
+            />
+            <.field
+              rf={rf}
+              name={:email}
+              label="Email"
+              type="email"
+              width={:md}
+              hint="Email ou telefone — pelo menos um é preciso para dar retorno."
+            />
+            <.field rf={rf} name={:phone_number} label="Telefone" type="tel" width={:sm} />
+            <.field rf={rf} name={:speaks_portuguese} label="Fala português" type="checkbox" />
+          </.section>
+
+          <.section title="Morada">
+            <.inputs_for :let={fa} field={rf.form[:address]}>
+              <.field rf={rf} form={fa} name={:line_1} label="Endereço" />
+              <.field rf={rf} form={fa} name={:line_2} label="Complemento" />
+              <.field rf={rf} form={fa} name={:region} label="Região" width={:md} required />
+              <.field rf={rf} form={fa} name={:city} label="Cidade" width={:md} required />
+              <.field rf={rf} form={fa} name={:zipcode} label="Código postal" width={:sm} />
+            </.inputs_for>
+          </.section>
+
+          <.section title="Documentos">
+            <.field rf={rf} name={:cc} label="Cartão de cidadão" width={:sm} />
+            <.field rf={rf} name={:nif} label="Nº de contribuinte" width={:sm} />
+            <.field rf={rf} name={:niss} label="Segurança social" width={:sm} />
+          </.section>
+
+          <.section title="Acompanhamento">
+            <.field
+              rf={rf}
+              name={:help_requested_at}
+              label="Ajuda pedida em"
+              type="datetime-local"
+              width={:sm}
+            />
+            <.field rf={rf} name={:notes} label="Notas" type="textarea" />
+          </.section>
+        </.record_form>
       </.modal>
     </div>
     """
@@ -119,7 +105,7 @@ defmodule RefoodWeb.HelpQueueLive.NewHelpRequest do
     case HelpQueue.request_help(help_request_attrs) do
       {:ok, created_request} ->
         send(self(), {:help_request_created, created_request})
-        send(self(), {:put_flash, [:info, "Pedido de ajuda registrado!"]})
+        send(self(), {:put_flash, [:info, "Pedido de ajuda criado!"]})
         {:noreply, socket}
 
       {:error, %Ecto.Changeset{} = changeset} ->

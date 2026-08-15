@@ -6,6 +6,7 @@ defmodule RefoodWeb.HelpQueueLive do
 
   alias Refood.Families
   alias Refood.Families.HelpQueue
+  alias Refood.Format
   alias RefoodWeb.HelpQueueLive.NewHelpRequest
   alias RefoodWeb.HelpQueueLive.HelpRequestDetails
   alias RefoodWeb.FamiliesLive.MoveToActive
@@ -41,9 +42,12 @@ defmodule RefoodWeb.HelpQueueLive do
   @impl true
   def handle_params(%{"move-to-active" => _, "family_id" => family_id}, _uri, socket) do
     with {:ok, socket} <- authorize(socket, [:manager, :admin]) do
+      family = Families.get_family!(family_id)
+
       assigns = [
         view_to_show: :move_to_active,
-        selected_family: Families.get_family!(family_id)
+        selected_family: family,
+        move_to_active_form: to_form(HelpQueue.change_activate_family(family, %{}))
       ]
 
       {:noreply, assign(socket, assigns)}
@@ -88,8 +92,8 @@ defmodule RefoodWeb.HelpQueueLive do
 
     <MoveToActive.form
       :if={@view_to_show == :move_to_active}
-      id="move-to-active-form"
-      for={HelpQueue.change_activate_family(@selected_family, %{})}
+      id="move-to-active"
+      for={@move_to_active_form}
       family={@selected_family}
       on_cancel={JS.push("hide-view")}
     />
@@ -146,7 +150,7 @@ defmodule RefoodWeb.HelpQueueLive do
         on_sort={&on_sort(:help_requested_at, &1)}
         label="Pedido em"
       >
-        {family.help_requested_at && Calendar.strftime(family.help_requested_at, "%d/%m/%Y %H:%M")}
+        {Format.datetime(family.help_requested_at)}
       </:col>
       <:col :let={family} id="family-id" sort={@sort[:id]} on_sort={&on_sort(:id, &1)} label="ID">
         {String.slice(family.id, 0, 6)}
@@ -228,9 +232,19 @@ defmodule RefoodWeb.HelpQueueLive do
            socket |> put_flash(:info, "Família movida para ajuda regular!") |> assign(assigns)}
 
         {:error, %Ecto.Changeset{} = changeset} ->
-          {:noreply, assign(socket, :changeset, changeset)}
+          {:noreply, assign(socket, :move_to_active_form, to_form(changeset))}
       end
     end
+  end
+
+  @impl true
+  def handle_event("validate-move-to-active", %{"family" => attrs}, socket) do
+    form =
+      socket.assigns.selected_family
+      |> HelpQueue.change_activate_family(attrs)
+      |> to_form(action: :validate)
+
+    {:noreply, assign(socket, :move_to_active_form, form)}
   end
 
   @impl true
@@ -245,8 +259,8 @@ defmodule RefoodWeb.HelpQueueLive do
 
           {:noreply, socket |> put_flash(:info, "Família removida!") |> assign(assigns)}
 
-        {:error, %Ecto.Changeset{} = changeset} ->
-          {:noreply, assign(socket, :changeset, changeset)}
+        {:error, %Ecto.Changeset{}} ->
+          {:noreply, put_flash(socket, :error, "Não foi possível remover a família da lista.")}
       end
     end
   end

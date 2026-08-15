@@ -11,8 +11,8 @@ defmodule RefoodWeb.UserForgotPasswordLiveTest do
     test "renders email page", %{conn: conn} do
       {:ok, lv, html} = live(conn, ~p"/users/reset_password")
 
-      assert html =~ "Esqueceu sua palavra-passe?"
-      assert has_element?(lv, ~s|a[href="#{~p"/users/log_in"}"]|, "Log in")
+      assert html =~ "Esqueceu a palavra-passe?"
+      assert has_element?(lv, ~s|a[href="#{~p"/users/log_in"}"]|, "Voltar ao início de sessão")
     end
 
     test "redirects if already logged in", %{conn: conn} do

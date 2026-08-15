@@ -29,6 +29,10 @@ config :refood, RefoodWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :refood, Refood.Mailer, adapter: Swoosh.Adapters.Local
 
+# The UI is written in Portuguese. Without this, the messages Ecto generates
+# itself fall back to their English source strings.
+config :refood, RefoodWeb.Gettext, default_locale: "pt", locales: ~w(pt)
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",

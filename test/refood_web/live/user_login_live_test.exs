@@ -8,8 +8,8 @@ defmodule RefoodWeb.UserLoginLiveTest do
     test "renders log in page", %{conn: conn} do
       {:ok, _lv, html} = live(conn, ~p"/users/log_in")
 
-      assert html =~ "Log in"
-      assert html =~ "Esqueceu sua palavra-passe?"
+      assert html =~ "Entrar"
+      assert html =~ "Esqueceu a palavra-passe?"
     end
 
     test "redirects if already logged in", %{conn: conn} do
@@ -64,11 +64,11 @@ defmodule RefoodWeb.UserLoginLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|main a:fl-contains("Esqueceu sua palavra-passe?")|)
+        |> element(~s|main a:fl-contains("Esqueceu a palavra-passe?")|)
         |> render_click()
         |> follow_redirect(conn, ~p"/users/reset_password")
 
-      assert conn.resp_body =~ "Esqueceu sua palavra-passe?"
+      assert conn.resp_body =~ "Esqueceu a palavra-passe?"
     end
   end
 end

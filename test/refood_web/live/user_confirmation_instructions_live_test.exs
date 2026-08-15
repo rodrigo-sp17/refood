@@ -14,7 +14,7 @@ defmodule RefoodWeb.UserConfirmationInstructionsLiveTest do
   describe "Resend confirmation" do
     test "renders the resend confirmation page", %{conn: conn} do
       {:ok, _lv, html} = live(conn, ~p"/users/confirm")
-      assert html =~ "Resend confirmation instructions"
+      assert html =~ "Enviar novo link"
     end
 
     test "sends a new confirmation token", %{conn: conn, user: user} do
@@ -27,7 +27,7 @@ defmodule RefoodWeb.UserConfirmationInstructionsLiveTest do
         |> follow_redirect(conn, ~p"/users/log_in")
 
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
-               "If your email is in our system"
+               "Se o email estiver no sistema"
 
       assert Repo.get_by!(Accounts.UserToken, user_id: user.id).context == "confirm"
     end
@@ -44,7 +44,7 @@ defmodule RefoodWeb.UserConfirmationInstructionsLiveTest do
         |> follow_redirect(conn, ~p"/users/log_in")
 
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
-               "If your email is in our system"
+               "Se o email estiver no sistema"
 
       refute Repo.get_by(Accounts.UserToken, user_id: user.id)
     end
@@ -59,7 +59,7 @@ defmodule RefoodWeb.UserConfirmationInstructionsLiveTest do
         |> follow_redirect(conn, ~p"/users/log_in")
 
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
-               "If your email is in our system"
+               "Se o email estiver no sistema"
 
       assert Repo.all(Accounts.UserToken) == []
     end

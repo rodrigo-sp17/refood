@@ -4,6 +4,7 @@ defmodule RefoodWeb.ExportController do
   alias Refood.Families
   alias Refood.Families.Family
   alias Refood.Families.HelpQueue
+  alias Refood.Format
   alias Refood.Inventory.Storages
   alias Refood.Repo
 
@@ -35,7 +36,7 @@ defmodule RefoodWeb.ExportController do
 
         [
           family.help_requested_at &&
-            Calendar.strftime(family.help_requested_at, "%d/%m/%Y %H:%M"),
+            Format.datetime(family.help_requested_at),
           String.slice(family.id, 0, 6),
           family.name,
           family.adults,
@@ -109,7 +110,7 @@ defmodule RefoodWeb.ExportController do
           address && address.city,
           address && address.zipcode,
           family.help_requested_at &&
-            Calendar.strftime(family.help_requested_at, "%d/%m/%Y %H:%M")
+            Format.datetime(family.help_requested_at)
         ]
       end)
 
