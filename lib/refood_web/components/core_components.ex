@@ -345,6 +345,52 @@ defmodule RefoodWeb.CoreComponents do
     do: "bg-transparent border border-zinc-900 text-zinc-900 hover:bg-zinc-900 hover:text-white"
 
   @doc """
+  Renders an on/off switch.
+
+  Use for a setting that takes effect immediately - not as a form input. The
+  label is part of the control, so the whole thing is one hit target.
+
+  ## Examples
+
+      <.switch checked={@tv?} label="Modo TV" phx-click="toggle-display-mode" />
+  """
+  attr :checked, :boolean, required: true
+  attr :label, :string, required: true
+  attr :class, :string, default: nil
+  attr :rest, :global, include: ~w(disabled form name value)
+
+  def switch(assigns) do
+    ~H"""
+    <button
+      type="button"
+      role="switch"
+      aria-checked={to_string(@checked)}
+      class={[
+        "group flex items-center gap-2 rounded-3xl py-1 px-2 text-sm font-semibold leading-6",
+        "text-zinc-600 hover:text-zinc-900",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2",
+        @class
+      ]}
+      {@rest}
+    >
+      {@label}
+      <span class={[
+        "relative h-6 w-11 shrink-0 rounded-3xl border motion-safe:transition-colors",
+        if(@checked,
+          do: "bg-brand border-brand",
+          else: "bg-zinc-200 border-zinc-300 group-hover:bg-zinc-300"
+        )
+      ]}>
+        <span class={[
+          "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm motion-safe:transition-all",
+          if(@checked, do: "left-6", else: "left-0.5")
+        ]} />
+      </span>
+    </button>
+    """
+  end
+
+  @doc """
   Renders a status pill.
 
   ## Examples
@@ -385,8 +431,8 @@ defmodule RefoodWeb.CoreComponents do
     * `:id` - The id to uniquely identify this dropdown
     * `:trigger` - optional custom trigger content; defaults to a kebab-menu
       icon link. When provided, the caller's element is responsible for its
-      own `phx-click` (targeting `show_dropdown/1` on the `"-dropdown"`
-      suffixed id) and `phx-hook="Menu"`.
+      own `phx-click`, targeting `show_dropdown/1` on the `"-dropdown"`
+      suffixed id.
 
   ## Examples
 
@@ -418,7 +464,6 @@ defmodule RefoodWeb.CoreComponents do
       :if={@trigger == []}
       id={@id}
       phx-click={show_dropdown("##{@id}-dropdown")}
-      phx-hook="Menu"
       aria-haspopup="true"
     >
       <.icon name="hero-ellipsis-vertical" class="h-6 w-6" />

@@ -61,11 +61,112 @@ Hooks.SearchBar = {
     },
 }
 
+// Remembers, per device, whether this browser shows the shift board or the
+// ordinary page. Screen width deliberately plays no part: a 27" desktop is
+// wider than the old 2xl breakpoint and is not a wall display.
+const DISPLAY_MODE_KEY = "shift-display-mode"
+
+Hooks.ShiftDisplayMode = {
+    mounted() {
+        const mode = this.el.dataset.mode
+
+        if (mode === "tv") {
+            // Includes a kiosk parked directly on /shift/tv, which never touched
+            // the switch - record it so a later visit to /shift comes back here.
+            localStorage.setItem(DISPLAY_MODE_KEY, "tv")
+        } else if (localStorage.getItem(DISPLAY_MODE_KEY) === "tv") {
+            this.pushEvent("set-display-mode", { mode: "tv" })
+        }
+
+        this.el.addEventListener("click", () => {
+            const next = this.el.dataset.mode === "tv" ? "normal" : "tv"
+            // Write before navigating. If the server got there first, the /shift
+            // mount would read a stale "tv" and bounce straight back here.
+            localStorage.setItem(DISPLAY_MODE_KEY, next)
+            this.pushEvent("set-display-mode", { mode: next })
+        })
+    },
+}
+
+// Arrow-key navigation across the board, for a TV remote's D-pad. Tabbing 34
+// times to reach F-35 is not a usable way to open a family.
+Hooks.TvGridNav = {
+    mounted() {
+        this.index = 0
+        this.onKeyDown = this.onKeyDown.bind(this)
+        this.el.addEventListener("keydown", this.onKeyDown)
+        this.el.addEventListener("focusin", (event) => {
+            const i = this.cells().indexOf(event.target.closest("[data-family-id]"))
+            if (i >= 0) { this.index = i }
+            this.syncTabIndex()
+            this.pushEvent("tv-focus", { focused: true })
+        })
+        this.el.addEventListener("focusout", (event) => {
+            // Moving between cells fires focusout then focusin - only report
+            // leaving when focus actually landed outside the board.
+            if (this.el.contains(event.relatedTarget)) { return }
+            this.pushEvent("tv-focus", { focused: false })
+        })
+        this.syncTabIndex()
+    },
+
+    updated() { this.syncTabIndex() },
+
+    destroyed() { this.el.removeEventListener("keydown", this.onKeyDown) },
+
+    cells() {
+        return Array.from(this.el.querySelectorAll("[data-family-id]"))
+    },
+
+    // Derived from geometry rather than the CSS track list: cells sharing an
+    // offsetTop are one row, which holds whatever the grid decided to do.
+    columns(cells) {
+        if (cells.length === 0) { return 1 }
+        const firstRowTop = cells[0].offsetTop
+        return cells.filter((cell) => cell.offsetTop === firstRowTop).length
+    },
+
+    // Exactly one cell is tabbable, so Tab enters and leaves the board in one
+    // press instead of walking every family.
+    syncTabIndex() {
+        const cells = this.cells()
+        if (this.index >= cells.length) { this.index = Math.max(0, cells.length - 1) }
+        cells.forEach((cell, i) => cell.setAttribute("tabindex", i === this.index ? "0" : "-1"))
+    },
+
+    onKeyDown(event) {
+        const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 0, ArrowUp: 0 }[event.key]
+        if (step === undefined) { return }
+
+        const cells = this.cells()
+        if (cells.length === 0) { return }
+
+        const columns = this.columns(cells)
+        const delta = event.key === "ArrowDown" ? columns
+            : event.key === "ArrowUp" ? -columns
+                : step
+
+        const next = this.index + delta
+
+        if (next < 0) {
+            // Off the top of the board - hand focus to the header controls.
+            const header = document.getElementById("tv-header")?.querySelector("button")
+            if (header) { event.preventDefault(); header.focus() }
+            return
+        }
+        if (next >= cells.length) { return }
+
+        event.preventDefault()
+        this.index = next
+        this.syncTabIndex()
+        cells[next].focus()
+    },
+}
+
 Hooks.TvGridSize = {
-    minRowHeight: 84,
+    minRowHeight: 96,
     rowGap: 12,
     minRows: 10,
-    columns: 2,
     // Ceiling on rows / cards trimmed from the page, only in effect for the page of
     // families currently on screen - a card that doesn't fit shouldn't be silently
     // clipped off the bottom of the screen. Reset (see fingerprint()) whenever the
@@ -76,6 +177,7 @@ Hooks.TvGridSize = {
     lastFingerprint: null,
     lastPushedRows: undefined,
     lastPushedTrim: undefined,
+    lastPushedColumns: undefined,
 
     mounted() {
         this.measure = this.measure.bind(this)
@@ -109,22 +211,33 @@ Hooks.TvGridSize = {
         return first ? first.getAttribute("data-family-id") : ""
     },
 
+    // Columns come from `repeat(auto-fill, minmax(...))`, so CSS decides how many
+    // fit and the server is told after the fact. Nothing here hardcodes a count.
+    columns() {
+        const tracks = getComputedStyle(this.el).gridTemplateColumns
+        return tracks === "none" ? 1 : tracks.split(" ").length
+    },
+
     push() {
         this.lastPushedRows = this.rows
         this.lastPushedTrim = this.cardTrim
-        this.pushEvent("tv-rows-changed", { rows: this.rows, trim: this.cardTrim })
+        this.lastPushedColumns = this.cols
+        this.pushEvent("tv-rows-changed", { rows: this.rows, trim: this.cardTrim, columns: this.cols })
     },
 
     measure() {
         if (this.el.offsetHeight === 0) {
-            // Hidden (below the TV breakpoint) - nothing to measure.
+            // Not on screen - nothing to measure.
             return
         }
 
         const target = Math.floor((this.el.clientHeight + this.rowGap) / (this.minRowHeight + this.rowGap))
         this.rows = Math.max(this.minRows, Math.min(target, this.maxRows))
+        this.cols = this.columns()
 
-        if (this.rows !== this.lastPushedRows || this.cardTrim !== this.lastPushedTrim) {
+        if (this.rows !== this.lastPushedRows
+            || this.cardTrim !== this.lastPushedTrim
+            || this.cols !== this.lastPushedColumns) {
             this.push()
         }
     },
@@ -145,9 +258,10 @@ Hooks.TvGridSize = {
             return
         }
 
-        const maxTrim = this.rows * this.columns - this.columns
+        const columns = this.cols || this.columns()
+        const maxTrim = this.rows * columns - columns
         if (this.cardTrim < maxTrim) {
-            this.cardTrim += this.columns
+            this.cardTrim += columns
             this.push()
         }
     },
