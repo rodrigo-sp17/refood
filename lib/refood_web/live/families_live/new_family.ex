@@ -10,7 +10,7 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
   def update(assigns, socket) do
     updated_assigns =
       Map.merge(assigns, %{
-        form: to_form(Families.change_create_family(%{adults: 1, children: 0}))
+        form: to_form(Families.change_create_family(Families.new_family_attrs()))
       })
 
     {:ok, assign(socket, updated_assigns)}
@@ -22,85 +22,78 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
     <div>
       <.modal show id={@id} on_cancel={@on_cancel}>
         <:header>Criar nova família</:header>
-        <.simple_form
+        <:subtitle>Uma família nova entra como inativa até ser colocada em ajuda regular.</:subtitle>
+        <:footer>
+          <div class="flex justify-end gap-3">
+            <.button type="button" variant={:ghost} phx-click={@on_cancel}>Cancelar</.button>
+            <.button type="submit" form="new-family-form">Criar família</.button>
+          </div>
+        </:footer>
+        <.record_form
+          :let={rf}
           id="new-family-form"
           for={@form}
           phx-change="validate"
           phx-target={@myself}
           phx-submit="create-family"
         >
-          <.form_section>Informações gerais</.form_section>
-          <div class="flex gap-4 justify-stretch">
-            <div class="flex-3/5">
-              <.input field={@form[:name]} type="text" label="Nome" />
-            </div>
-            <div class="flex-1/5">
-              <.input
-                field={@form[:adults]}
-                type="number"
-                min="0"
-                step="1"
-                pattern="[0-9]*"
-                label="Adultos"
-              />
-            </div>
-            <div class="flex-1/5">
-              <.input
-                field={@form[:children]}
-                type="number"
-                min="0"
-                step="1"
-                pattern="[0-9]*"
-                label="Crianças"
-              />
-            </div>
-          </div>
+          <.section title="Identificação">
+            <.field rf={rf} name={:name} label="Nome" required />
+            <.field rf={rf} name={:adults} label="Adultos" type="number" width={:xs} min="1" step="1" />
+            <.field
+              rf={rf}
+              name={:children}
+              label="Crianças"
+              type="number"
+              width={:xs}
+              min="0"
+              step="1"
+            />
+            <.field rf={rf} name={:email} label="Email" type="email" width={:md} />
+            <.field rf={rf} name={:phone_number} label="Telefone" type="tel" width={:sm} />
+            <.field rf={rf} name={:speaks_portuguese} label="Fala português" type="checkbox" />
+            <.field rf={rf} name={:cc} label="CC" width={:sm} />
+            <.field rf={rf} name={:nif} label="NIF" width={:sm} />
+            <.field rf={rf} name={:niss} label="NISS" width={:sm} />
+          </.section>
 
-          <div class="flex gap-4 justify-stretch">
-            <div class="flex-3/5"><.input field={@form[:email]} type="email" label="Email" /></div>
-            <div class="flex-2/5">
-              <.input field={@form[:phone_number]} type="tel" label="Telefone" />
-            </div>
-          </div>
-          <.input field={@form[:speaks_portuguese]} type="checkbox" label="Fala Português?" />
-          <div class="flex gap-4 justify-stretch">
-            <div class="flex-1/2">
-              <.input field={@form[:help_requested_at]} type="datetime-local" label="Ajuda pedida em" />
-            </div>
-            <div class="flex-1/2">
-              <.input
-                field={@form[:last_contacted_at]}
-                type="datetime-local"
-                label="Último contacto em"
-              />
-            </div>
-          </div>
-          <div class="flex gap-4 justify-stretch">
-            <div class="flex-1/3"><.input field={@form[:cc]} type="text" label="CC" /></div>
-            <div class="flex-1/3"><.input field={@form[:nif]} type="text" label="NIF" /></div>
-            <div class="flex-1/3"><.input field={@form[:niss]} type="text" label="NISS" /></div>
-          </div>
-          <.form_section class="pt-10">Morada</.form_section>
-          <.inputs_for :let={fa} id="address-block" field={@form[:address]}>
-            <.input field={fa[:line_1]} type="text" label="Endereço" />
-            <.input field={fa[:line_2]} type="text" label="Complemento" />
-            <div class="flex gap-4 justify-stretch">
-              <div class="w-full">
-                <.input field={fa[:region]} type="text" label="Região" />
-              </div>
-              <div class="w-full">
-                <.input field={fa[:city]} type="text" label="Cidade" value="Porto" />
-              </div>
-            </div>
-          </.inputs_for>
-          <.form_section class="pt-10">Agregado</.form_section>
+          <.section title="Morada">
+            <.inputs_for :let={fa} id="address-block" field={rf.form[:address]}>
+              <.field rf={rf} form={fa} name={:line_1} label="Endereço" />
+              <.field rf={rf} form={fa} name={:line_2} label="Complemento" />
+              <.field rf={rf} form={fa} name={:region} label="Região" width={:md} required />
+              <.field rf={rf} form={fa} name={:city} label="Cidade" width={:md} required />
+            </.inputs_for>
+          </.section>
 
-          <.input field={@form[:restrictions]} type="textarea" label="Restrições" />
-          <.input field={@form[:notes]} type="textarea" label="Notas" />
-          <:actions>
-            <.button class="w-full">Salvar</.button>
-          </:actions>
-        </.simple_form>
+          <.section title="Agregado">
+            <.field
+              rf={rf}
+              name={:restrictions}
+              label="Restrições"
+              type="textarea"
+              hint="Alimentos que esta família não pode receber."
+            />
+            <.field rf={rf} name={:notes} label="Notas" type="textarea" />
+          </.section>
+
+          <.section title="Acompanhamento">
+            <.field
+              rf={rf}
+              name={:help_requested_at}
+              label="Ajuda pedida em"
+              type="datetime-local"
+              width={:sm}
+            />
+            <.field
+              rf={rf}
+              name={:last_contacted_at}
+              label="Último contacto"
+              type="datetime-local"
+              width={:sm}
+            />
+          </.section>
+        </.record_form>
       </.modal>
     </div>
     """
@@ -120,10 +113,7 @@ defmodule RefoodWeb.FamiliesLive.NewFamily do
       {:ok, created_request} ->
         socket.assigns.on_created.(created_request)
 
-        {:noreply,
-         socket
-         |> put_flash(:info, "Sucesso!")
-         |> assign(edit: false)}
+        {:noreply, put_flash(socket, :info, "Família criada!")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}

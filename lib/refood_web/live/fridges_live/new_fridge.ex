@@ -12,34 +12,46 @@ defmodule RefoodWeb.FridgesLive.NewFridge do
   def render(assigns) do
     ~H"""
     <div>
-      <.modal show id={@id} on_cancel={@on_cancel}>
-        <:header>Gerir Frigoríficos</:header>
-        <div :if={Enum.any?(@fridges)} class="mb-6">
-          <h3 class="text-sm font-semibold text-zinc-700 mb-2">Frigoríficos existentes</h3>
-          <ul class="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden">
-            <li :for={fridge <- @fridges} class="flex items-center justify-between px-4 py-3 text-sm">
+      <.modal show id={@id} on_cancel={@on_cancel} size={:md}>
+        <:header>Gerir frigoríficos</:header>
+        <:footer>
+          <div class="flex justify-end gap-3">
+            <.button type="button" variant={:ghost} phx-click={@on_cancel}>Fechar</.button>
+            <.button type="submit" form="new-fridge-form">Adicionar frigorífico</.button>
+          </div>
+        </:footer>
+
+        <div class="flex flex-col gap-8">
+          <.record_list
+            id="fridges-list"
+            title="Frigoríficos"
+            items={@fridges}
+            empty_message="Nenhum frigorífico registado"
+          >
+            <:item :let={fridge}>
               <span class="font-medium text-zinc-900">{fridge.name}</span>
               <.link
                 patch={~p"/fridges?delete-fridge&fridge_id=#{fridge.id}"}
-                class="text-rose-600 hover:text-rose-800 text-xs font-medium"
+                class="text-sm font-medium text-rose-600 hover:text-rose-800"
               >
                 Eliminar
               </.link>
-            </li>
-          </ul>
+            </:item>
+          </.record_list>
+
+          <.record_form
+            :let={rf}
+            id="new-fridge-form"
+            for={@form}
+            phx-change="validate"
+            phx-target={@myself}
+            phx-submit="create-fridge"
+          >
+            <.section title="Adicionar">
+              <.field rf={rf} name={:name} label="Nome" width={:md} required />
+            </.section>
+          </.record_form>
         </div>
-        <.simple_form
-          id="new-fridge-form"
-          for={@form}
-          phx-change="validate"
-          phx-target={@myself}
-          phx-submit="create-fridge"
-        >
-          <.input field={@form[:name]} type="text" label="Adicionar frigorífico" />
-          <:actions>
-            <.button class="w-full">Adicionar</.button>
-          </:actions>
-        </.simple_form>
       </.modal>
     </div>
     """

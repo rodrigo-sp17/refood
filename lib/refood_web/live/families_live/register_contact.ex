@@ -29,28 +29,44 @@ defmodule RefoodWeb.FamiliesLive.RegisterContact do
   def render(assigns) do
     ~H"""
     <div>
-      <.modal show id={@id} on_cancel={@on_cancel}>
-        <:header>Registar contacto para {@family.name}</:header>
-        <.simple_form
+      <.modal show id={@id} on_cancel={@on_cancel} size={:md}>
+        <:header>Registar contacto</:header>
+        <:subtitle>{@family.name}</:subtitle>
+        <:footer>
+          <div class="flex justify-end gap-3">
+            <.button type="button" variant={:ghost} phx-click={@on_cancel}>Cancelar</.button>
+            <.button type="submit" form="register-contact-form">Registar contacto</.button>
+          </div>
+        </:footer>
+        <.record_form
+          :let={rf}
           id="register-contact-form"
           for={@form}
           phx-change="validate"
           phx-target={@myself}
           phx-submit="register-family-contact"
         >
-          <.input field={@form[:last_contacted_at]} label="Contactada em" type="datetime-local" />
-          <.input field={@form[:notes]} label="Notas" type="textarea" />
-          <.input
-            field={@form[:alerts_to_dismiss]}
-            label="Tipos de alertas a dispensar"
-            type="checkgroup"
-            multiple={true}
-            options={get_options_from_active_alerts(@family.active_alerts)}
-          />
-          <:actions>
-            <.button class="w-full">Registar</.button>
-          </:actions>
-        </.simple_form>
+          <.section title="Contacto">
+            <.field
+              rf={rf}
+              name={:last_contacted_at}
+              label="Contactada em"
+              type="datetime-local"
+              width={:sm}
+            />
+            <.field rf={rf} name={:notes} label="Notas" type="textarea" />
+            <.field
+              :if={@family.active_alerts != []}
+              rf={rf}
+              name={:alerts_to_dismiss}
+              label="Dispensar alertas"
+              type="checkgroup"
+              multiple
+              hint="Alertas resolvidos por este contacto."
+              options={get_options_from_active_alerts(@family.active_alerts)}
+            />
+          </.section>
+        </.record_form>
       </.modal>
     </div>
     """

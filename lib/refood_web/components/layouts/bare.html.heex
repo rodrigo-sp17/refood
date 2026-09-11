@@ -1,0 +1,9 @@
+<%!--
+Wall-display layout: no sidebar, no page padding, no chrome of any kind. The
+board itself owns every pixel and sets its own padding. Flashes are kept - an
+error that only surfaced in a log would be invisible on an unattended screen.
+--%>
+<main class="w-full h-full flex-1 min-w-0 flex flex-col focus:outline-none bg-zinc-100">
+  <.flash_group flash={@flash} />
+  {@inner_content}
+</main>

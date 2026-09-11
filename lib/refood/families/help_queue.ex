@@ -14,6 +14,19 @@ defmodule Refood.Families.HelpQueue do
   end
 
   @doc """
+  Blank attributes for the new-request form.
+
+  `inputs_for` renders nothing for a `has_one` that is nil with no params, so
+  the "Morada" section came up empty while `update_help_request/2` required an
+  address — the form asked for something it never showed. Seeding the *params*
+  builds the child changeset, and validation then behaves the same on change as
+  on submit.
+  """
+  def new_request_attrs do
+    %{help_requested_at: DateTime.utc_now(), address: %{city: "Porto"}}
+  end
+
+  @doc """
   Requests help for a family.
   """
   def request_help(attrs) do

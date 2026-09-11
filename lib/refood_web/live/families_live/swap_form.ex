@@ -18,15 +18,27 @@ defmodule RefoodWeb.FamiliesLive.SwapForm do
   def render(assigns) do
     ~H"""
     <div>
-      <.modal show id={@id} on_cancel={@on_cancel}>
+      <.modal show id={@id} on_cancel={@on_cancel} size={:md}>
         <:header>{if @swap, do: "Editar troca", else: "Adicionar troca"}</:header>
-        <.simple_form id="swap-details-form" for={@form} phx-submit="save-swap" phx-target={@myself}>
-          <.input field={@form[:from]} type="date" label="De" />
-          <.input field={@form[:to]} type="date" label="Para" />
-          <:actions>
-            <.button class="w-full">Guardar</.button>
-          </:actions>
-        </.simple_form>
+        <:subtitle>Mover a recolha desta família de um dia para outro.</:subtitle>
+        <:footer>
+          <div class="flex justify-end gap-3">
+            <.button type="button" variant={:ghost} phx-click={@on_cancel}>Cancelar</.button>
+            <.button type="submit" form="swap-details-form">Guardar troca</.button>
+          </div>
+        </:footer>
+        <.record_form
+          :let={rf}
+          id="swap-details-form"
+          for={@form}
+          phx-submit="save-swap"
+          phx-target={@myself}
+        >
+          <.section title="Dias">
+            <.field rf={rf} name={:from} label="De" type="date" width={:sm} required />
+            <.field rf={rf} name={:to} label="Para" type="date" width={:sm} required />
+          </.section>
+        </.record_form>
       </.modal>
     </div>
     """
@@ -45,7 +57,7 @@ defmodule RefoodWeb.FamiliesLive.SwapForm do
     case result do
       {:ok, _swap} ->
         send(self(), {:swap_saved, socket.assigns.family.id})
-        send(self(), {:put_flash, [:info, "Sucesso!"]})
+        send(self(), {:put_flash, [:info, "Troca guardada!"]})
         {:noreply, socket}
 
       {:error, %Ecto.Changeset{} = changeset} ->

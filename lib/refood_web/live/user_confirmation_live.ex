@@ -8,15 +8,15 @@ defmodule RefoodWeb.UserConfirmationLive do
     <div class="mx-auto max-w-sm">
       <.header class="text-center">Confirmar conta</.header>
 
-      <.simple_form for={@form} id="confirmation_form" phx-submit="confirm_account">
+      <.form for={@form} id="confirmation_form" phx-submit="confirm_account" class="mt-8">
         <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
-        <:actions>
-          <.button phx-disable-with="Confirmando..." class="w-full">Confirmar minha conta</.button>
-        </:actions>
-      </.simple_form>
+        <.button phx-disable-with="A confirmar..." full_width size={:lg}>
+          Confirmar a minha conta
+        </.button>
+      </.form>
 
-      <p class="text-center mt-4">
-        <.link href={~p"/users/log_in"}>Log in</.link>
+      <p class="mt-6 text-center text-sm">
+        <.link href={~p"/users/log_in"} class="underline">Voltar ao início de sessão</.link>
       </p>
     </div>
     """

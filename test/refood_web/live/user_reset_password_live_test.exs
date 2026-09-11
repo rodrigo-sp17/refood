@@ -43,7 +43,7 @@ defmodule RefoodWeb.UserResetPasswordLiveTest do
           user: %{"password" => "secret12", "password_confirmation" => "secret123456"}
         )
 
-      assert result =~ "should be at least 12 character"
+      assert result =~ "tem de ter pelo menos 12 caracteres"
       assert result =~ "does not match password"
     end
   end
@@ -82,7 +82,7 @@ defmodule RefoodWeb.UserResetPasswordLiveTest do
         |> render_submit()
 
       assert result =~ "Resetar palavra-passe"
-      assert result =~ "should be at least 12 character(s)"
+      assert result =~ "tem de ter pelo menos 12 caracteres"
       assert result =~ "does not match password"
     end
   end
@@ -93,11 +93,11 @@ defmodule RefoodWeb.UserResetPasswordLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|main a:fl-contains("Log in")|)
+        |> element(~s|main a:fl-contains("Voltar ao início de sessão")|)
         |> render_click()
         |> follow_redirect(conn, ~p"/users/log_in")
 
-      assert conn.resp_body =~ "Log in"
+      assert conn.resp_body =~ "Entrar"
     end
   end
 end

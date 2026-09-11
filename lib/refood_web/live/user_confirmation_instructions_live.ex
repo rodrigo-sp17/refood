@@ -7,21 +7,24 @@ defmodule RefoodWeb.UserConfirmationInstructionsLive do
     ~H"""
     <div class="mx-auto max-w-sm">
       <.header class="text-center">
-        No confirmation instructions received?
-        <:subtitle>We'll send a new confirmation link to your inbox</:subtitle>
+        Não recebeu as instruções de confirmação?
+        <:subtitle>Enviamos um novo link de confirmação para o seu email</:subtitle>
       </.header>
 
-      <.simple_form for={@form} id="resend_confirmation_form" phx-submit="send_instructions">
-        <.input field={@form[:email]} type="email" placeholder="Email" required />
-        <:actions>
-          <.button phx-disable-with="Sending..." class="w-full">
-            Resend confirmation instructions
-          </.button>
-        </:actions>
-      </.simple_form>
+      <.form
+        for={@form}
+        id="resend_confirmation_form"
+        phx-submit="send_instructions"
+        class="mt-8 flex flex-col gap-5"
+      >
+        <.input field={@form[:email]} type="email" label="Email" required />
+        <.button phx-disable-with="A enviar..." full_width size={:lg}>
+          Enviar novo link
+        </.button>
+      </.form>
 
-      <p class="text-center mt-4">
-        <.link href={~p"/users/log_in"}>Log in</.link>
+      <p class="mt-6 text-center text-sm">
+        <.link href={~p"/users/log_in"} class="underline">Voltar ao início de sessão</.link>
       </p>
     </div>
     """
@@ -40,7 +43,7 @@ defmodule RefoodWeb.UserConfirmationInstructionsLive do
     end
 
     info =
-      "If your email is in our system and it has not been confirmed yet, you will receive an email with instructions shortly."
+      "Se o email estiver no sistema e ainda não tiver sido confirmado, receberá as instruções em breve."
 
     {:noreply,
      socket

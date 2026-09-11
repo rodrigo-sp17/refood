@@ -1,0 +1,111 @@
+## Portuguese (pt-PT) translations for the messages Ecto generates itself.
+##
+## Domain-specific messages are written in Portuguese at the validation that
+## raises them (`message: "número já assimilado"`). What lands here are the
+## defaults Ecto supplies when no `:message` was given — without these, a form
+## shows "Nome: can't be blank" next to a Portuguese error on the next line.
+msgid ""
+msgstr ""
+"Language: pt\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+## From Ecto.Changeset.cast/4
+msgid "can't be blank"
+msgstr "não pode ficar vazio"
+
+## From Ecto.Changeset.unique_constraint/3
+msgid "has already been taken"
+msgstr "já está em uso"
+
+## From Ecto.Changeset.put_change/3
+msgid "is invalid"
+msgstr "não é válido"
+
+## From Ecto.Changeset.validate_acceptance/3
+msgid "must be accepted"
+msgstr "tem de ser aceite"
+
+## From Ecto.Changeset.validate_format/3
+msgid "has invalid format"
+msgstr "não tem um formato válido"
+
+## From Ecto.Changeset.validate_subset/3
+msgid "has an invalid entry"
+msgstr "tem um valor inválido"
+
+## From Ecto.Changeset.validate_exclusion/3
+msgid "is reserved"
+msgstr "está reservado"
+
+## From Ecto.Changeset.validate_confirmation/3
+msgid "does not match confirmation"
+msgstr "não coincide com a confirmação"
+
+## From Ecto.Changeset.no_assoc_constraint/3
+msgid "is still associated with this entry"
+msgstr "ainda está associado a este registo"
+
+msgid "are still associated with this entry"
+msgstr "ainda estão associados a este registo"
+
+## From Ecto.Changeset.validate_length/3
+msgid "should have %{count} item(s)"
+msgid_plural "should have %{count} item(s)"
+msgstr[0] "tem de ter %{count} item"
+msgstr[1] "tem de ter %{count} itens"
+
+msgid "should be %{count} character(s)"
+msgid_plural "should be %{count} character(s)"
+msgstr[0] "tem de ter %{count} caracter"
+msgstr[1] "tem de ter %{count} caracteres"
+
+msgid "should be %{count} byte(s)"
+msgid_plural "should be %{count} byte(s)"
+msgstr[0] "tem de ter %{count} byte"
+msgstr[1] "tem de ter %{count} bytes"
+
+msgid "should have at least %{count} item(s)"
+msgid_plural "should have at least %{count} item(s)"
+msgstr[0] "tem de ter pelo menos %{count} item"
+msgstr[1] "tem de ter pelo menos %{count} itens"
+
+msgid "should be at least %{count} character(s)"
+msgid_plural "should be at least %{count} character(s)"
+msgstr[0] "tem de ter pelo menos %{count} caracter"
+msgstr[1] "tem de ter pelo menos %{count} caracteres"
+
+msgid "should be at least %{count} byte(s)"
+msgid_plural "should be at least %{count} byte(s)"
+msgstr[0] "tem de ter pelo menos %{count} byte"
+msgstr[1] "tem de ter pelo menos %{count} bytes"
+
+msgid "should have at most %{count} item(s)"
+msgid_plural "should have at most %{count} item(s)"
+msgstr[0] "tem de ter no máximo %{count} item"
+msgstr[1] "tem de ter no máximo %{count} itens"
+
+msgid "should be at most %{count} character(s)"
+msgid_plural "should be at most %{count} character(s)"
+msgstr[0] "tem de ter no máximo %{count} caracter"
+msgstr[1] "tem de ter no máximo %{count} caracteres"
+
+msgid "should be at most %{count} byte(s)"
+msgid_plural "should be at most %{count} byte(s)"
+msgstr[0] "tem de ter no máximo %{count} byte"
+msgstr[1] "tem de ter no máximo %{count} bytes"
+
+## From Ecto.Changeset.validate_number/3
+msgid "must be less than %{number}"
+msgstr "tem de ser menor que %{number}"
+
+msgid "must be greater than %{number}"
+msgstr "tem de ser maior que %{number}"
+
+msgid "must be less than or equal to %{number}"
+msgstr "tem de ser menor ou igual a %{number}"
+
+msgid "must be greater than or equal to %{number}"
+msgstr "tem de ser maior ou igual a %{number}"
+
+msgid "must be equal to %{number}"
+msgstr "tem de ser igual a %{number}"

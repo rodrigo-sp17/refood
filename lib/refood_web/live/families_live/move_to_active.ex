@@ -13,50 +13,38 @@ defmodule RefoodWeb.FamiliesLive.MoveToActive do
   def form(assigns) do
     ~H"""
     <div>
-      <.modal show id={@id} on_cancel={@on_cancel}>
-        <:header>
-          Mover {@family.name} para ajuda regular
-        </:header>
-        <.simple_form :let={f} for={@for} phx-target={@target} phx-submit="move-to-active">
-          <div class="flex flex-row gap-10">
-            <div class="w-30">
-              <.input
-                field={f[:number]}
-                type="number"
-                min="0"
-                step="1"
-                pattern="[0-9]*"
-                label="No."
-                value={@family.number}
-              />
-            </div>
-            <div class="w-30">
-              <.input
-                field={f[:weekdays]}
-                type="checkgroup"
-                multiple={true}
-                label="Dia(s) da semana"
-                options={[
-                  {"Dom", :sunday},
-                  {"Seg", :monday},
-                  {"Ter", :tuesday},
-                  {"Qua", :wednesday},
-                  {"Qui", :thursday},
-                  {"Sex", :friday},
-                  {"Sab", :saturday}
-                ]}
-                value={@family.weekdays}
-              />
-            </div>
+      <.modal show id={@id} on_cancel={@on_cancel} size={:md}>
+        <:header>Mover para ajuda regular</:header>
+        <:subtitle>{@family.name}</:subtitle>
+        <:footer>
+          <div class="flex justify-end gap-3">
+            <.button type="button" variant={:ghost} phx-click={@on_cancel}>Cancelar</.button>
+            <.button type="submit" form="move-to-active-form">Ativar família</.button>
           </div>
-          <.error :if={@for.action}>
-            Oops, algo de errado aconteceu!
-          </.error>
-
-          <:actions>
-            <.button class="w-full">Ativar</.button>
-          </:actions>
-        </.simple_form>
+        </:footer>
+        <.record_form
+          :let={rf}
+          id="move-to-active-form"
+          for={@for}
+          phx-target={@target}
+          phx-change="validate-move-to-active"
+          phx-submit="move-to-active"
+        >
+          <.section title="Distribuição">
+            <.field
+              rf={rf}
+              name={:number}
+              label="Número"
+              type="number"
+              width={:xs}
+              min="1"
+              step="1"
+              required
+              hint="O código que identifica a família, sem o F."
+            />
+            <.field rf={rf} name={:weekdays} label="Dias" type="weekdays" multiple required />
+          </.section>
+        </.record_form>
       </.modal>
     </div>
     """

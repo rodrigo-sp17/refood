@@ -1,11 +1,11 @@
 <div :if={@current_user} id="navbar-minimal" class="relative flex shrink-0">
   <button
     phx-click={expand_sidebar()}
-    class="absolute -right-3 top-9.5 flex items-center rounded-full bg-gray-800 group hover:bg-white border border-gray-800 p-1"
+    class="absolute -right-3 top-9.5 flex items-center rounded-full bg-zinc-800 group hover:bg-white border border-zinc-800 p-1"
   >
-    <.icon name="hero-chevron-right" class="bg-white group-hover:bg-gray-800" />
+    <.icon name="hero-chevron-right" class="bg-white group-hover:bg-zinc-800" />
   </button>
-  <div class="flex flex-col pt-4 pb-4 px-2 border-r border-gray-200 bg-gray-800">
+  <div class="flex flex-col pt-4 pb-4 px-2 border-r border-zinc-200 bg-zinc-800">
     <div id="navbar-minimal-header" class="flex justify-center items-center h-16 py-4 mt-1 mb-4">
       <img src={~p"/images/refood-cropped-192.png"} width="28" />
     </div>
@@ -13,25 +13,25 @@
     <div id="navbar-minimal-nav" class="flex-1 flex flex-col overflow-y-auto">
       <nav>
         <.link title="Turno" navigate={~p"/shift"}>
-          <div class={"#{if @socket.view == RefoodWeb.ShiftLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex justify-center items-center h-16 p-4 my-1 text-white hover:rounded"}>
+          <div class={nav_item_class(@socket.view == RefoodWeb.ShiftLive, compact: true)}>
             <.icon name="hero-calendar-solid" class="w-6 h-6" />
           </div>
         </.link>
 
         <.link title="Lista de Espera" navigate={~p"/help-queue"}>
-          <div class={"#{if @socket.view == RefoodWeb.HelpQueueLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex justify-center items-center h-16 p-4 my-1 text-white hover:rounded"}>
+          <div class={nav_item_class(@socket.view == RefoodWeb.HelpQueueLive, compact: true)}>
             <.icon name="hero-queue-list" class="w-6 h-6" />
           </div>
         </.link>
 
         <.link title="Famílias" navigate={~p"/families"}>
-          <div class={"#{if @socket.view == RefoodWeb.FamiliesLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex justify-center items-center h-16 p-4 my-1 text-white hover:rounded"}>
+          <div class={nav_item_class(@socket.view == RefoodWeb.FamiliesLive, compact: true)}>
             <.icon name="hero-user-group-solid" class="w-6 h-6" />
           </div>
         </.link>
 
         <.link title="Frigoríficos" navigate={~p"/fridges"}>
-          <div class={"#{if @socket.view == RefoodWeb.FridgesLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex justify-center items-center h-16 p-4 my-1 text-white hover:rounded"}>
+          <div class={nav_item_class(@socket.view == RefoodWeb.FridgesLive, compact: true)}>
             <.icon name="hero-beaker-solid" class="w-6 h-6" />
           </div>
         </.link>
@@ -41,7 +41,7 @@
           title="Usuários"
           navigate={~p"/user-management"}
         >
-          <div class={"#{if @socket.view == RefoodWeb.UsersLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex justify-center items-center h-16 p-4 my-1 text-white hover:rounded"}>
+          <div class={nav_item_class(@socket.view == RefoodWeb.UsersLive, compact: true)}>
             <.icon name="hero-users-solid" class="w-6 h-6" />
           </div>
         </.link>
@@ -51,50 +51,35 @@
       <div class="mt-auto"></div>
       
 <!-- Logged in user drawer -->
-      <.link
-        title="Minha conta"
-        id="minimal-logged-in-user"
-        class="relative flex justify-center items-center h-16 p-4 my-1 bg-gray-700 rounded text-white"
-        phx-click={show_dropdown("#minimal-dropdown-logged-in-user")}
-        phx-hook="Menu"
-      >
-        <.icon name="hero-user-circle" class="w-8 h-8" />
-      </.link>
+      <.dropdown id="minimal-dropdown-logged-in-user" position={:bottom_left_fixed}>
+        <:trigger>
+          <.link
+            title="Minha conta"
+            id="minimal-logged-in-user"
+            class="relative flex justify-center items-center h-16 p-4 my-1 bg-zinc-700 rounded text-white"
+            phx-click={show_dropdown("#minimal-dropdown-logged-in-user-dropdown")}
+          >
+            <.icon name="hero-user-circle" class="w-8 h-8" />
+          </.link>
+        </:trigger>
+        <:link href="/users/settings">Configurações</:link>
+        <:link href={~p"/users/log_out"} method="delete">Log out</:link>
+      </.dropdown>
     </div>
   </div>
 </div>
-<div
-  id="minimal-dropdown-logged-in-user"
-  class="hidden fixed origin-bottom-left bottom-4 left-15 mx-3 z-50 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black/5 divide-y divide-gray-200"
-  role="menu"
-  phx-click-away={hide_dropdown("#minimal-dropdown-logged-in-user")}
->
-  <.link
-    class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-    href="/users/settings"
-  >
-    Configurações
-  </.link>
-  <.link
-    class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-    href={~p"/users/log_out"}
-    method="delete"
-  >
-    Log out
-  </.link>
-</div>
 
 <div :if={@current_user} id="navbar" class="hidden relative shrink-0">
-  <div class="flex flex-col w-72 pt-4 pb-4 px-4 border-r border-gray-200 bg-gray-800">
+  <div class="flex flex-col w-72 pt-4 pb-4 px-4 border-r border-zinc-200 bg-zinc-800">
     <!-- Header -->
     <div id="navbar-header" class="flex gap-3 items-center h-16 w-full p-4 mt-1 mb-4">
       <img src={~p"/images/refood-cropped-192.png"} width="28" />
-      <span class="h-8 w-auto text-2xl text-yellow-500 font-bold">REFOOD</span>
+      <span class="h-8 w-auto text-2xl text-brand font-bold">REFOOD</span>
       <button
         phx-click={retract_sidebar()}
-        class="absolute -right-3 flex items-center rounded-full bg-gray-800 group hover:bg-white border border-gray-800 p-1"
+        class="absolute -right-3 flex items-center rounded-full bg-zinc-800 group hover:bg-white border border-zinc-800 p-1"
       >
-        <.icon name="hero-chevron-left" class="bg-white group-hover:bg-gray-800" />
+        <.icon name="hero-chevron-left" class="bg-white group-hover:bg-zinc-800" />
       </button>
     </div>
     
@@ -102,31 +87,31 @@
     <div id="navbar-nav" class="flex-1 flex flex-col overflow-y-auto">
       <nav>
         <.link navigate={~p"/shift"}>
-          <div class={"#{if @socket.view == RefoodWeb.ShiftLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+          <div class={nav_item_class(@socket.view == RefoodWeb.ShiftLive)}>
             <.icon name="hero-calendar-solid" class="w-6 h-6 mx-1" /> Turno
           </div>
         </.link>
 
         <.link navigate={~p"/help-queue"}>
-          <div class={"#{if @socket.view == RefoodWeb.HelpQueueLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+          <div class={nav_item_class(@socket.view == RefoodWeb.HelpQueueLive)}>
             <.icon name="hero-queue-list" class="w-6 h-6 mx-1" /> Lista de Espera
           </div>
         </.link>
 
         <.link navigate={~p"/families"}>
-          <div class={"#{if @socket.view == RefoodWeb.FamiliesLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+          <div class={nav_item_class(@socket.view == RefoodWeb.FamiliesLive)}>
             <.icon name="hero-user-group-solid" class="w-6 h-6 mx-1" /> Famílias
           </div>
         </.link>
 
         <.link navigate={~p"/fridges"}>
-          <div class={"#{if @socket.view == RefoodWeb.FridgesLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+          <div class={nav_item_class(@socket.view == RefoodWeb.FridgesLive)}>
             <.icon name="hero-beaker-solid" class="w-6 h-6 mx-1" /> Frigoríficos
           </div>
         </.link>
 
         <.link :if={@current_user.role == :admin} navigate={~p"/user-management"}>
-          <div class={"#{if @socket.view == RefoodWeb.UsersLive, do: "bg-gray-500 rounded-sm", else: "hover:bg-gray-500"} flex gap-3 items-center h-16 w-full p-4 my-1 text-white hover:rounded font-medium"}>
+          <div class={nav_item_class(@socket.view == RefoodWeb.UsersLive)}>
             <.icon name="hero-users-solid" class="w-6 h-6 mx-1" /> Usuários
           </div>
         </.link>
@@ -136,42 +121,27 @@
       <div class="mt-auto"></div>
       
 <!-- Logged in user drawer -->
-      <.link
-        id="logged-in-user"
-        class="flex items-center gap-3 h-16 w-full p-4 mt-2 bg-gray-700 rounded text-white"
-        phx-click={show_dropdown("#dropdown-logged-in-user")}
-        phx-hook="Menu"
-      >
-        <.icon name="hero-user-circle" class="w-8 h-8" />
-        <div class="flex flex-col">
-          <span class="font-semibold">{@current_user.name}</span>
-          <span class="text-sm text-gray-300">{@current_user.email}</span>
-        </div>
-      </.link>
-      <div
-        id="dropdown-logged-in-user"
-        class="hidden mx-3 z-10 mt-1 rounded-md shadow-lg bg-white ring-1 ring-black/5 divide-y divide-gray-200"
-        role="menu"
-        phx-click-away={hide_dropdown("#dropdown-logged-in-user")}
-      >
-        <.link
-          class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-          href="/users/settings"
-        >
-          Configurações
-        </.link>
-        <.link
-          class="block truncate px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-          href={~p"/users/log_out"}
-          method="delete"
-        >
-          Log out
-        </.link>
-      </div>
+      <.dropdown id="dropdown-logged-in-user" position={:below}>
+        <:trigger>
+          <.link
+            id="logged-in-user"
+            class="flex items-center gap-3 h-16 w-full p-4 mt-2 bg-zinc-700 rounded text-white"
+            phx-click={show_dropdown("#dropdown-logged-in-user-dropdown")}
+          >
+            <.icon name="hero-user-circle" class="w-8 h-8" />
+            <div class="flex flex-col">
+              <span class="font-semibold">{@current_user.name}</span>
+              <span class="text-sm text-zinc-300">{@current_user.email}</span>
+            </div>
+          </.link>
+        </:trigger>
+        <:link href="/users/settings">Configurações</:link>
+        <:link href={~p"/users/log_out"} method="delete">Log out</:link>
+      </.dropdown>
     </div>
   </div>
 </div>
-<main class="w-full h-full flex-1 min-w-0 flex flex-col focus:outline-none px-12 py-9 bg-gray-100">
+<main class="w-full h-full flex-1 min-w-0 flex flex-col focus:outline-none px-12 py-9 bg-zinc-100">
   <.flash_group flash={@flash} />
   {@inner_content}
 </main>

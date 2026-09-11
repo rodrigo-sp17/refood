@@ -5,6 +5,7 @@ defmodule RefoodWeb.ShiftLiveTest do
   import Refood.AccountsFixtures
   import Refood.Factory
 
+  alias Refood.Families.Family
   alias Refood.Families.Swap
   alias Refood.Repo
 
@@ -18,6 +19,16 @@ defmodule RefoodWeb.ShiftLiveTest do
     lv |> element("button[phx-click=prev-date]") |> render_click()
   end
 
+  defp open_family(lv, family) do
+    lv
+    |> element("#shift-list button[phx-value-family_id=\"#{family.id}\"]")
+    |> render_click()
+  end
+
+  defp click_action(lv, text) do
+    lv |> element("#family-actions a", text) |> render_click()
+  end
+
   describe "adding a swap from a past shift date" do
     test "shows 'Trocar dia' when viewing a past date", %{conn: conn} do
       family = insert(:family, status: :active, weekdays: @all_weekdays)
@@ -26,10 +37,7 @@ defmodule RefoodWeb.ShiftLiveTest do
 
       go_to_yesterday(lv)
 
-      html =
-        lv
-        |> element("#shift-table-mobile button[phx-value-family_id=\"#{family.id}\"]")
-        |> render_click()
+      html = open_family(lv, family)
 
       assert html =~ "Trocar dia"
       assert html =~ "/shift/#{family.id}?new-swap"
@@ -42,7 +50,8 @@ defmodule RefoodWeb.ShiftLiveTest do
       {:ok, lv, _html} = live(conn, ~p"/shift")
       go_to_yesterday(lv)
 
-      render_patch(lv, ~p"/shift/#{family.id}?new-swap")
+      open_family(lv, family)
+      click_action(lv, "Trocar dia")
 
       html =
         lv
@@ -60,7 +69,8 @@ defmodule RefoodWeb.ShiftLiveTest do
       {:ok, lv, _html} = live(conn, ~p"/shift")
       go_to_yesterday(lv)
 
-      render_patch(lv, ~p"/shift/#{family.id}?new-swap")
+      open_family(lv, family)
+      click_action(lv, "Trocar dia")
 
       html =
         lv
@@ -69,6 +79,95 @@ defmodule RefoodWeb.ShiftLiveTest do
 
       assert html =~ "não é possível trocar para o passado"
       refute Repo.get_by(Swap, family_id: family.id)
+    end
+  end
+
+  describe "page actions" do
+    test "creating a help request is not offered here", %{conn: conn} do
+      # It lives on Lista de Espera, which owns the queue.
+      {:ok, _lv, html} = live(conn, ~p"/shift")
+
+      refute html =~ "Criar pedido de ajuda"
+      assert html =~ "Modo TV"
+    end
+  end
+
+  describe "the date in the URL" do
+    test "mounts on the date given, not today", %{conn: conn, yesterday: yesterday} do
+      family =
+        insert(:family, status: :active, weekdays: [Family.weekday_from_date(yesterday)])
+
+      {:ok, _lv, html} = live(conn, ~p"/shift?date=#{Date.to_iso8601(yesterday)}")
+
+      assert html =~ "F-#{family.number}"
+      refute html =~ "(Hoje)"
+    end
+
+    test "survives a reload after stepping the day", %{conn: conn, yesterday: yesterday} do
+      {:ok, lv, _html} = live(conn, ~p"/shift")
+
+      go_to_yesterday(lv)
+
+      assert assert_patch(lv) =~ "date=#{Date.to_iso8601(yesterday)}"
+    end
+
+    test "falls back to today when the date is unparseable", %{conn: conn} do
+      {:ok, _lv, html} = live(conn, ~p"/shift?date=not-a-date")
+
+      assert html =~ "(Hoje)"
+    end
+  end
+
+  describe "the TV board" do
+    test "drops the app chrome", %{conn: conn} do
+      {:ok, _lv, html} = live(conn, ~p"/shift/tv")
+
+      # The sidebar and the page title both live in the app layout the board
+      # does not use, so neither should appear anywhere in the document.
+      refute html =~ "Lista de Espera"
+      refute html =~ "Turno"
+
+      assert html =~ "Modo TV"
+    end
+
+    test "shows families and keeps them openable", %{conn: conn} do
+      family = insert(:family, status: :active, weekdays: @all_weekdays)
+
+      {:ok, lv, html} = live(conn, ~p"/shift/tv")
+
+      assert html =~ to_string(family.number)
+
+      html =
+        lv
+        |> element("#tv-board button[phx-value-family_id=\"#{family.id}\"]")
+        |> render_click()
+
+      assert html =~ "Gerir empréstimos"
+      assert html =~ "/shift/tv/#{family.id}?loaned-items"
+    end
+
+    test "the switch swaps the layout, not just the route", %{conn: conn} do
+      {:ok, lv, html} = live(conn, ~p"/shift")
+      assert html =~ "Lista de Espera"
+
+      result =
+        lv
+        |> element("#display-mode-switch")
+        |> render_hook("set-display-mode", %{"mode" => "tv"})
+
+      {:ok, _tv_lv, tv_html} = follow_redirect(result, conn)
+
+      # Live navigation, not a fresh mount - this is where a layout that only
+      # applies on first mount would leave the sidebar stranded on the wall.
+      refute tv_html =~ "Lista de Espera"
+    end
+
+    test "changing the day stays on the board", %{conn: conn, yesterday: yesterday} do
+      {:ok, lv, _html} = live(conn, ~p"/shift/tv")
+
+      go_to_yesterday(lv)
+
+      assert assert_patch(lv) == "/shift/tv?date=#{Date.to_iso8601(yesterday)}"
     end
   end
 end

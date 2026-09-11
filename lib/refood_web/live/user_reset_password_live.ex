@@ -8,30 +8,28 @@ defmodule RefoodWeb.UserResetPasswordLive do
     <div class="mx-auto max-w-sm">
       <.header class="text-center">Resetar palavra-passe</.header>
 
-      <.simple_form
+      <.form
         for={@form}
         id="reset_password_form"
         phx-submit="reset_password"
         phx-change="validate"
+        class="mt-8 flex flex-col gap-5"
       >
-        <.error :if={@form.errors != []}>
-          Oops, algo de errado aconteceu! Veja os erros abaixo...
-        </.error>
+        <.error_summary form={@form} />
 
-        <.input field={@form[:password]} type="password" label="Nova palavra-passe" required />
+        <.input field={@form[:password]} type="password" label="Nova palavra-passe" />
         <.input
           field={@form[:password_confirmation]}
           type="password"
           label="Confirme a nova palavra-passe"
-          required
         />
-        <:actions>
-          <.button phx-disable-with="Resetando..." class="w-full">Resetar palavra-passe</.button>
-        </:actions>
-      </.simple_form>
+        <.button phx-disable-with="A guardar..." full_width size={:lg}>
+          Definir palavra-passe
+        </.button>
+      </.form>
 
-      <p class="text-center text-sm mt-4">
-        <.link href={~p"/users/log_in"}>Log in</.link>
+      <p class="mt-6 text-center text-sm">
+        <.link href={~p"/users/log_in"} class="underline">Voltar ao início de sessão</.link>
       </p>
     </div>
     """

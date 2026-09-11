@@ -29,41 +29,58 @@ defmodule RefoodWeb.FamiliesLive.AddLoanedItem do
   def render(assigns) do
     ~H"""
     <div>
-      <.modal show id={@id} on_cancel={@on_cancel}>
-        <:header>Adicionar item emprestado</:header>
-        <.simple_form
+      <.modal show id={@id} on_cancel={@on_cancel} size={:md}>
+        <:header>Emprestar item</:header>
+        <:subtitle>
+          Registe o que a família leva emprestado, para saber o que falta devolver.
+        </:subtitle>
+        <:footer>
+          <div class="flex justify-end gap-3">
+            <.button type="button" variant={:ghost} phx-click={@on_cancel}>Cancelar</.button>
+            <.button type="submit" form="add-loaned-item-form">Emprestar item</.button>
+          </div>
+        </:footer>
+        <.record_form
+          :let={rf}
           id="add-loaned-item-form"
           for={@form}
           phx-change="validate"
           phx-submit="add-loaned-item"
           phx-target={@myself}
         >
-          <.input
-            field={@form[:item_type]}
-            type="select"
-            label="Tipo de item"
-            options={["Tupperware", "Saco", "Outros"]}
-            prompt="Selecione um item"
-            required
-          />
-
-          <.input
-            :if={@show_custom_name}
-            field={@form[:name]}
-            type="text"
-            label="Nome do item"
-            placeholder="Digite o nome do item"
-            required
-          />
-
-          <.input field={@form[:quantity]} type="number" label="Quantidade" min="1" step="1" required />
-
-          <.input field={@form[:loaned_at]} type="datetime-local" label="Emprestado em" />
-
-          <:actions>
-            <.button class="w-full">Adicionar</.button>
-          </:actions>
-        </.simple_form>
+          <.section title="Item">
+            <.field
+              rf={rf}
+              name={:item_type}
+              label="Tipo"
+              type="select"
+              width={:md}
+              options={["Tupperware", "Saco", "Outros"]}
+              prompt="Selecione um item"
+              required
+            />
+            <.field
+              :if={@show_custom_name}
+              rf={rf}
+              name={:name}
+              label="Nome"
+              width={:md}
+              placeholder="Ex: tabuleiro"
+              required
+            />
+            <.field
+              rf={rf}
+              name={:quantity}
+              label="Quantidade"
+              type="number"
+              width={:xs}
+              min="1"
+              step="1"
+              required
+            />
+            <.field rf={rf} name={:loaned_at} label="Emprestado em" type="datetime-local" width={:sm} />
+          </.section>
+        </.record_form>
       </.modal>
     </div>
     """

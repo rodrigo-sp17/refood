@@ -7,21 +7,24 @@ defmodule RefoodWeb.UserForgotPasswordLive do
     ~H"""
     <div class="mx-auto max-w-sm">
       <.header class="text-center">
-        Esqueceu sua palavra-passe?
-        <:subtitle>Enviaremos um link de reset para sua inbox</:subtitle>
+        Esqueceu a palavra-passe?
+        <:subtitle>Enviamos um link para definir uma nova.</:subtitle>
       </.header>
 
-      <.simple_form for={@form} id="reset_password_form" phx-submit="send_email">
-        <.input field={@form[:email]} type="email" placeholder="Email" required />
-        <:actions>
-          <.button phx-disable-with="Sending..." class="w-full">
-            Enviar instruções de reset de palavra-passe
-          </.button>
-        </:actions>
-      </.simple_form>
+      <.form
+        for={@form}
+        id="reset_password_form"
+        phx-submit="send_email"
+        class="mt-8 flex flex-col gap-5"
+      >
+        <.input field={@form[:email]} type="email" label="Email" required />
+        <.button phx-disable-with="A enviar..." full_width size={:lg}>
+          Enviar instruções
+        </.button>
+      </.form>
 
-      <p class="text-center text-sm mt-4">
-        <.link href={~p"/users/log_in"}> Log in</.link>
+      <p class="mt-6 text-center text-sm">
+        <.link href={~p"/users/log_in"} class="underline">Voltar ao início de sessão</.link>
       </p>
     </div>
     """

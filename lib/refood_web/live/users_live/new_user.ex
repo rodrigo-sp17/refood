@@ -13,7 +13,7 @@ defmodule RefoodWeb.UsersLive.NewUser do
     socket =
       socket
       |> assign(assigns)
-      |> assign(changeset: Accounts.change_user_registration(%User{}))
+      |> assign(form: to_form(Accounts.change_user_registration(%User{})))
 
     {:ok, socket}
   end
@@ -22,36 +22,61 @@ defmodule RefoodWeb.UsersLive.NewUser do
   def render(assigns) do
     ~H"""
     <div>
-      <.modal show id={@id} on_cancel={@on_cancel}>
+      <.modal show id={@id} on_cancel={@on_cancel} size={:md}>
         <:header>Criar novo usuário</:header>
-        <.simple_form
-          :let={f}
+        <:footer>
+          <div class="flex justify-end gap-3">
+            <.button type="button" variant={:ghost} phx-click={@on_cancel}>Cancelar</.button>
+            <.button type="submit" form="registration-form" phx-disable-with="A criar...">
+              Criar usuário
+            </.button>
+          </div>
+        </:footer>
+        <.record_form
+          :let={rf}
           id="registration-form"
-          for={@changeset}
+          for={@form}
           phx-target={@myself}
+          phx-change="validate"
           phx-submit="create-user"
         >
-          <.input field={f[:name]} type="text" label="Nome" required />
-          <.input field={f[:email]} type="email" label="Email" required />
-          <.input
-            field={f[:role]}
-            type="select"
-            options={["manager", "shift"]}
-            label="Função"
-            required
-          />
-          <.input field={f[:password]} type="password" label="Palavra-passe" required />
-          <.error :if={@changeset.action}>
-            Oops, algo de errado aconteceu!
-          </.error>
-
-          <:actions>
-            <.button phx-disable-with="Criando usuário..." class="w-full">Criar usuário</.button>
-          </:actions>
-        </.simple_form>
+          <.section title="Utilizador">
+            <.field rf={rf} name={:name} label="Nome" width={:md} required />
+            <.field rf={rf} name={:email} label="Email" type="email" width={:md} required />
+            <.field
+              rf={rf}
+              name={:role}
+              label="Função"
+              type="select"
+              width={:sm}
+              options={role_options()}
+              required
+            />
+            <.field
+              rf={rf}
+              name={:password}
+              label="Palavra-passe"
+              type="password"
+              width={:md}
+              required
+            />
+          </.section>
+        </.record_form>
       </.modal>
     </div>
     """
+  end
+
+  defp role_options, do: [{"Gestor", "manager"}, {"Turno", "shift"}]
+
+  @impl true
+  def handle_event("validate", %{"user" => user_attrs}, socket) do
+    form =
+      %User{}
+      |> Accounts.change_user_registration(user_attrs)
+      |> to_form(action: :validate)
+
+    {:noreply, assign(socket, form: form)}
   end
 
   @impl true
@@ -64,7 +89,7 @@ defmodule RefoodWeb.UsersLive.NewUser do
         {:noreply, socket}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, changeset: changeset)}
+        {:noreply, assign(socket, form: to_form(changeset))}
     end
   end
 end

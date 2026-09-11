@@ -102,6 +102,18 @@ defmodule Refood.Families do
   end
 
   @doc """
+  Blank attributes for a create form.
+
+  `inputs_for` renders nothing for a `has_one` that is nil with no params, which
+  is why the "Morada" section used to come up empty. Seeding the *params* rather
+  than the struct makes `cast_assoc` build the child changeset, so the fields
+  render — and validation behaves identically on change and on submit.
+  """
+  def new_family_attrs do
+    %{adults: 1, children: 0, address: %{city: "Porto"}}
+  end
+
+  @doc """
   Creates a new family.
   """
   def create_family(attrs) do

@@ -30,8 +30,12 @@ defmodule RefoodWeb.Router do
     scope "/shift", RefoodWeb do
       pipe_through :browser
 
-      live "/", ShiftLive
-      live "/:family_id", ShiftLive
+      live "/", ShiftLive, :index
+      # Keep the /tv routes above "/:family_id" - otherwise "tv" matches as a
+      # family id and the TV board becomes unreachable.
+      live "/tv", ShiftLive, :tv
+      live "/tv/:family_id", ShiftLive, :tv
+      live "/:family_id", ShiftLive, :index
     end
 
     scope "/help-queue", RefoodWeb do

@@ -10,22 +10,24 @@ defmodule RefoodWeb.UserLoginLive do
           REFOOD - Login
         </.header>
       </div>
-      <.simple_form for={@form} id="login_form" action={~p"/users/log_in"} phx-update="ignore">
+      <.form
+        for={@form}
+        id="login_form"
+        action={~p"/users/log_in"}
+        phx-update="ignore"
+        class="mt-8 flex flex-col gap-5"
+      >
         <.input field={@form[:email]} type="email" label="Email" required />
-        <.input field={@form[:password]} type="password" label="Senha" required />
+        <.input field={@form[:password]} type="password" label="Palavra-passe" required />
 
-        <:actions>
-          <.input field={@form[:remember_me]} type="checkbox" label="Mantenha-me logado" />
-          <.link href={~p"/users/reset_password"} class="text-sm font-semibold">
-            Esqueceu sua palavra-passe?
+        <div class="flex items-center justify-between gap-4">
+          <.input field={@form[:remember_me]} type="checkbox" label="Manter sessão iniciada" />
+          <.link href={~p"/users/reset_password"} class="text-sm font-semibold underline">
+            Esqueceu a palavra-passe?
           </.link>
-        </:actions>
-        <:actions>
-          <.button phx-disable-with="Logging in..." class="w-full">
-            Log in <span aria-hidden="true">→</span>
-          </.button>
-        </:actions>
-      </.simple_form>
+        </div>
+        <.button phx-disable-with="A entrar..." full_width size={:lg}>Entrar</.button>
+      </.form>
     </div>
     """
   end
