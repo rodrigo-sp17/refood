@@ -47,7 +47,7 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetailsTest do
 
         lv
         |> form("#swap-details-form",
-          swap: %{from: Date.to_iso8601(from), to: Date.to_iso8601(to)}
+          swap: %{from: Date.to_iso8601(from), to: Date.to_iso8601(to), kit_prepared: "true"}
         )
         |> render_submit()
 
@@ -56,7 +56,10 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetailsTest do
         html = open_history(lv)
         assert html =~ Format.date(from)
         assert html =~ Format.date(to)
-        assert %Swap{from: ^from, to: ^to} = Repo.get_by!(Swap, family_id: family.id)
+        assert html =~ "Cabaz pronto"
+
+        assert %Swap{from: ^from, to: ^to, kit_prepared: true} =
+                 Repo.get_by!(Swap, family_id: family.id)
       end
     end
 
@@ -81,6 +84,26 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetailsTest do
       assert render(lv) =~ "Troca guardada!"
       assert open_history(lv) =~ Format.date(new_to)
       assert %Swap{to: ^new_to} = Repo.get!(Swap, swap.id)
+    end
+
+    test "can clear a kit marked as prepared", %{conn: conn} do
+      conn = log_in_user(conn, user_fixture(%{role: :manager}))
+      family = insert(:family, status: :active, weekdays: @all_weekdays)
+      from = Date.utc_today()
+      swap = insert(:swap, family: family, from: from, to: Date.add(from, 1), kit_prepared: true)
+
+      {:ok, lv, _html} = open_family_details(conn, family)
+      assert open_history(lv) =~ "Cabaz pronto"
+
+      lv |> element("#swap-dropdown-#{swap.id}-dropdown a", "Editar troca") |> render_click()
+
+      lv
+      |> form("#swap-details-form", swap: %{kit_prepared: "false"})
+      |> render_submit()
+
+      assert render(lv) =~ "Troca guardada!"
+      refute open_history(lv) =~ "Cabaz pronto"
+      assert %Swap{kit_prepared: false} = Repo.get!(Swap, swap.id)
     end
 
     test "editing to a past date keeps the original swap and shows the error", %{conn: conn} do

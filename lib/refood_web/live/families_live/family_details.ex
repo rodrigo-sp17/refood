@@ -330,6 +330,9 @@ defmodule RefoodWeb.FamiliesLive.FamilyDetails do
                 <span class="text-zinc-500">{Format.date(swap.from)}</span>
                 <.icon name="hero-arrow-right-mini" class="h-4 w-4 text-zinc-400" />
                 <span class="font-medium">{Format.date(swap.to)}</span>
+                <.badge :if={swap.kit_prepared} color={:accent} class="self-center">
+                  Cabaz pronto
+                </.badge>
               </div>
               <.dropdown
                 :if={@current_user.role in [:admin, :manager]}

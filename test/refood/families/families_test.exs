@@ -339,6 +339,21 @@ defmodule Refood.FamiliesTest do
 
       assert {:ok, swap} = Families.add_swap(attrs, ~D[2024-05-01])
       assert swap.family_id == family.id
+      refute swap.kit_prepared
+    end
+
+    test "records that the kit was already prepared" do
+      family = insert(:family, weekdays: [:wednesday])
+
+      attrs = %{
+        family_id: family.id,
+        from: ~D[2024-05-15],
+        to: ~D[2024-05-17],
+        kit_prepared: true
+      }
+
+      assert {:ok, swap} = Families.add_swap(attrs, ~D[2024-05-01])
+      assert Repo.reload!(swap).kit_prepared
     end
 
     test "errors if swapping from same day for same family" do
@@ -423,6 +438,18 @@ defmodule Refood.FamiliesTest do
 
       assert updated_swap.to == ~D[2024-05-24]
       assert updated_swap.from == ~D[2024-05-15]
+    end
+
+    test "toggles whether the kit was prepared, keeping the days" do
+      ref_date = ~D[2024-05-01]
+      family = insert(:family, weekdays: [:wednesday])
+      swap = insert(:swap, family: family, from: ~D[2024-05-15], to: ~D[2024-05-17])
+
+      assert {:ok, %{kit_prepared: true}} =
+               Families.update_swap(swap.id, %{kit_prepared: true}, ref_date)
+
+      assert {:ok, %{kit_prepared: false, to: ~D[2024-05-17]}} =
+               Families.update_swap(swap.id, %{kit_prepared: false}, ref_date)
     end
 
     test "errors if updating to collide with another swap for the same family" do

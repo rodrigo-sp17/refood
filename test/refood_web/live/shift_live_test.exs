@@ -82,6 +82,103 @@ defmodule RefoodWeb.ShiftLiveTest do
     end
   end
 
+  describe "a kit prepared before the swap" do
+    defp swap_with(conn, family, target, kit_prepared) do
+      {:ok, lv, _html} = live(conn, ~p"/shift")
+
+      open_family(lv, family)
+      click_action(lv, "Trocar dia")
+
+      lv
+      |> form("#add-swap-form",
+        swap: %{to: Date.to_iso8601(target), kit_prepared: to_string(kit_prepared)}
+      )
+      |> render_submit()
+    end
+
+    test "is recorded when 'cabaz já feito' is ticked and tagged on the new day", %{conn: conn} do
+      family = insert(:family, status: :active, weekdays: @all_weekdays)
+      target = Date.add(Date.utc_today(), 3)
+
+      assert swap_with(conn, family, target, true) =~ "Troca efetuada!"
+      assert %Swap{kit_prepared: true} = Repo.get_by!(Swap, family_id: family.id)
+
+      {:ok, lv, _html} = live(conn, ~p"/shift?date=#{Date.to_iso8601(target)}")
+
+      assert lv
+             |> element("#shift-list [data-family-id='#{family.id}']", "Cabaz pronto")
+             |> has_element?()
+    end
+
+    test "is not tagged when 'cabaz já feito' is left unticked", %{conn: conn} do
+      family = insert(:family, status: :active, weekdays: @all_weekdays)
+      target = Date.add(Date.utc_today(), 3)
+
+      swap_with(conn, family, target, false)
+      assert %Swap{kit_prepared: false} = Repo.get_by!(Swap, family_id: family.id)
+
+      {:ok, _lv, html} = live(conn, ~p"/shift?date=#{Date.to_iso8601(target)}")
+
+      assert html =~ "Troca"
+      refute html =~ "Cabaz pronto"
+    end
+
+    test "is only tagged on the day swapped to", %{conn: conn} do
+      # Scheduled on both days, with a second swap *into* the from-day, so the
+      # family is listed there too and the prepared swap is preloaded with it.
+      from = Date.add(Date.utc_today(), 1)
+      to = Date.add(Date.utc_today(), 2)
+
+      family =
+        insert(:family,
+          status: :active,
+          weekdays: [Family.weekday_from_date(from), Family.weekday_from_date(to)]
+        )
+
+      insert(:swap, family: family, from: from, to: to, kit_prepared: true)
+      insert(:swap, family: family, from: Date.add(from, -7), to: from)
+
+      {:ok, _lv, html} = live(conn, ~p"/shift?date=#{Date.to_iso8601(from)}")
+      assert html =~ "F-#{family.number}"
+      refute html =~ "Cabaz pronto"
+
+      {:ok, _lv, html} = live(conn, ~p"/shift?date=#{Date.to_iso8601(to)}")
+      assert html =~ "Cabaz pronto"
+    end
+
+    test "shows on the TV board too", %{conn: conn} do
+      family = insert(:family, status: :active, weekdays: @all_weekdays)
+      today = Date.utc_today()
+      insert(:swap, family: family, from: Date.add(today, -1), to: today, kit_prepared: true)
+
+      {:ok, lv, _html} = live(conn, ~p"/shift/tv")
+
+      assert lv
+             |> element("#tv-board [data-family-id='#{family.id}']", "Cabaz pronto")
+             |> has_element?()
+    end
+
+    test "shares the TV row with restrictions and every other flag", %{conn: conn} do
+      restrictions = "Sem glúten, sem lactose e alergia a frutos secos"
+
+      family =
+        insert(:family, status: :active, weekdays: @all_weekdays, restrictions: restrictions)
+
+      today = Date.utc_today()
+      insert(:swap, family: family, from: Date.add(today, -1), to: today, kit_prepared: true)
+      insert(:absence, family: family, date: today, warned: false)
+      insert(:loaned_item, family: family)
+
+      {:ok, lv, _html} = live(conn, ~p"/shift/tv")
+
+      row = "#tv-board [data-family-id='#{family.id}']"
+
+      for text <- [restrictions, "Troca", "Cabaz pronto", "Faltou", "Empréstimo"] do
+        assert lv |> element(row, text) |> has_element?(), "missing #{inspect(text)}"
+      end
+    end
+  end
+
   describe "page actions" do
     test "creating a help request is not offered here", %{conn: conn} do
       # It lives on Lista de Espera, which owns the queue.

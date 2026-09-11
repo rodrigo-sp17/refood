@@ -164,6 +164,7 @@ defmodule RefoodWeb.ShiftLive do
           <.board_row
             :for={family <- tv_page_families(@families, @page, @tv_rows, @tv_columns, @tv_trim)}
             family={family}
+            date={@date}
           />
         </div>
       </div>
@@ -219,7 +220,7 @@ defmodule RefoodWeb.ShiftLive do
       <div :if={@families == []} class="h-16 flex justify-center items-center">
         Nenhuma família para o dia.
       </div>
-      <.family_card :for={family <- @families} family={family} />
+      <.family_card :for={family <- @families} family={family} date={@date} />
     </div>
     """
   end
@@ -254,6 +255,7 @@ defmodule RefoodWeb.ShiftLive do
   # One board row. No card: on a wall, 40 rounded rectangles spend their pixels
   # on padding and corners, while a board spends them on the numbers.
   attr :family, :map, required: true
+  attr :date, Date, required: true
 
   defp board_row(assigns) do
     ~H"""
@@ -304,9 +306,17 @@ defmodule RefoodWeb.ShiftLive do
           </span>
         </div>
 
-        <div :if={@family.restrictions || flagged?(@family)} class="flex items-start gap-4">
+        <%!--
+        Restrictions and flags share a line only while both fit. Otherwise the
+        flags wrap onto their own line, still right-aligned: a flag group that
+        refuses to shrink would squeeze the restrictions to one character a line.
+        --%>
+        <div
+          :if={@family.restrictions || flagged?(@family)}
+          class="flex flex-wrap items-start gap-x-4 gap-y-1"
+        >
           <div class={[
-            "flex-1 min-w-0 flex items-start gap-1.5 text-[22px] leading-tight text-rose-700",
+            "grow min-w-0 flex items-start gap-1.5 text-[22px] leading-tight text-rose-700",
             absent?(@family) && "opacity-45"
           ]}>
             <.icon
@@ -317,8 +327,10 @@ defmodule RefoodWeb.ShiftLive do
             <span class="min-w-0 break-words">{@family.restrictions}</span>
           </div>
 
-          <div class="shrink-0 flex flex-wrap justify-end gap-x-3 text-[20px] leading-tight font-bold uppercase tracking-wide">
+          <%!-- Flags wrap between each other, never inside one: "Cabaz pronto" stays whole. --%>
+          <div class="ml-auto flex flex-wrap justify-end gap-x-3 whitespace-nowrap text-[20px] leading-tight font-bold uppercase tracking-wide">
             <span :if={!Enum.empty?(@family.swaps)} class="text-emerald-600">Troca</span>
+            <span :if={kit_ready?(@family, @date)} class="text-violet-600">Cabaz pronto</span>
             <span
               :for={absence <- @family.absences}
               class={if absence.warned, do: "text-amber-600", else: "text-rose-600"}
@@ -336,6 +348,7 @@ defmodule RefoodWeb.ShiftLive do
   end
 
   attr :family, :map, required: true
+  attr :date, Date, required: true
 
   defp family_card(assigns) do
     ~H"""
@@ -373,6 +386,9 @@ defmodule RefoodWeb.ShiftLive do
         <div class="flex items-center flex-wrap flex-1 grow gap-2">
           <.badge :if={!Enum.empty?(@family.swaps)} color={:success}>
             Troca
+          </.badge>
+          <.badge :if={kit_ready?(@family, @date)} color={:accent}>
+            Cabaz pronto
           </.badge>
           <div :for={absence <- @family.absences}>
             <.badge :if={absence.warned} color={:warning}>
@@ -418,6 +434,24 @@ defmodule RefoodWeb.ShiftLive do
         <h2 class="text-center text-2xl">Para qual dia deseja trocar?</h2>
         <.form id="add-swap-form" for={@form} phx-submit="add-swap" class="flex flex-col gap-4">
           <.input type="date" field={@form[:to]} min={Date.utc_today()} />
+          <%!--
+          Sized to the Trocar button rather than the form default: on a phone a
+          16px box is a hard thing to hit, so the whole row is the target.
+          --%>
+          <label
+            for={@form[:kit_prepared].id}
+            class="flex items-center gap-3 py-3 text-lg text-zinc-900 cursor-pointer"
+          >
+            <input type="hidden" name={@form[:kit_prepared].name} value="false" />
+            <input
+              type="checkbox"
+              id={@form[:kit_prepared].id}
+              name={@form[:kit_prepared].name}
+              value="true"
+              checked={Phoenix.HTML.Form.normalize_value("checkbox", @form[:kit_prepared].value)}
+              class="h-6 w-6 shrink-0 rounded border-zinc-300 text-zinc-900 focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
+            /> Cabaz já feito
+          </label>
           <.button type="submit" full_width size={:lg}>Trocar</.button>
         </.form>
       </div>
@@ -568,6 +602,11 @@ defmodule RefoodWeb.ShiftLive do
     family.absences != [] || !Enum.empty?(family.swaps) ||
       !Enum.empty?(family.unreturned_loaned_items)
   end
+
+  # Only on the day swapped *to*: that is the day someone would otherwise pack a
+  # second bag. The from-day never lists the family at all.
+  defp kit_ready?(family, date),
+    do: Enum.any?(family.swaps, &(&1.kit_prepared && &1.to == date))
 
   defp summary(families) do
     absences = Enum.count(families, &absent?/1)

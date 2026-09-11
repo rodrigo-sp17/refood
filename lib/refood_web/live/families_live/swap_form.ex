@@ -38,6 +38,9 @@ defmodule RefoodWeb.FamiliesLive.SwapForm do
             <.field rf={rf} name={:from} label="De" type="date" width={:sm} required />
             <.field rf={rf} name={:to} label="Para" type="date" width={:sm} required />
           </.section>
+          <.section title="Cabaz">
+            <.field rf={rf} name={:kit_prepared} label="Cabaz já feito" type="checkbox" />
+          </.section>
         </.record_form>
       </.modal>
     </div>

@@ -396,7 +396,7 @@ defmodule RefoodWeb.CoreComponents do
   """
   attr :color, :atom,
     default: :neutral,
-    values: [:success, :warning, :danger, :info, :neutral, :brand]
+    values: [:success, :warning, :danger, :info, :accent, :neutral, :brand]
 
   attr :class, :string, default: nil
 
@@ -418,6 +418,7 @@ defmodule RefoodWeb.CoreComponents do
   defp badge_color_class(:warning), do: "border-amber-500 text-amber-600"
   defp badge_color_class(:danger), do: "border-rose-600 text-rose-600"
   defp badge_color_class(:info), do: "border-blue-600 text-blue-600"
+  defp badge_color_class(:accent), do: "border-violet-600 text-violet-600"
   defp badge_color_class(:neutral), do: "border-zinc-400 text-zinc-600"
 
   # Filled rather than outlined: this one marks a live state, not a category.
