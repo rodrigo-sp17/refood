@@ -280,7 +280,7 @@ defmodule RefoodWeb.ShiftLive do
       <div class="flex-1 min-w-0 flex flex-col gap-1">
         <div class={["flex items-start gap-4", absent?(@family) && "opacity-45"]}>
           <%!--
-          First name, middle initial and last name, wrapped rather than truncated: shortening
+          First, middle and last name, wrapped rather than truncated: shortening
           is a decision about which words matter, an ellipsis is just the layout
           giving up mid-word.
           --%>
@@ -538,12 +538,12 @@ defmodule RefoodWeb.ShiftLive do
 
   ## Presentation helpers
 
-  # Portuguese name particles - "Maria da Silva Santos" is Maria S. Santos, not
-  # Maria d. Santos.
+  # Portuguese name particles - "Maria da Silva Santos" is Maria Silva Santos,
+  # not Maria da Santos.
   @name_particles ~w(da de do das dos e)
 
-  # First name, the initial of the first middle name, and last name. The
-  # initial tells apart two "Maria Silva"s without costing a line on the board.
+  # First name, the first middle name, and last name. The middle name tells
+  # apart two "Maria Silva"s; the rest of it is dropped to keep rows short.
   defp short_name(name) do
     case String.split(name, " ", trim: true) do
       [] ->
@@ -557,7 +557,7 @@ defmodule RefoodWeb.ShiftLive do
 
         case Enum.find(middles, &(String.downcase(&1) not in @name_particles)) do
           nil -> "#{first} #{last}"
-          middle -> "#{first} #{String.upcase(String.first(middle))}. #{last}"
+          middle -> "#{first} #{middle} #{last}"
         end
     end
   end

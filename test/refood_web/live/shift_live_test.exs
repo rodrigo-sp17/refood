@@ -186,7 +186,7 @@ defmodule RefoodWeb.ShiftLiveTest do
   end
 
   describe "family names" do
-    test "shorten to first name, first middle initial and last name", %{conn: conn} do
+    test "shorten to first name, first middle name and last name", %{conn: conn} do
       for name <- [
             "Maria Ferreira Silva",
             "Joao Silva",
@@ -202,10 +202,10 @@ defmodule RefoodWeb.ShiftLiveTest do
         {:ok, lv, _html} = live(conn, path)
         html = render(lv)
 
-        assert html =~ ~r/>\s*Maria F\. Silva\s*</
+        assert html =~ ~r/>\s*Maria Ferreira Silva\s*</
         assert html =~ ~r/>\s*Joao Silva\s*</
-        assert html =~ ~r/>\s*John F\. Smith\s*</
-        assert html =~ ~r/>\s*Ana C\. Santos\s*</
+        assert html =~ ~r/>\s*John Fraud Smith\s*</
+        assert html =~ ~r/>\s*Ana Costa Santos\s*</
         assert html =~ ~r/>\s*Rui Santos\s*</
         assert html =~ ~r/>\s*Cher\s*</
       end

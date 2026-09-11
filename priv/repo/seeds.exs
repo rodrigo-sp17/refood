@@ -56,7 +56,7 @@ if Mix.env() == :dev do
     [
       %{
         number: 21,
-        name: "Ana Costa",
+        name: "Ana da Costa Santos",
         adults: 3,
         children: 1,
         restrictions: nil,
@@ -67,7 +67,7 @@ if Mix.env() == :dev do
       },
       %{
         number: 22,
-        name: "Carlos Fernandes",
+        name: "Carlos Manuel Fernandes",
         adults: 2,
         children: 3,
         restrictions: "- glúten",
@@ -78,7 +78,7 @@ if Mix.env() == :dev do
       },
       %{
         number: 23,
-        name: "Filipa Rodrigues",
+        name: "Filipa Alexandra Moreira Rodrigues",
         adults: 1,
         children: 2,
         restrictions: nil,
@@ -90,7 +90,7 @@ if Mix.env() == :dev do
       },
       %{
         number: 24,
-        name: "Rui Santos",
+        name: "Rui dos Santos",
         adults: 4,
         children: 0,
         restrictions: "- lactose",
@@ -146,7 +146,7 @@ if Mix.env() == :dev do
       },
       %{
         number: 29,
-        name: "Luísa Gonçalves",
+        name: "Luísa Maria Gonçalves",
         adults: 1,
         children: 3,
         restrictions: nil,
@@ -192,7 +192,7 @@ if Mix.env() == :dev do
       },
       %{
         number: 33,
-        name: "Catarina Lima",
+        name: "Catarina Isabel Lima",
         adults: 2,
         children: 3,
         restrictions: "- carne de porco",
@@ -203,7 +203,7 @@ if Mix.env() == :dev do
       },
       %{
         number: 34,
-        name: "André Ribeiro",
+        name: "André Filipe de Sousa Ribeiro",
         adults: 4,
         children: 2,
         restrictions: nil,
@@ -226,7 +226,7 @@ if Mix.env() == :dev do
       },
       %{
         number: 36,
-        name: "Ricardo Pinto",
+        name: "Maximiliano Albuquerque de Vasconcelos Pinto",
         adults: 3,
         children: 3,
         restrictions: "- marisco",
