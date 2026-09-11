@@ -4,6 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={Plug.CSRFProtection.get_csrf_token()} />
+    <%!-- Makes the app installable on the tablets, so volunteers get a home-screen
+    icon instead of having to remember a URL. See priv/static/manifest.json. --%>
+    <link rel="manifest" href={~p"/manifest.json"} />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Refood" />
+    <link rel="apple-touch-icon" href={~p"/images/refood-cropped-192.png"} />
     <.live_title suffix=" · Portal">
       {assigns[:page_title] || "Refood"}
     </.live_title>

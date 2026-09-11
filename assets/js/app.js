@@ -297,3 +297,14 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
+// Registers the service worker that makes the app installable on the tablets.
+// It must be served from the origin root to claim scope "/", which is why it
+// lives at priv/static/sw.js rather than going through esbuild into /assets.
+// Registering on `load` keeps it off the critical path of the socket connect.
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch(error =>
+            console.error("Service worker registration failed", error)
+        )
+    })
+}
