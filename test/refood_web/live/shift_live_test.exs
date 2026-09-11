@@ -170,4 +170,31 @@ defmodule RefoodWeb.ShiftLiveTest do
       assert assert_patch(lv) == "/shift/tv?date=#{Date.to_iso8601(yesterday)}"
     end
   end
+
+  describe "family names" do
+    test "shorten to first name, first middle initial and last name", %{conn: conn} do
+      for name <- [
+            "Maria Ferreira Silva",
+            "Joao Silva",
+            "John Fraud Name Smith",
+            "Ana da Costa Santos",
+            "Rui dos Santos",
+            "Cher"
+          ] do
+        insert(:family, name: name, status: :active, weekdays: @all_weekdays)
+      end
+
+      for path <- [~p"/shift", ~p"/shift/tv"] do
+        {:ok, lv, _html} = live(conn, path)
+        html = render(lv)
+
+        assert html =~ ~r/>\s*Maria F\. Silva\s*</
+        assert html =~ ~r/>\s*Joao Silva\s*</
+        assert html =~ ~r/>\s*John F\. Smith\s*</
+        assert html =~ ~r/>\s*Ana C\. Santos\s*</
+        assert html =~ ~r/>\s*Rui Santos\s*</
+        assert html =~ ~r/>\s*Cher\s*</
+      end
+    end
+  end
 end
