@@ -198,10 +198,18 @@ defmodule RefoodWeb.ShiftLive do
 
     <div id="shift-list" class="mt-6 flex-1 min-h-0 overflow-y-auto flex flex-col gap-2">
       <div class="sticky top-0 z-10 bg-zinc-100 pb-3 flex flex-col items-center gap-2">
-        <div class="flex justify-center items-center gap-8">
+        <%!--
+        The row fills the column and only the date shrinks: sized to its own
+        content, a centred row wider than the column overflows both sides, and a
+        scroll container cannot reach what spills out on the left - the prev
+        arrow vanished on phones.
+        --%>
+        <div class="w-full flex justify-center items-center gap-2 sm:gap-8">
           <.date_step direction={:prev} />
-          <div class="w-[48ch] max-w-[80vw] text-3xl text-center font-bold">
-            {if @date == @today, do: "(Hoje)"} {long_date(@date)}
+          <div class="flex-1 min-w-0 max-w-[48ch] text-xl sm:text-3xl text-center font-bold">
+            {if @date == @today, do: "(Hoje)"}
+            <span class="sm:hidden">{short_date(@date)}</span>
+            <span class="hidden sm:inline">{long_date(@date)}</span>
           </div>
           <.date_step direction={:next} />
         </div>
@@ -227,7 +235,7 @@ defmodule RefoodWeb.ShiftLive do
       phx-click={if @direction == :prev, do: "prev-date", else: "next-date"}
       aria-label={if @direction == :prev, do: "Dia anterior", else: "Dia seguinte"}
       class={[
-        "flex items-center rounded-full bg-white hover:bg-brand border border-brand",
+        "shrink-0 flex items-center rounded-full bg-white hover:bg-brand border border-brand",
         "focus-visible:outline-none",
         if(@tv,
           do: "p-2 tv-focus",

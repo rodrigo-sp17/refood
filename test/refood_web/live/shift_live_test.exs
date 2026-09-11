@@ -116,6 +116,20 @@ defmodule RefoodWeb.ShiftLiveTest do
 
       assert html =~ "(Hoje)"
     end
+
+    test "renders a short date for phones and the long one from sm up", %{conn: conn} do
+      date = ~D[2027-02-17]
+
+      {:ok, lv, _html} = live(conn, ~p"/shift?date=#{Date.to_iso8601(date)}")
+
+      assert lv
+             |> element("#shift-list span.sm\\:hidden", Refood.Format.short_date(date))
+             |> has_element?()
+
+      assert lv
+             |> element("#shift-list span.hidden.sm\\:inline", Refood.Format.long_date(date))
+             |> has_element?()
+    end
   end
 
   describe "the TV board" do
